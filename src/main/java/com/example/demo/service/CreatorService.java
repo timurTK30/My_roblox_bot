@@ -8,6 +8,6 @@ public interface CreatorService {
 
     CreatorDto save(CreatorDto creatorDto);
     List<CreatorDto> readAll();
-    CreatorDto updateById(Long id, String name);
+    CreatorDto updateById(Long id, CreatorDto creatorDto);
     void deleteById(Long id);
 }

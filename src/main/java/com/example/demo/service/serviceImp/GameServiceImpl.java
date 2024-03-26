@@ -1,8 +1,12 @@
 package com.example.demo.service.serviceImp;
 
+import com.example.demo.domain.Game;
+import com.example.demo.domain.User;
 import com.example.demo.dto.GameDto;
+import com.example.demo.mapper.GameMapper;
 import com.example.demo.repository.GameRepository;
 import com.example.demo.service.GameService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,28 +16,35 @@ public class GameServiceImpl implements GameService {
 
     private GameRepository gameRepository;
 
-    public GameServiceImpl(GameRepository gameRepository) {
-        this.gameRepository = gameRepository;
-    }
+    private GameMapper gameMapper;
 
+    @Autowired
+    public GameServiceImpl(GameRepository gameRepository, GameMapper gameMapper) {
+        this.gameRepository = gameRepository;
+        this.gameMapper = gameMapper;
+    }
 
     @Override
     public GameDto save(GameDto gameDto) {
-        return null;
+        return gameMapper.toDto(gameRepository.save(gameMapper.toEntity(gameDto)));
     }
 
     @Override
     public List<GameDto> readAll() {
-        return null;
+        List<Game> gameList = gameRepository.findAll();
+        return gameList.stream().map(gameMapper::toDto).toList();
     }
 
     @Override
     public GameDto updateByName(GameDto gameDto, String name) {
-        return null;
+        Game game = gameMapper.toEntity(gameDto);
+        game.setName(name);
+        return gameMapper.toDto(game);
     }
 
     @Override
     public void deleteByName(GameDto gameDto) {
-
+        Game game = gameMapper.toEntity(gameDto);
+        gameRepository.delete(game);
     }
 }
