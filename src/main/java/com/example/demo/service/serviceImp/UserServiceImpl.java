@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -46,5 +47,11 @@ public class UserServiceImpl implements UserService {
     public void deleteByName(UserDto userDto) {
         User user = userMapper.toEntity(userDto);
         userRepository.delete(user);
+    }
+
+    @Override
+    public UserDto getUserByChatId(Long chatId) {
+        Optional<User> userByChatId = userRepository.getUserByChatId(chatId);
+        return userMapper.toDto(userByChatId.get());
     }
 }

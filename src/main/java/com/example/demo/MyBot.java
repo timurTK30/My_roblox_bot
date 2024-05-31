@@ -2,6 +2,7 @@ package com.example.demo;
 
 import com.example.demo.config.BotConfig;
 import com.example.demo.domain.User;
+import com.example.demo.dto.UserDto;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.CreatorService;
 import com.example.demo.service.GameService;
@@ -72,13 +73,22 @@ public class MyBot extends TelegramLongPollingBot {
     }
 
     public void register(Long chatId, String nickname) {
+        if(isUserExist(chatId)){
+            sendMassegeToUser(chatId, "Вы уже зарегестририваны", null, 0 );
+            return;
+        }
         User user = new User();
         user.setNickname(nickname);
         user.setChatId(chatId);
         userService.save(userMapper.toDto(user));
-        sendMassegeToUser(chatId, "Вы успешно зарегестририваныВы успешно зарегистрированы в нашем боте✅\n" +
+        sendMassegeToUser(chatId, "Вы успешно зарегистрированы в нашем боте✅\n" +
                 "\n" +
                 "Успешного пользования☺\uFE0F", null, 0);
+    }
+
+    public boolean isUserExist(Long chatId){
+        UserDto userByChatId = userService.getUserByChatId(chatId);
+        return userByChatId != null;
     }
 
     public void sendMassegeToUser(Long chatId, String massage, List<String> buttonText, int buttonRows) {

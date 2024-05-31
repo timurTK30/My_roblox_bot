@@ -11,4 +11,5 @@ public interface UserService {
     List<UserDto> readAll();
     UserDto updateByName(UserDto userDto, String name);
     void deleteByName(UserDto userDto);
+    UserDto getUserByChatId(Long chatId);
 }
