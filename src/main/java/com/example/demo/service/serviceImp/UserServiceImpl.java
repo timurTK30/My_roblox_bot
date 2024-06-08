@@ -52,6 +52,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserByChatId(Long chatId) {
         Optional<User> userByChatId = userRepository.getUserByChatId(chatId);
-        return userMapper.toDto(userByChatId.get());
+        return userByChatId.map(user -> userMapper.toDto(user)).orElse(null);
     }
 }
