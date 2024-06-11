@@ -1,6 +1,7 @@
 package com.example.demo.mapper;
 
 import com.example.demo.domain.SupportMassage;
+import com.example.demo.domain.UserChatInfo;
 import com.example.demo.dto.SuportMassageDto;
 import org.springframework.stereotype.Component;
 
@@ -23,5 +24,11 @@ public class SuportMassageMapper {
         suportMassageDto.setMassage(supportMassage.getMassage());
         suportMassageDto.setDate(supportMassage.getDate());
         return suportMassageDto;
+    }
+
+    public UserChatInfo toUserChatInfo(SuportMassageDto suportMassageDto){
+        UserChatInfo userChatInfo = new UserChatInfo();
+        userChatInfo.setChatId(suportMassageDto.getChatId());
+        return userChatInfo;
     }
 }

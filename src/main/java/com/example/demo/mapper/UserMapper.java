@@ -20,6 +20,7 @@ public class UserMapper {
         UserDto userDto = new UserDto();
         userDto.setNickname(user.getNickname());
         userDto.setChatId(user.getChatId());
+        userDto.setRole(user.getRole().name());
         return userDto;
     }
 }

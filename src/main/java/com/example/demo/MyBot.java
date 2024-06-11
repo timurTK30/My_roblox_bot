@@ -1,14 +1,16 @@
 package com.example.demo;
 
 import com.example.demo.config.BotConfig;
+import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
+import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.CreatorService;
 import com.example.demo.service.GameService;
-import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
+import com.example.demo.service.serviceImp.SupportMassageServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,17 +33,20 @@ public class MyBot extends TelegramLongPollingBot {
     private final GameService gameService;
     private final UserService userService;
     private final UserMapper userMapper;
-    private final SupportMassageService supportMassageService;
+    private final SupportMassageServiceImpl supportMassageServiceImpl;
+    private final SuportMassageMapper suportMassageMapper;
+
     private final Map<Long, Boolean> ifUserWantToSendSupMassage = new HashMap<>();
 
     @Autowired
-    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageService supportMassageService) {
+    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper) {
         this.botConfig = botConfig;
         this.creatorService = creatorService;
         this.gameService = gameService;
         this.userService = userService;
         this.userMapper = userMapper;
-        this.supportMassageService = supportMassageService;
+        this.supportMassageServiceImpl = supportMassageServiceImpl;
+        this.suportMassageMapper = suportMassageMapper;
     }
 
     @Override
@@ -49,15 +54,19 @@ public class MyBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             String massege = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
+            System.out.println(ifUserWantToSendSupMassage);
+            System.out.println(userService.getUserByChatId(chatId));
             if (massege.startsWith("/start")) {
                 wellcome(chatId);
+                ifUserWantToSendSupMassage.put(chatId, false);
             } else if (massege.startsWith("/help")) {
                 help(chatId);
-            } else if (massege.startsWith("/readSuppMsg")) {
+            } else if (massege.startsWith("/readSuppMsg") && isUserAdmin(chatId)) {
                 readSuppMsg(chatId);
 
             } else if (!massege.isEmpty() && ifUserWantToSendSupMassage.get(chatId)) {
                 saveSuppMassageFromUser(chatId, massege);
+                ifUserWantToSendSupMassage.put(chatId, false);
             }
         }
         if (update.hasCallbackQuery()) {
@@ -69,6 +78,9 @@ public class MyBot extends TelegramLongPollingBot {
             if (callbackQuery.getData().equalsIgnoreCase("Написать админу")) {
                 ifUserWantToSendSupMassage.put(chatId, true);
                 sendMassegeToUser(chatId, "Введите сообщение", null, 0);
+            }
+            if (callbackQuery.getData().startsWith("User")){
+                sendMassegeToUser(chatId, callbackQuery.getData(), null, 0);
             }
         }
     }
@@ -90,15 +102,23 @@ public class MyBot extends TelegramLongPollingBot {
         sendMassegeToUser(chatId, "Чем вам помочь?", List.of("Написать админу"), 1);
     }
 
+    public boolean isUserAdmin(Long chatId) {
+        UserDto userByChatId = userService.getUserByChatId(chatId);
+        return userByChatId.getRole().equalsIgnoreCase("ADMIN");
+    }
+
     public void readSuppMsg(Long chatId) {
-        List<SuportMassageDto> massageDtos = supportMassageService.readAll();
+        List<SuportMassageDto> massageDtos = supportMassageServiceImpl.readAll();
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < massageDtos.size(); i++) {
             stringBuilder.append(i + 1)
+                    .append(". ")
                     .append(massageDtos.get(i).getChatId())
-                    .append(massageDtos.get(i).getMassage());
+                    .append(" ")
+                    .append(massageDtos.get(i).getMassage()).append("\n");
         }
-        sendMassegeToUser(chatId, stringBuilder.toString(), null, 0);
+        sendMassegeToUser(chatId, stringBuilder.toString(), massageDtos.stream().
+                map(suppMsg -> suportMassageMapper.toUserChatInfo(suppMsg).toString()).toList() , massageDtos.size());
     }
 
     public void saveSuppMassageFromUser(Long chatId, String massage) {
@@ -106,7 +126,7 @@ public class MyBot extends TelegramLongPollingBot {
         suportMassageDto.setChatId(chatId);
         suportMassageDto.setMassage(massage);
         suportMassageDto.setDate(new Date());
-        supportMassageService.save(suportMassageDto);
+        supportMassageServiceImpl.save(suportMassageDto);
     }
 
     public void register(Long chatId, String nickname) {
@@ -117,6 +137,7 @@ public class MyBot extends TelegramLongPollingBot {
         User user = new User();
         user.setNickname(nickname);
         user.setChatId(chatId);
+        user.setRole(Role.USER);
         userService.save(userMapper.toDto(user));
         sendMassegeToUser(chatId, "Вы успешно зарегистрированы в нашем боте✅\n" +
                 "\n" +

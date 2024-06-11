@@ -6,8 +6,8 @@ import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.repository.SupportMassageRepository;
 import com.example.demo.service.SupportMassageService;
 import org.hibernate.internal.build.AllowNonPortable;
-import org.jvnet.hk2.annotations.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
