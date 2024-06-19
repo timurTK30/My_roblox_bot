@@ -1,8 +1,10 @@
 package com.example.demo;
 
 import com.example.demo.config.BotConfig;
+import com.example.demo.domain.AdminStatus;
 import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
+import com.example.demo.domain.UserStatus;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
 import com.example.demo.mapper.SuportMassageMapper;
@@ -147,6 +149,9 @@ public class MyBot extends TelegramLongPollingBot {
         user.setNickname(nickname);
         user.setChatId(chatId);
         user.setRole(Role.USER);
+        user.setStatus(UserStatus.DONT_SENT);
+        user.setAStatus(AdminStatus.DONT_WRITE);
+        user.setTempChatIdForReply(0L);
         userService.save(userMapper.toDto(user));
         sendMassegeToUser(chatId, "Вы успешно зарегистрированы в нашем боте✅\n" +
                 "\n" +
