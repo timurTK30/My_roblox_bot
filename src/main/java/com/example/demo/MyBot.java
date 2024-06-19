@@ -36,7 +36,7 @@ public class MyBot extends TelegramLongPollingBot {
     private final SupportMassageServiceImpl supportMassageServiceImpl;
     private final SuportMassageMapper suportMassageMapper;
 
-    private final Map<Long, Boolean> ifUserWantToSendSupMassage = new HashMap<>();
+    private final Map<Long, Long> ifAdminWantToSendMassage = new HashMap<>();
 
     @Autowired
     public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper) {
@@ -64,9 +64,20 @@ public class MyBot extends TelegramLongPollingBot {
             } else if (massege.startsWith("/readSuppMsg") && isUserAdmin(chatId)) {
                 readSuppMsg(chatId);
 
-            } else if (!massege.isEmpty() && ifUserWantToSendSupMassage.get(chatId)) {
-                saveSuppMassageFromUser(chatId, massege);
-                ifUserWantToSendSupMassage.put(chatId, false);
+            } else if (!massege.isEmpty()) {
+                try {
+                    if (ifUserWantToSendSupMassage.get(chatId)) {
+
+                        saveSuppMassageFromUser(chatId, massege);
+                        ifUserWantToSendSupMassage.put(chatId, false);
+
+                    } else if (ifAdminWantToSendMassage.get(chatId) != -1) {
+                        sendMassegeToUser(ifAdminWantToSendMassage.get(chatId), massege, null, 0);
+                        ifAdminWantToSendMassage.put(chatId, -1L);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Человек не ожидает на отправку сообщений -> " + ifUserWantToSendSupMassage);
+                }
             }
         }
         if (update.hasCallbackQuery()) {
@@ -79,8 +90,10 @@ public class MyBot extends TelegramLongPollingBot {
                 ifUserWantToSendSupMassage.put(chatId, true);
                 sendMassegeToUser(chatId, "Введите сообщение", null, 0);
             }
-            if (callbackQuery.getData().startsWith("User")){
-                sendMassegeToUser(chatId, callbackQuery.getData(), null, 0);
+            if (callbackQuery.getData().startsWith("User")) {
+                String chatIdWaitingUser = callbackQuery.getData().replaceAll("\\D", "");
+                ifAdminWantToSendMassage.put(chatId, Long.valueOf(chatIdWaitingUser));
+                sendMassegeToUser(chatId, "Напишите сообщение", null, 0);
             }
         }
     }
@@ -118,7 +131,7 @@ public class MyBot extends TelegramLongPollingBot {
                     .append(massageDtos.get(i).getMassage()).append("\n");
         }
         sendMassegeToUser(chatId, stringBuilder.toString(), massageDtos.stream().
-                map(suppMsg -> suportMassageMapper.toUserChatInfo(suppMsg).toString()).toList() , massageDtos.size());
+                map(suppMsg -> suportMassageMapper.toUserChatInfo(suppMsg).toString()).toList(), massageDtos.size());
     }
 
     public void saveSuppMassageFromUser(Long chatId, String massage) {

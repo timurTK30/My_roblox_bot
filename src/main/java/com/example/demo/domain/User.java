@@ -24,4 +24,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private UserStatus status;
+    @Column(name = "AdminStatus")
+    private AdminStatus Astatus;
 }
