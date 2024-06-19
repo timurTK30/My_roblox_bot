@@ -9,5 +9,6 @@ public class UserDto {
     private Long chatId;
     private String role;
     private String status;
-    private String Astatus;
+    private String aStatus;
+    private Long tempChatIdForReply;
 }

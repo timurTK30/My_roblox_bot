@@ -12,4 +12,7 @@ public interface UserService {
     UserDto updateByName(UserDto userDto, String name);
     void deleteByName(UserDto userDto);
     UserDto getUserByChatId(Long chatId);
+    UserDto updateStatusByChatId(Long chatId, String status);
+    UserDto updateAdminStatusByChatId(Long chatId, String adminStatus, Long tempChatId);
+
 }

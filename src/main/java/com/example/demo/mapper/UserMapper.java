@@ -16,7 +16,8 @@ public class UserMapper {
         user.setNickname(dto.getNickname());
         user.setRole(Role.USER);
         user.setStatus(UserStatus.DONT_SENT);
-        user.setAstatus(AdminStatus.DONT_WRITE);
+        user.setAStatus(AdminStatus.DONT_WRITE);
+        user.setTempChatIdForReply(0L);
         return user;
     }
 
@@ -26,7 +27,8 @@ public class UserMapper {
         userDto.setChatId(user.getChatId());
         userDto.setRole(user.getRole().name());
         userDto.setStatus(user.getStatus().name());
-        userDto.setAstatus(user.getAstatus().name());
+        userDto.setAStatus(user.getAStatus().name());
+        userDto.setTempChatIdForReply(user.getTempChatIdForReply());
         return userDto;
     }
 }

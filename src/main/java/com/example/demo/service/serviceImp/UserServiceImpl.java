@@ -54,4 +54,26 @@ public class UserServiceImpl implements UserService {
         Optional<User> userByChatId = userRepository.getUserByChatId(chatId);
         return userByChatId.map(user -> userMapper.toDto(user)).orElse(null);
     }
+
+    @Override
+    public UserDto updateStatusByChatId(Long chatId, String status) {
+        UserDto userByChatId = getUserByChatId(chatId);
+        userByChatId.setStatus(status);
+        userRepository.save(userMapper.toEntity(userByChatId));
+        return userByChatId;
+    }
+
+    @Override
+    public UserDto updateAdminStatusByChatId(Long chatId, String adminStatus, Long tempChatId) {
+        UserDto adminByChatId = getUserByChatId(chatId);
+        if (adminByChatId.getRole().equalsIgnoreCase("ADMIN")){
+            adminByChatId.setAStatus(adminStatus);
+            adminByChatId.setTempChatIdForReply(tempChatId);
+            userRepository.save(userMapper.toEntity(adminByChatId));
+            return adminByChatId;
+        }
+        else {
+            throw new RuntimeException("предатель " + adminByChatId);
+        }
+    }
 }

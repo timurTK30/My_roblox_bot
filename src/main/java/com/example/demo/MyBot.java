@@ -36,8 +36,6 @@ public class MyBot extends TelegramLongPollingBot {
     private final SupportMassageServiceImpl supportMassageServiceImpl;
     private final SuportMassageMapper suportMassageMapper;
 
-    private final Map<Long, Long> ifAdminWantToSendMassage = new HashMap<>();
-
     @Autowired
     public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper) {
         this.botConfig = botConfig;
@@ -54,11 +52,8 @@ public class MyBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             String massege = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
-            System.out.println(ifUserWantToSendSupMassage);
-            System.out.println(userService.getUserByChatId(chatId));
             if (massege.startsWith("/start")) {
                 wellcome(chatId);
-                ifUserWantToSendSupMassage.put(chatId, false);
             } else if (massege.startsWith("/help")) {
                 help(chatId);
             } else if (massege.startsWith("/readSuppMsg") && isUserAdmin(chatId)) {
@@ -66,17 +61,18 @@ public class MyBot extends TelegramLongPollingBot {
 
             } else if (!massege.isEmpty()) {
                 try {
-                    if (ifUserWantToSendSupMassage.get(chatId)) {
+                    if (userService.getUserByChatId(chatId).getStatus().equalsIgnoreCase("WAIT_FOR_SENT")) {
 
                         saveSuppMassageFromUser(chatId, massege);
-                        ifUserWantToSendSupMassage.put(chatId, false);
+                        userService.updateStatusByChatId(chatId, "WAIT_FOR_REPLY");
 
-                    } else if (ifAdminWantToSendMassage.get(chatId) != -1) {
-                        sendMassegeToUser(ifAdminWantToSendMassage.get(chatId), massege, null, 0);
-                        ifAdminWantToSendMassage.put(chatId, -1L);
+                    } else if (userService.getUserByChatId(chatId).getRole().equalsIgnoreCase("ADMIN")
+                            && userService.getUserByChatId(chatId).getAStatus().equalsIgnoreCase("WANT_REPLY")) {
+                        sendMassegeToUser(userService.getUserByChatId(chatId).getTempChatIdForReply(), massege, null, 0);
+                        userService.updateAdminStatusByChatId(chatId, "SENT", 0L);
                     }
                 } catch (Exception e) {
-                    System.out.println("Человек не ожидает на отправку сообщений -> " + ifUserWantToSendSupMassage);
+                    System.out.println("Человек не ожидает на отправку сообщений");
                 }
             }
         }
@@ -87,12 +83,12 @@ public class MyBot extends TelegramLongPollingBot {
                 register(chatId, callbackQuery.getFrom().getUserName());
             }
             if (callbackQuery.getData().equalsIgnoreCase("Написать админу")) {
-                ifUserWantToSendSupMassage.put(chatId, true);
+                userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
                 sendMassegeToUser(chatId, "Введите сообщение", null, 0);
             }
             if (callbackQuery.getData().startsWith("User")) {
                 String chatIdWaitingUser = callbackQuery.getData().replaceAll("\\D", "");
-                ifAdminWantToSendMassage.put(chatId, Long.valueOf(chatIdWaitingUser));
+                userService.updateAdminStatusByChatId(chatId, "WANT_REPLY", Long.valueOf(chatIdWaitingUser));
                 sendMassegeToUser(chatId, "Напишите сообщение", null, 0);
             }
         }
