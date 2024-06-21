@@ -27,6 +27,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private UserStatus status;
+    @Enumerated(EnumType.STRING)
     @Column(name = "admin_status")
     private AdminStatus aStatus;
     @Column(name = "temp_chat_id_for_reply")

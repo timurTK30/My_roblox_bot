@@ -24,7 +24,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -71,7 +73,7 @@ public class MyBot extends TelegramLongPollingBot {
                     } else if (userService.getUserByChatId(chatId).getRole().equalsIgnoreCase("ADMIN")
                             && userService.getUserByChatId(chatId).getAStatus().equalsIgnoreCase("WANT_REPLY")) {
                         sendMassegeToUser(userService.getUserByChatId(chatId).getTempChatIdForReply(), massege, null, 0);
-                        userService.updateAdminStatusByChatId(chatId, "SENT", 0L);
+                        System.out.println(userService.updateAdminStatusByChatId(chatId, "SENT", 0L));
                     }
                 } catch (Exception e) {
                     System.out.println("Человек не ожидает на отправку сообщений");
@@ -91,7 +93,7 @@ public class MyBot extends TelegramLongPollingBot {
             if (callbackQuery.getData().startsWith("User")) {
                 String chatIdWaitingUser = callbackQuery.getData().replaceAll("\\D", "");
                 userService.updateAdminStatusByChatId(chatId, "WANT_REPLY", Long.valueOf(chatIdWaitingUser));
-                sendMassegeToUser(chatId, "Напишите сообщение", null, 0);
+                sendMassegeToUser(chatId, "Напишите сообщение (" + chatIdWaitingUser + ")", null, 0);
             }
         }
     }

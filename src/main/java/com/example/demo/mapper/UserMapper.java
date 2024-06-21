@@ -10,19 +10,25 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserMapper {
 
-    public User toEntity(UserDto dto){
+    public User toEntity(UserDto dto) {
         User user = new User();
+        user.setId(dto.getId());
         user.setChatId(dto.getChatId());
         user.setNickname(dto.getNickname());
-        user.setRole(Role.USER);
-        user.setStatus(UserStatus.DONT_SENT);
-        user.setAStatus(AdminStatus.DONT_WRITE);
-        user.setTempChatIdForReply(0L);
+        if (dto.getRole() == null) {
+            user.setRole(Role.USER);
+        }else {
+            user.setRole(Role.valueOf(dto.getRole()));
+        }
+        user.setStatus(UserStatus.valueOf(dto.getStatus()));
+        user.setAStatus(AdminStatus.valueOf(dto.getAStatus()));
+        user.setTempChatIdForReply(dto.getTempChatIdForReply());
         return user;
     }
 
-    public UserDto toDto(User user){
+    public UserDto toDto(User user) {
         UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
         userDto.setNickname(user.getNickname());
         userDto.setChatId(user.getChatId());
         userDto.setRole(user.getRole().name());

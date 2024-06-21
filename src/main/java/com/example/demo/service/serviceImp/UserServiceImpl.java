@@ -58,6 +58,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateStatusByChatId(Long chatId, String status) {
         UserDto userByChatId = getUserByChatId(chatId);
+        if(userByChatId == null){
+            System.out.println("user is null. ChatId = " + chatId);
+            return null;
+        }
         userByChatId.setStatus(status);
         userRepository.save(userMapper.toEntity(userByChatId));
         return userByChatId;
@@ -66,6 +70,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateAdminStatusByChatId(Long chatId, String adminStatus, Long tempChatId) {
         UserDto adminByChatId = getUserByChatId(chatId);
+        System.out.println(adminByChatId);
         if (adminByChatId.getRole().equalsIgnoreCase("ADMIN")){
             adminByChatId.setAStatus(adminStatus);
             adminByChatId.setTempChatIdForReply(tempChatId);
