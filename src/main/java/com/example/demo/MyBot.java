@@ -5,6 +5,7 @@ import com.example.demo.domain.AdminStatus;
 import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import com.example.demo.domain.UserStatus;
+import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
 import com.example.demo.mapper.SuportMassageMapper;
@@ -63,21 +64,30 @@ public class MyBot extends TelegramLongPollingBot {
             } else if (massege.startsWith("/readSuppMsg") && isUserAdmin(chatId)) {
                 readSuppMsg(chatId);
 
+            } else if (massege.startsWith("/game")){
+                readGames(chatId);
+
             } else if (!massege.isEmpty()) {
                 try {
                     if (userService.getUserByChatId(chatId).getStatus().equalsIgnoreCase("WAIT_FOR_SENT")) {
 
-                        saveSuppMassageFromUser(chatId, massege);
-                        userService.updateStatusByChatId(chatId, "WAIT_FOR_REPLY");
+                        if (saveSuppMassageFromUser(chatId, massege)){
+                            sendMassegeToUser(chatId, "Сообщение отправлено", null, 0);
+                            userService.updateStatusByChatId(chatId, "WAIT_FOR_REPLY");
+                        }else {
+                            sendMassegeToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки", null, 0);
+                        }
 
                     } else if (userService.getUserByChatId(chatId).getRole().equalsIgnoreCase("ADMIN")
                             && userService.getUserByChatId(chatId).getAStatus().equalsIgnoreCase("WANT_REPLY")) {
                         sendMassegeToUser(userService.getUserByChatId(chatId).getTempChatIdForReply(), massege, null, 0);
-                        System.out.println(userService.updateAdminStatusByChatId(chatId, "SENT", 0L));
+                        userService.updateAdminStatusByChatId(chatId, "SENT", 0L);
                     }
                 } catch (Exception e) {
                     System.out.println("Человек не ожидает на отправку сообщений");
                 }
+
+
             }
         }
         if (update.hasCallbackQuery()) {
@@ -134,12 +144,39 @@ public class MyBot extends TelegramLongPollingBot {
                 map(suppMsg -> suportMassageMapper.toUserChatInfo(suppMsg).toString()).toList(), massageDtos.size());
     }
 
-    public void saveSuppMassageFromUser(Long chatId, String massage) {
-        SuportMassageDto suportMassageDto = new SuportMassageDto();
-        suportMassageDto.setChatId(chatId);
-        suportMassageDto.setMassage(massage);
-        suportMassageDto.setDate(new Date());
-        supportMassageServiceImpl.save(suportMassageDto);
+    public void readGames(Long chatId){
+        List<GameDto> gameDtos = gameService.readAll();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < gameDtos.size(); i++) {
+            stringBuilder.append(i + 1)
+                    .append(". ")
+                    .append(gameDtos.get(i).getName())
+                    .append("\n")
+                    .append(gameDtos.get(i).getDescription())
+                    .append("\n")
+                    .append("Когдато здесь будет... ФОТО!!!")
+                    .append("\n")
+                    .append(gameDtos.get(i).getAmountOfPlayers())
+                    .append("\n")
+                    .append(gameDtos.get(i).getCreator())
+                    .append("\n")
+                    .append(gameDtos.get(i).getCreateDate());
+
+        }
+        sendMassegeToUser(chatId, stringBuilder.toString(), null, 0);
+    }
+
+    public boolean saveSuppMassageFromUser(Long chatId, String massage) {
+        try {
+            SuportMassageDto suportMassageDto = new SuportMassageDto();
+            suportMassageDto.setChatId(chatId);
+            suportMassageDto.setMassage(massage);
+            suportMassageDto.setDate(new Date());
+            supportMassageServiceImpl.save(suportMassageDto);
+            return true;
+        }catch (Exception e){
+            return false;
+        }
     }
 
     public void register(Long chatId, String nickname) {

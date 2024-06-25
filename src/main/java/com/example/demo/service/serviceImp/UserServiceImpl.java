@@ -8,7 +8,6 @@ import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,7 +57,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateStatusByChatId(Long chatId, String status) {
         UserDto userByChatId = getUserByChatId(chatId);
-        if(userByChatId == null){
+        if (userByChatId == null) {
             System.out.println("user is null. ChatId = " + chatId);
             return null;
         }
@@ -70,14 +69,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateAdminStatusByChatId(Long chatId, String adminStatus, Long tempChatId) {
         UserDto adminByChatId = getUserByChatId(chatId);
-        System.out.println(adminByChatId);
-        if (adminByChatId.getRole().equalsIgnoreCase("ADMIN")){
+        if (adminByChatId.getRole().equalsIgnoreCase("ADMIN")) {
             adminByChatId.setAStatus(adminStatus);
             adminByChatId.setTempChatIdForReply(tempChatId);
             userRepository.save(userMapper.toEntity(adminByChatId));
             return adminByChatId;
-        }
-        else {
+        } else {
             throw new RuntimeException("предатель " + adminByChatId);
         }
     }
