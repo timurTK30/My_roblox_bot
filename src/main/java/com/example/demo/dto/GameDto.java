@@ -10,8 +10,10 @@ public class GameDto {
 
     private String name;
     private String description;
-    private int amountOfPlayers;
-    private byte[] photo;
+    private int price;
+    private String gameGenre;
+    private int active;
+    private String photo;
     private Creator creator;
     private Date createDate;
 }

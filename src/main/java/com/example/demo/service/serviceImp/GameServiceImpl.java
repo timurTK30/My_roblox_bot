@@ -1,6 +1,7 @@
 package com.example.demo.service.serviceImp;
 
 import com.example.demo.domain.Game;
+import com.example.demo.domain.GameGenre;
 import com.example.demo.domain.User;
 import com.example.demo.dto.GameDto;
 import com.example.demo.mapper.GameMapper;
@@ -46,5 +47,11 @@ public class GameServiceImpl implements GameService {
     public void deleteByName(GameDto gameDto) {
         Game game = gameMapper.toEntity(gameDto);
         gameRepository.delete(game);
+    }
+
+    @Override
+    public List<GameDto> getGameByGenre(GameGenre genre) {
+        List<Game> gamesByGenre = gameRepository.getGameByGameGenre(genre);
+        return gamesByGenre.stream().map(gameMapper::toDto).toList();
     }
 }

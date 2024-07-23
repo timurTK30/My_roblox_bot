@@ -1,6 +1,7 @@
 package com.example.demo.mapper;
 
 import com.example.demo.domain.Game;
+import com.example.demo.domain.GameGenre;
 import com.example.demo.dto.GameDto;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +14,9 @@ public class GameMapper {
         game.setCreator(dto.getCreator());
         game.setPhoto(dto.getPhoto());
         game.setDescription(dto.getDescription());
-        game.setAmountOfPlayers(dto.getAmountOfPlayers());
+        game.setPrice(dto.getPrice());
+        game.setGameGenre(GameGenre.valueOf(dto.getGameGenre()));
+        game.setActive(dto.getActive());
         game.setCreateDate(dto.getCreateDate());
         return game;
     }
@@ -23,9 +26,11 @@ public class GameMapper {
         gameDto.setName(game.getName());
         gameDto.setPhoto(game.getPhoto());
         gameDto.setDescription(game.getDescription());
+        gameDto.setPrice(game.getPrice());
+        gameDto.setGameGenre(game.getGameGenre().name());
         gameDto.setCreateDate(game.getCreateDate());
         gameDto.setCreator(game.getCreator());
-        gameDto.setAmountOfPlayers(game.getAmountOfPlayers());
+        gameDto.setActive(game.getActive());
         return gameDto;
     }
 }

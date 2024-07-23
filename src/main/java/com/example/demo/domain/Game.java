@@ -22,15 +22,19 @@ public class Game {
     private Long id;
     @Column(name = "name")
     private String name;
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "LONGTEXT")
     private String description;
-    @Column(name = "amount_of_players")
-    private int amountOfPlayers;
+    @Column(name = "price")
+    private int price;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "game_genre")
+    private GameGenre gameGenre;
+    @Column(name = "active")
+    private int active;
     @Column(name = "create_data")
     private Date createDate;
-    @Lob
     @Column(name = "photo")
-    private byte[] photo;
+    private String photo;
     @ManyToOne
     private Creator creator;
 }

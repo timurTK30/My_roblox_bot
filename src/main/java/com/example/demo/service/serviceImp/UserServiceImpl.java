@@ -1,5 +1,6 @@
 package com.example.demo.service.serviceImp;
 
+import com.example.demo.domain.AdminStatus;
 import com.example.demo.domain.User;
 import com.example.demo.dto.UserDto;
 import com.example.demo.mapper.UserMapper;
@@ -36,10 +37,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto updateByName(UserDto userDto, String name) {
-        User user = userMapper.toEntity(userDto);
-        user.setNickname(name);
-        return userMapper.toDto(user);
+    public UserDto updateByChatId(UserDto userDto, Long chatId) {
+        UserDto userByChatId = getUserByChatId(chatId);
+        userByChatId.setNickname(userDto.getNickname());
+        userByChatId.setId(userDto.getId());
+        userByChatId.setStatus(userDto.getStatus());
+        userByChatId.setChatId(userDto.getChatId());
+        userByChatId.setAStatus(userDto.getAStatus());
+        userByChatId.setTempChatIdForReply(userDto.getTempChatIdForReply());
+        userByChatId.setRole(userDto.getRole());
+        return userByChatId;
     }
 
     @Override
@@ -67,15 +74,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto updateAdminStatusByChatId(Long chatId, String adminStatus, Long tempChatId) {
-        UserDto adminByChatId = getUserByChatId(chatId);
-        if (adminByChatId.getRole().equalsIgnoreCase("ADMIN")) {
-            adminByChatId.setAStatus(adminStatus);
-            adminByChatId.setTempChatIdForReply(tempChatId);
-            userRepository.save(userMapper.toEntity(adminByChatId));
-            return adminByChatId;
-        } else {
-            throw new RuntimeException("предатель " + adminByChatId);
-        }
+    public UserDto updateAdminStatusByChatId(Long chatId, AdminStatus adminStatus, Long tempChatId) {
+        UserDto userByChatId = getUserByChatId(chatId);
+        userByChatId.setAStatus(adminStatus.name());
+        userByChatId.setTempChatIdForReply(tempChatId);
+        userRepository.save(userMapper.toEntity(userByChatId));
+        return userByChatId;
     }
+
+
 }
