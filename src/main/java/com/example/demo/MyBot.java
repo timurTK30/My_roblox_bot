@@ -70,7 +70,7 @@ public class MyBot extends TelegramLongPollingBot {
                 GameGenre[] gameGenres = GameGenre.values();
                 List<String> buttons = Arrays.stream(gameGenres).map(Enum::toString).collect(Collectors.toList());
                 buttons.add("ALL");
-                sendMassegeToUser(chatId, "Вибирите жанр", buttons, gameGenres.length / 2);
+                sendMassegeToUser(chatId, "Вибирите жанр", buttons, buttons.size() / 2);
 
             } else if (!massege.isEmpty()) {
                 try {
