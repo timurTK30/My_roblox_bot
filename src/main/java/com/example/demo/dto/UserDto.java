@@ -1,5 +1,6 @@
 package com.example.demo.dto;
 
+import com.example.demo.domain.Game;
 import lombok.Data;
 
 @Data
@@ -12,4 +13,5 @@ public class UserDto {
     private String status;
     private String aStatus;
     private Long tempChatIdForReply;
+    private GameDto gameDto;
 }

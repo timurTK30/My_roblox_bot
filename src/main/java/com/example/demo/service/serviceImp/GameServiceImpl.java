@@ -54,4 +54,9 @@ public class GameServiceImpl implements GameService {
         List<Game> gamesByGenre = gameRepository.getGameByGameGenre(genre);
         return gamesByGenre.stream().map(gameMapper::toDto).toList();
     }
+
+    @Override
+    public GameDto getGameByName(String gameName) {
+        return gameMapper.toDto(gameRepository.getGameByName(gameName).get());
+    }
 }

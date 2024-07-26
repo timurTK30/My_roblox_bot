@@ -31,6 +31,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.example.demo.domain.Commands.*;
+
 @Component
 @Slf4j
 public class MyBot extends TelegramLongPollingBot {
@@ -59,14 +61,14 @@ public class MyBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             String massege = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
-            if (massege.startsWith("/start")) {
+            if (massege.startsWith(START.getCmd())) {
                 wellcome(chatId);
-            } else if (massege.startsWith("/help")) {
+            } else if (massege.startsWith(HELP.getCmd())) {
                 help(chatId);
-            } else if (massege.startsWith("/readSuppMsg") && isUserAdmin(chatId)) {
+            } else if (massege.startsWith(READ_SUPP_MSG.getCmd()) && isUserAdmin(chatId)) {
                 readSuppMsg(chatId);
 
-            } else if (massege.startsWith("/game")) {
+            } else if (massege.startsWith(GAME.getCmd())) {
                 GameGenre[] gameGenres = GameGenre.values();
                 List<String> buttons = Arrays.stream(gameGenres).map(Enum::toString).collect(Collectors.toList());
                 buttons.add("ALL");
@@ -122,6 +124,14 @@ public class MyBot extends TelegramLongPollingBot {
                         "\n" +
                         supportMassageServiceImpl.getMassageByChatId(chatId).get().getMassage();
                 sendMassegeToUser(1622241974L, stringBuilder, null, 0);
+            }
+
+            if (callbackQuery.getData().startsWith("Найти друга")){
+                String gameName = callbackQuery.getData().replaceAll("[^A-Za-z ]", "").trim();
+                GameDto gameDto = gameService.getGameByName(gameName);
+                UserDto userDto = userService.getUserByChatId(chatId);
+                userDto.setGame(ga);
+
             }
 
             if (callbackQuery.getData().equalsIgnoreCase("ALL")) {
@@ -231,7 +241,7 @@ public class MyBot extends TelegramLongPollingBot {
                     .append("<b>").append("\uD83D\uDDD3 Дата создания:").append("</b>")
                     .append(gameByGenre.get(i).getCreateDate());
 
-            sendPhotoToUser(chatId, gameByGenre.get(i).getPhoto(), stringBuilder.toString());
+            sendPhotoToUser(chatId, gameByGenre.get(i).getPhoto(), stringBuilder.toString(), List.of("Найти друга для игры: " + gameByGenre.get(i).getName()), 1);
             stringBuilder.setLength(0);
         }
     }
@@ -275,7 +285,7 @@ public class MyBot extends TelegramLongPollingBot {
         return userByChatId != null;
     }
 
-    public void sendPhotoToUser(Long chatId, String url, String massage){
+    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows){
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
 
@@ -283,6 +293,10 @@ public class MyBot extends TelegramLongPollingBot {
         sendPhoto.setPhoto(inputFile);
         sendPhoto.setCaption(massage);
         sendPhoto.setParseMode("HTML");
+        if (buttonText != null) {
+            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
+            sendPhoto.setReplyMarkup(inlineKeyboardMarkup);
+        }
         try {
             execute(sendPhoto);
         } catch (TelegramApiException e) {

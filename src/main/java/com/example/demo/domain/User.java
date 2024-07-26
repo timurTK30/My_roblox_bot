@@ -32,4 +32,7 @@ public class User {
     private AdminStatus aStatus;
     @Column(name = "temp_chat_id_for_reply")
     private Long tempChatIdForReply;
+    @ManyToOne
+    private Game game;
+
 }

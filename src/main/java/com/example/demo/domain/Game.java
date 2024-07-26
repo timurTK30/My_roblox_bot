@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -37,4 +38,6 @@ public class Game {
     private String photo;
     @ManyToOne
     private Creator creator;
+    @OneToMany
+    private List<User> user;
 }

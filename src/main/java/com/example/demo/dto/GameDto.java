@@ -1,6 +1,7 @@
 package com.example.demo.dto;
 
 import com.example.demo.domain.Creator;
+import com.example.demo.domain.Game;
 import lombok.Data;
 
 import java.util.Date;

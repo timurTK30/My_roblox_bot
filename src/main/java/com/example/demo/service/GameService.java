@@ -13,4 +13,5 @@ public interface GameService {
     GameDto updateByName(GameDto gameDto, String name);
     void deleteByName(GameDto gameDto);
     List<GameDto> getGameByGenre(GameGenre genre);
+    GameDto getGameByName(String gameName);
 }

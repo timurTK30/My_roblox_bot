@@ -23,6 +23,7 @@ public class UserMapper {
         user.setStatus(UserStatus.valueOf(dto.getStatus()));
         user.setAStatus(AdminStatus.valueOf(dto.getAStatus()));
         user.setTempChatIdForReply(dto.getTempChatIdForReply());
+        user.setGame(dto.getGameDto());
         return user;
     }
 
@@ -35,6 +36,7 @@ public class UserMapper {
         userDto.setStatus(user.getStatus().name());
         userDto.setAStatus(user.getAStatus().name());
         userDto.setTempChatIdForReply(user.getTempChatIdForReply());
+        userDto.setGameDto(user.getGame());
         return userDto;
     }
 }
