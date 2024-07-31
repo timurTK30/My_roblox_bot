@@ -13,5 +13,5 @@ public class UserDto {
     private String status;
     private String aStatus;
     private Long tempChatIdForReply;
-    private GameDto gameDto;
+    private Game game;
 }

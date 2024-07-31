@@ -5,6 +5,7 @@ import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
+import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.CreatorService;
@@ -25,10 +26,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.example.demo.domain.Commands.*;
@@ -44,9 +42,10 @@ public class MyBot extends TelegramLongPollingBot {
     private final UserMapper userMapper;
     private final SupportMassageServiceImpl supportMassageServiceImpl;
     private final SuportMassageMapper suportMassageMapper;
+    private final GameMapper gameMapper;
 
     @Autowired
-    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper) {
+    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper) {
         this.botConfig = botConfig;
         this.creatorService = creatorService;
         this.gameService = gameService;
@@ -54,6 +53,7 @@ public class MyBot extends TelegramLongPollingBot {
         this.userMapper = userMapper;
         this.supportMassageServiceImpl = supportMassageServiceImpl;
         this.suportMassageMapper = suportMassageMapper;
+        this.gameMapper = gameMapper;
     }
 
     @Override
@@ -104,8 +104,13 @@ public class MyBot extends TelegramLongPollingBot {
                 register(chatId, callbackQuery);
             }
             if (callbackQuery.getData().equalsIgnoreCase("Написать админу")) {
-                userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
-                sendMassegeToUser(chatId, "Введите сообщение", null, 0);
+                if (!isSuppMsgExistByUserChatId(chatId)) {
+                    userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
+                    sendMassegeToUser(chatId, "Введите сообщение", null, 0);
+                } else {
+                    sendMassegeToUser(chatId, "У вас уже есть сообщение: " + supportMassageServiceImpl.getMassageByChatId(chatId), List.of("Редоктировать сообщение", "Оставить"), 1);
+                }
+
             }
             if (callbackQuery.getData().startsWith("User")) {
                 String chatIdWaitingUser = callbackQuery.getData().replaceAll("\\D", "");
@@ -126,12 +131,15 @@ public class MyBot extends TelegramLongPollingBot {
                 sendMassegeToUser(1622241974L, stringBuilder, null, 0);
             }
 
-            if (callbackQuery.getData().startsWith("Найти друга")){
+            if (callbackQuery.getData().startsWith("Найти друга")) {
                 String gameName = callbackQuery.getData().replaceAll("[^A-Za-z ]", "").trim();
+                System.out.println(gameName);
                 GameDto gameDto = gameService.getGameByName(gameName);
                 UserDto userDto = userService.getUserByChatId(chatId);
-                userDto.setGame(ga);
-
+                userDto.setGame(gameMapper.toEntity(gameDto));
+                userService.updateByChatId(userDto, chatId);
+                System.out.println(gameDto);
+                System.out.println(userDto);
             }
 
             if (callbackQuery.getData().equalsIgnoreCase("ALL")) {
@@ -181,6 +189,11 @@ public class MyBot extends TelegramLongPollingBot {
         return userByChatId.getRole().equalsIgnoreCase("ADMIN");
     }
 
+    public boolean isSuppMsgExistByUserChatId(Long chatId) {
+        Optional<SuportMassageDto> massageByChatId = supportMassageServiceImpl.getMassageByChatId(chatId);
+        return massageByChatId.isPresent();
+    }
+
     public void readSuppMsg(Long chatId) {
         List<SuportMassageDto> massageDtos = supportMassageServiceImpl.readAll();
         StringBuilder stringBuilder = new StringBuilder();
@@ -208,7 +221,7 @@ public class MyBot extends TelegramLongPollingBot {
         StringBuilder stringBuilder = new StringBuilder();
         String tempCreatorGroup = "пусто";
         for (int i = 0; i < gameByGenre.size(); i++) {
-            if (gameByGenre.get(i).getCreator() != null){
+            if (gameByGenre.get(i).getCreator() != null) {
                 tempCreatorGroup = gameByGenre.get(i).getCreator().getNameOfGroup();
             }
             stringBuilder.append(i + 1)
@@ -285,7 +298,7 @@ public class MyBot extends TelegramLongPollingBot {
         return userByChatId != null;
     }
 
-    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows){
+    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
 

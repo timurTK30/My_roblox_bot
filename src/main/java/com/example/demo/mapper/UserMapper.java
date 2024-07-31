@@ -5,6 +5,7 @@ import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import com.example.demo.domain.UserStatus;
 import com.example.demo.dto.UserDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -23,7 +24,7 @@ public class UserMapper {
         user.setStatus(UserStatus.valueOf(dto.getStatus()));
         user.setAStatus(AdminStatus.valueOf(dto.getAStatus()));
         user.setTempChatIdForReply(dto.getTempChatIdForReply());
-        user.setGame(dto.getGameDto());
+        user.setGame(dto.getGame());
         return user;
     }
 
@@ -36,7 +37,7 @@ public class UserMapper {
         userDto.setStatus(user.getStatus().name());
         userDto.setAStatus(user.getAStatus().name());
         userDto.setTempChatIdForReply(user.getTempChatIdForReply());
-        userDto.setGameDto(user.getGame());
+        userDto.setGame(user.getGame());
         return userDto;
     }
 }

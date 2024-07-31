@@ -9,5 +9,5 @@ import java.util.Optional;
 
 
 public interface SupportMassageRepository extends JpaRepository<SupportMassage, Long> {
-    SupportMassage getMassageByChatId(Long chatId);
+    Optional<SupportMassage> getMassageByChatId(Long chatId);
 }

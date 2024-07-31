@@ -33,6 +33,7 @@ public class User {
     @Column(name = "temp_chat_id_for_reply")
     private Long tempChatIdForReply;
     @ManyToOne
+    @JoinColumn(name = "game_id")
     private Game game;
 
 }

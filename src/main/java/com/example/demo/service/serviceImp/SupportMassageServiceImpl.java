@@ -57,8 +57,10 @@ public class SupportMassageServiceImpl implements SupportMassageService {
 
     @Override
     public Optional<SuportMassageDto> getMassageByChatId(Long chatId) {
-        SupportMassage massageByChatId = repository.getMassageByChatId(chatId);
-        Optional<SuportMassageDto> suportMassageDto = Optional.ofNullable(mapper.toDto(massageByChatId));
-        return suportMassageDto;
+        Optional<SupportMassage> suportMassage = repository.getMassageByChatId(chatId);
+        if (suportMassage.isPresent()){
+            return suportMassage.map(mapper::toDto);
+        }
+        return Optional.empty();
     }
 }

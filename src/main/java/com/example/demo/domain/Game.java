@@ -38,6 +38,6 @@ public class Game {
     private String photo;
     @ManyToOne
     private Creator creator;
-    @OneToMany
+    @OneToMany(mappedBy = "game")
     private List<User> user;
 }
