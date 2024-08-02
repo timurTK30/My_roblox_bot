@@ -1,6 +1,7 @@
 package com.example.demo.service.serviceImp;
 
 import com.example.demo.domain.AdminStatus;
+import com.example.demo.domain.Game;
 import com.example.demo.domain.User;
 import com.example.demo.dto.UserDto;
 import com.example.demo.mapper.UserMapper;
@@ -8,7 +9,9 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +42,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateByChatId(UserDto userDto, Long chatId) {
         UserDto userByChatId = getUserByChatId(chatId);
+        Game game = userMapper.toEntity(userDto).getGame();
+        if (game != null){
+            userByChatId.setGame(userDto.getGame());
+        }
         userByChatId.setNickname(userDto.getNickname());
         userByChatId.setId(userDto.getId());
         userByChatId.setStatus(userDto.getStatus());
@@ -46,7 +53,6 @@ public class UserServiceImpl implements UserService {
         userByChatId.setAStatus(userDto.getAStatus());
         userByChatId.setTempChatIdForReply(userDto.getTempChatIdForReply());
         userByChatId.setRole(userDto.getRole());
-        userByChatId.setGame(userDto.getGame());
         userRepository.save(userMapper.toEntity(userByChatId));
         return userByChatId;
     }
@@ -84,5 +90,10 @@ public class UserServiceImpl implements UserService {
         return userByChatId;
     }
 
-
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDto> getUserByGameId(Long gameId) {
+        List<User> usersByGameId = userRepository.getUserByGameId(gameId);
+        return usersByGameId.stream().map(userMapper::toDto).toList();
+    }
 }

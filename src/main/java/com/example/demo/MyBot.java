@@ -109,7 +109,7 @@ public class MyBot extends TelegramLongPollingBot {
                     sendMassegeToUser(chatId, "Введите сообщение", null, 0);
                 } else {
                     sendMassegeToUser(chatId, "У вас уже есть сообщение: " + supportMassageServiceImpl.getMassageByChatId(chatId)
-                                    .get().getMassage() + " дата отправки: " +
+                                    .get().getMassage() + "\nдата отправки: " +
                                     supportMassageServiceImpl.getMassageByChatId(chatId)
                                             .get().getDate(),
                             List.of("Редоктировать сообщение", "Оставить"), 1);
@@ -135,15 +135,19 @@ public class MyBot extends TelegramLongPollingBot {
                 sendMassegeToUser(1622241974L, stringBuilder, null, 0);
             }
 
-            if (callbackQuery.getData().startsWith("Найти друга")) {
+            if (callbackQuery.getData().startsWith("Оставить заяву")) {
                 String gameName = callbackQuery.getData().replaceAll("[^A-Za-z ]", "").trim();
-                System.out.println(gameName);
                 GameDto gameDto = gameService.getGameByName(gameName);
                 UserDto userDto = userService.getUserByChatId(chatId);
                 userDto.setGame(gameMapper.toEntity(gameDto));
                 userService.updateByChatId(userDto, chatId);
-                System.out.println(gameDto);
-                System.out.println(userDto);
+                return;
+            }
+
+            if (callbackQuery.getData().startsWith("Показать друзей")){
+                String gameName = callbackQuery.getData().replaceAll("[^A-Za-z ]", "").trim();
+                GameDto gameByName = gameService.getGameByName(gameName);
+                sendMassegeToUser(chatId, "@" + userService.getUserByGameId(gameByName.getId()).get(0).getNickname(), null, 0);
             }
 
             if (callbackQuery.getData().startsWith("Оставить")){
@@ -262,7 +266,7 @@ public class MyBot extends TelegramLongPollingBot {
                     .append("<b>").append("\uD83D\uDDD3 Дата создания:").append("</b>")
                     .append(gameByGenre.get(i).getCreateDate());
 
-            sendPhotoToUser(chatId, gameByGenre.get(i).getPhoto(), stringBuilder.toString(), List.of("Найти друга для игры: " + gameByGenre.get(i).getName()), 1);
+            sendPhotoToUser(chatId, gameByGenre.get(i).getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameByGenre.get(i).getName() ,"Показать друзей для игры: " + gameByGenre.get(i).getName()), 1);
             stringBuilder.setLength(0);
         }
     }

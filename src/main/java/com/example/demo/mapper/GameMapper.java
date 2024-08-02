@@ -10,6 +10,7 @@ public class GameMapper {
 
     public Game toEntity(GameDto dto){
         Game game = new Game();
+        game.setId(dto.getId());
         game.setName(dto.getName());
         game.setCreator(dto.getCreator());
         game.setPhoto(dto.getPhoto());
@@ -18,11 +19,13 @@ public class GameMapper {
         game.setGameGenre(GameGenre.valueOf(dto.getGameGenre()));
         game.setActive(dto.getActive());
         game.setCreateDate(dto.getCreateDate());
+        game.setUser(dto.getUsers());
         return game;
     }
 
     public GameDto toDto(Game game){
         GameDto gameDto = new GameDto();
+        gameDto.setId(game.getId());
         gameDto.setName(game.getName());
         gameDto.setPhoto(game.getPhoto());
         gameDto.setDescription(game.getDescription());
@@ -31,6 +34,7 @@ public class GameMapper {
         gameDto.setCreateDate(game.getCreateDate());
         gameDto.setCreator(game.getCreator());
         gameDto.setActive(game.getActive());
+        gameDto.setUsers(game.getUser());
         return gameDto;
     }
 }
