@@ -108,7 +108,11 @@ public class MyBot extends TelegramLongPollingBot {
                     userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
                     sendMassegeToUser(chatId, "Введите сообщение", null, 0);
                 } else {
-                    sendMassegeToUser(chatId, "У вас уже есть сообщение: " + supportMassageServiceImpl.getMassageByChatId(chatId), List.of("Редоктировать сообщение", "Оставить"), 1);
+                    sendMassegeToUser(chatId, "У вас уже есть сообщение: " + supportMassageServiceImpl.getMassageByChatId(chatId)
+                                    .get().getMassage() + " дата отправки: " +
+                                    supportMassageServiceImpl.getMassageByChatId(chatId)
+                                            .get().getDate(),
+                            List.of("Редоктировать сообщение", "Оставить"), 1);
                 }
 
             }
@@ -140,6 +144,10 @@ public class MyBot extends TelegramLongPollingBot {
                 userService.updateByChatId(userDto, chatId);
                 System.out.println(gameDto);
                 System.out.println(userDto);
+            }
+
+            if (callbackQuery.getData().startsWith("Оставить")){
+                sendMassegeToUser(chatId, "Рано или поздно но кто то ответит на вашу проблему", null,0);
             }
 
             if (callbackQuery.getData().equalsIgnoreCase("ALL")) {
