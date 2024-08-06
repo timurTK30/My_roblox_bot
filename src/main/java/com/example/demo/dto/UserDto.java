@@ -14,4 +14,17 @@ public class UserDto {
     private String aStatus;
     private Long tempChatIdForReply;
     private Game game;
+
+    @Override
+    public String toString() {
+        return "UserDto{" +
+                "id=" + id +
+                ", nickname='" + nickname + '\'' +
+                ", chatId=" + chatId +
+                ", role='" + role + '\'' +
+                ", status='" + status + '\'' +
+                ", aStatus='" + aStatus + '\'' +
+                ", tempChatIdForReply=" + tempChatIdForReply +
+                '}';
+    }
 }

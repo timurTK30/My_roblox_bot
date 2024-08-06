@@ -144,14 +144,14 @@ public class MyBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (callbackQuery.getData().startsWith("Показать друзей")){
+            if (callbackQuery.getData().startsWith("Показать друзей")) {
                 String gameName = callbackQuery.getData().replaceAll("[^A-Za-z ]", "").trim();
                 GameDto gameByName = gameService.getGameByName(gameName);
-                sendMassegeToUser(chatId, "@" + userService.getUserByGameId(gameByName.getId()).get(0).getNickname(), null, 0);
+                sendMassegeToUser(chatId, getFriendByGameId(gameByName.getId(), chatId), null, 0);
             }
 
-            if (callbackQuery.getData().startsWith("Оставить")){
-                sendMassegeToUser(chatId, "Рано или поздно но кто то ответит на вашу проблему", null,0);
+            if (callbackQuery.getData().startsWith("Оставить")) {
+                sendMassegeToUser(chatId, "Рано или поздно но кто то ответит на вашу проблему", null, 0);
             }
 
             if (callbackQuery.getData().equalsIgnoreCase("ALL")) {
@@ -190,6 +190,20 @@ public class MyBot extends TelegramLongPollingBot {
                 "Так что не стесняйся, спрашивай обо всём, что тебе интересно!";
         sendMassegeToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), 1);
 
+    }
+
+    public String getFriendByGameId(Long gameId, Long chatId) {
+        List<UserDto> userByGameId = userService.getUserByGameId(gameId).stream()
+                .filter(u -> !u.getChatId().equals(chatId)).toList();
+        StringBuilder stringBuilder = new StringBuilder();
+        userByGameId
+                .forEach(
+                        user -> {
+                            stringBuilder.append("@").append(user.getNickname()).append("\n");
+                        }
+                );
+
+        return stringBuilder.toString();
     }
 
     public void help(Long chatId) {
@@ -266,7 +280,7 @@ public class MyBot extends TelegramLongPollingBot {
                     .append("<b>").append("\uD83D\uDDD3 Дата создания:").append("</b>")
                     .append(gameByGenre.get(i).getCreateDate());
 
-            sendPhotoToUser(chatId, gameByGenre.get(i).getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameByGenre.get(i).getName() ,"Показать друзей для игры: " + gameByGenre.get(i).getName()), 1);
+            sendPhotoToUser(chatId, gameByGenre.get(i).getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameByGenre.get(i).getName(), "Показать друзей для игры: " + gameByGenre.get(i).getName()), 1);
             stringBuilder.setLength(0);
         }
     }

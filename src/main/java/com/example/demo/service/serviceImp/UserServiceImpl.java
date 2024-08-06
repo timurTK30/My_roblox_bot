@@ -91,7 +91,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<UserDto> getUserByGameId(Long gameId) {
         List<User> usersByGameId = userRepository.getUserByGameId(gameId);
         return usersByGameId.stream().map(userMapper::toDto).toList();
