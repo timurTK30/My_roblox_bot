@@ -20,6 +20,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -30,6 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.example.demo.domain.Commands.*;
+import static com.example.demo.domain.UserStatus.WANT_UPDATE_MSG;
 
 @Component
 @Slf4j
@@ -59,123 +61,161 @@ public class MyBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
-            String massege = update.getMessage().getText();
-            Long chatId = update.getMessage().getChatId();
-            if (massege.startsWith(START.getCmd())) {
-                wellcome(chatId);
-            } else if (massege.startsWith(HELP.getCmd())) {
-                help(chatId);
-            } else if (massege.startsWith(READ_SUPP_MSG.getCmd()) && isUserAdmin(chatId)) {
-                readSuppMsg(chatId);
+            handleIncomingMessage(update.getMessage());
+        }
 
-            } else if (massege.startsWith(GAME.getCmd())) {
-                GameGenre[] gameGenres = GameGenre.values();
-                List<String> buttons = Arrays.stream(gameGenres).map(Enum::toString).collect(Collectors.toList());
-                buttons.add("ALL");
-                sendMassegeToUser(chatId, "Вибирите жанр", buttons, buttons.size() / 2);
+        if (update.hasCallbackQuery()) {
+            handleCallbackQuery(update.getCallbackQuery());
+        }
+    }
 
-            } else if (!massege.isEmpty()) {
-                try {
-                    if (userService.getUserByChatId(chatId).getStatus().equalsIgnoreCase("WAIT_FOR_SENT")) {
+    private void handleIncomingMessage(Message message) {
+        String text = message.getText();
+        Long chatId = message.getChatId();
 
-                        if (saveSuppMassageFromUser(chatId, massege)) {
-                            sendMassegeToUser(chatId, "Сообщение отправлено", null, 0);
-                            userService.updateStatusByChatId(chatId, "WAIT_FOR_REPLY");
-                        } else {
-                            sendMassegeToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки", null, 0);
-                        }
+        if (text.startsWith(START.getCmd())) {
+            wellcome(chatId);
+        } else if (text.startsWith(HELP.getCmd())) {
+            help(chatId);
+        } else if (text.startsWith(READ_SUPP_MSG.getCmd()) && isUserAdmin(chatId)) {
+            readSuppMsg(chatId);
+        } else if (text.startsWith(GAME.getCmd())) {
+            handleGameCommand(chatId);
+        } else {
+            handleUserMessage(chatId, text);
+        }
+    }
 
-                    } else if (userService.getUserByChatId(chatId).getRole().equalsIgnoreCase("ADMIN")
-                            && userService.getUserByChatId(chatId).getAStatus().equalsIgnoreCase("WANT_REPLY")) {
-                        sendMassegeToUser(userService.getUserByChatId(chatId).getTempChatIdForReply(), massege, List.of("😀", "😡"), 1);
-                        userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
-                    }
-                } catch (Exception e) {
-                    System.out.println("Человек не ожидает на отправку сообщений");
+    private void handleCallbackQuery(CallbackQuery callbackQuery) {
+        Long chatId = callbackQuery.getMessage().getChatId();
+        String data = callbackQuery.getData();
+
+        switch (data) {
+            case "Зарегистрировать в системе\uD83D\uDC7E":
+                register(chatId, callbackQuery);
+                break;
+            case "Написать админу":
+                handleAdminMessage(chatId);
+                break;
+            case "😀":
+                handlePositiveFeedback(chatId);
+                break;
+            case "😡":
+                handleNegativeFeedback(chatId, callbackQuery);
+                break;
+            case "ALL":
+                readGames(chatId, null);
+                break;
+            case "HORROR":
+            case "ADVENTURE":
+            case "SHOOTER":
+            case "TYCOON":
+            case "SURVIVAL":
+                readGames(chatId, GameGenre.valueOf(data));
+                break;
+            default:
+                if (data.startsWith("User")) {
+                    handleUserReplyRequest(chatId, data);
+                } else if (data.startsWith("Оставить заяву")) {
+                    handleGameApplication(chatId, data);
+                } else if (data.startsWith("Показать друзей")) {
+                    showFriends(chatId, data);
+                } else if (data.startsWith("Оставить")) {
+                    sendMassegeToUser(chatId, "Рано или поздно но кто-то ответит на вашу проблему", null, 0);
+                } else if (data.startsWith("Редактировать сообщение")) {
+                    handleEditSuppMsg(chatId);
                 }
+                break;
+        }
+    }
+
+    private void handleGameCommand(Long chatId) {
+        GameGenre[] gameGenres = GameGenre.values();
+        List<String> buttons = Arrays.stream(gameGenres)
+                .map(Enum::toString)
+                .collect(Collectors.toList());
+        buttons.add("ALL");
+        sendMassegeToUser(chatId, "Выберите жанр", buttons, buttons.size() / 2);
+    }
+
+    private void handleEditSuppMsg(Long chatId) {
+        userService.updateStatusByChatId(chatId, "WANT_UPDATE_MSG");
+        sendMassegeToUser(chatId, "Напишите сообщение", null, 0);
+    }
+
+    private void handleUserMessage(Long chatId, String message) {
+        try {
+            UserDto user = userService.getUserByChatId(chatId);
+
+            if (user.getStatus().equalsIgnoreCase("WAIT_FOR_SENT")) {
+                if (saveSuppMassageFromUser(chatId, message)) {
+                    sendMassegeToUser(chatId, "Сообщение отправлено", null, 0);
+                    userService.updateStatusByChatId(chatId, "WAIT_FOR_REPLY");
+                } else {
+                    sendMassegeToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки", null, 0);
+                }
+            } else if (user.getRole().equalsIgnoreCase("ADMIN") && user.getAStatus().equalsIgnoreCase("WANT_REPLY")) {
+                sendMassegeToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
+                userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
+            } else if (user.getStatus().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
+
+            }
+        } catch (Exception e) {
+            System.out.println("Человек не ожидает на отправку сообщений");
+        }
+    }
 
 
+    private void handleAdminMessage(Long chatId) {
+        if (!isSuppMsgExistByUserChatId(chatId)) {
+            userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
+            sendMassegeToUser(chatId, "Введите сообщение", null, 0);
+        } else {
+            SuportMassageDto supportMessage = supportMassageServiceImpl.getMassageByChatId(chatId).orElse(null);
+            if (supportMessage != null) {
+                sendMassegeToUser(chatId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
+                        List.of("Редактировать сообщение", "Оставить"), 1);
             }
         }
-        if (update.hasCallbackQuery()) {
-            CallbackQuery callbackQuery = update.getCallbackQuery();
-            Long chatId = callbackQuery.getMessage().getChatId();
-            if (callbackQuery.getData().equalsIgnoreCase("Зарегистрировать в системе\uD83D\uDC7E")) {
-                register(chatId, callbackQuery);
-            }
-            if (callbackQuery.getData().equalsIgnoreCase("Написать админу")) {
-                if (!isSuppMsgExistByUserChatId(chatId)) {
-                    userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
-                    sendMassegeToUser(chatId, "Введите сообщение", null, 0);
-                } else {
-                    sendMassegeToUser(chatId, "У вас уже есть сообщение: " + supportMassageServiceImpl.getMassageByChatId(chatId)
-                                    .get().getMassage() + "\nдата отправки: " +
-                                    supportMassageServiceImpl.getMassageByChatId(chatId)
-                                            .get().getDate(),
-                            List.of("Редоктировать сообщение", "Оставить"), 1);
-                }
+    }
 
-            }
-            if (callbackQuery.getData().startsWith("User")) {
-                String chatIdWaitingUser = callbackQuery.getData().replaceAll("\\D", "");
-                userService.updateAdminStatusByChatId(chatId, AdminStatus.WANT_REPLY, Long.valueOf(chatIdWaitingUser));
-                sendMassegeToUser(chatId, "Напишите сообщение (" + chatIdWaitingUser + ")", null, 0);
-            }
-            if (callbackQuery.getData().equalsIgnoreCase("😀")) {
-                supportMassageServiceImpl.deleteByChatId(chatId);
-                userService.updateStatusByChatId(chatId, "DONT_SENT");
-            }
-            if (callbackQuery.getData().equalsIgnoreCase("😡")) {
-                String stringBuilder = "Пользователь с ником @" +
-                        callbackQuery.getFrom().getUserName() +
-                        " не одобрил помощь" +
-                        "\n" +
-                        "\n" +
-                        supportMassageServiceImpl.getMassageByChatId(chatId).get().getMassage();
-                sendMassegeToUser(1622241974L, stringBuilder, null, 0);
-            }
+    private void handleUserReplyRequest(Long chatId, String data) {
+        String chatIdWaitingUser = data.replaceAll("\\D", "");
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.WANT_REPLY, Long.valueOf(chatIdWaitingUser));
+        sendMassegeToUser(chatId, "Напишите сообщение (" + chatIdWaitingUser + ")", null, 0);
+    }
 
-            if (callbackQuery.getData().startsWith("Оставить заяву")) {
-                String gameName = callbackQuery.getData().replaceAll("[^A-Za-z ]", "").trim();
-                GameDto gameDto = gameService.getGameByName(gameName);
-                UserDto userDto = userService.getUserByChatId(chatId);
-                userDto.setGame(gameMapper.toEntity(gameDto));
-                userService.updateByChatId(userDto, chatId);
-                return;
-            }
+    private void handlePositiveFeedback(Long chatId) {
+        supportMassageServiceImpl.deleteByChatId(chatId);
+        userService.updateStatusByChatId(chatId, "DONT_SENT");
+    }
 
-            if (callbackQuery.getData().startsWith("Показать друзей")) {
-                String gameName = callbackQuery.getData().replaceAll("[^A-Za-z ]", "").trim();
-                GameDto gameByName = gameService.getGameByName(gameName);
-                sendMassegeToUser(chatId, getFriendByGameId(gameByName.getId(), chatId), null, 0);
-            }
+    private void handleNegativeFeedback(Long chatId, CallbackQuery callbackQuery) {
+        SuportMassageDto supportMessage = supportMassageServiceImpl.getMassageByChatId(chatId).orElse(null);
+        if (supportMessage != null) {
+            String message = "Пользователь с ником @" + callbackQuery.getFrom().getUserName() +
+                    " не одобрил помощь\n\n" + supportMessage.getMassage();
+            sendMassegeToUser(1622241974L, message, null, 0);
+        }
+    }
 
-            if (callbackQuery.getData().startsWith("Оставить")) {
-                sendMassegeToUser(chatId, "Рано или поздно но кто то ответит на вашу проблему", null, 0);
-            }
+    private void handleGameApplication(Long chatId, String data) {
+        String gameName = data.replaceAll("[^A-Za-z ]", "").trim();
+        GameDto gameDto = gameService.getGameByName(gameName);
+        UserDto userDto = userService.getUserByChatId(chatId);
+        userDto.setGame(gameMapper.toEntity(gameDto));
+        userService.updateByChatId(userDto, chatId);
+    }
 
-            if (callbackQuery.getData().equalsIgnoreCase("ALL")) {
-                readGames(chatId, null);
-            }
-            if (callbackQuery.getData().equalsIgnoreCase("HORROR")) {
-                readGames(chatId, GameGenre.HORROR);
-            }
-
-            if (callbackQuery.getData().equalsIgnoreCase("ADVENTURE")) {
-                readGames(chatId, GameGenre.ADVENTURE);
-            }
-
-            if (callbackQuery.getData().equalsIgnoreCase("SHOOTER")) {
-                readGames(chatId, GameGenre.SHOOTER);
-            }
-
-            if (callbackQuery.getData().equalsIgnoreCase("TYCOON")) {
-                readGames(chatId, GameGenre.TYCOON);
-            }
-
-            if (callbackQuery.getData().equalsIgnoreCase("SURVIVAL")) {
-                readGames(chatId, GameGenre.SURVIVAL);
-            }
+    private void showFriends(Long chatId, String data) {
+        String gameName = data.replaceAll("[^A-Za-z ]", "").trim();
+        GameDto gameByName = gameService.getGameByName(gameName);
+        List<UserDto> friends = userService.getUserByGameId(gameByName.getId());
+        if (!friends.isEmpty()) {
+            sendMassegeToUser(chatId, "@" + friends.get(0).getNickname(), null, 0);
+            System.out.println(friends);
+        } else {
+            sendMassegeToUser(chatId, "Нет друзей, играющих в эту игру", null, 0);
         }
     }
 
@@ -287,12 +327,21 @@ public class MyBot extends TelegramLongPollingBot {
 
     public boolean saveSuppMassageFromUser(Long chatId, String massage) {
         try {
-            SuportMassageDto suportMassageDto = new SuportMassageDto();
-            suportMassageDto.setChatId(chatId);
-            suportMassageDto.setMassage(massage);
-            suportMassageDto.setDate(new Date());
-            supportMassageServiceImpl.save(suportMassageDto);
+            Optional<SuportMassageDto> massageByChatId = supportMassageServiceImpl.getMassageByChatId(chatId);
+            if (massageByChatId.isEmpty()) {
+                SuportMassageDto suportMassageDto = new SuportMassageDto();
+                suportMassageDto.setChatId(chatId);
+                suportMassageDto.setMassage(massage);
+                suportMassageDto.setDate(new Date());
+                supportMassageServiceImpl.save(suportMassageDto);
+            } else {
+                SuportMassageDto massageDto = massageByChatId.get();
+                massageDto.setMassage(massage);
+                massageDto.setDate(new Date());
+                supportMassageServiceImpl.updateByChatId(massageDto, chatId);
+            }
             return true;
+
         } catch (Exception e) {
             return false;
         }

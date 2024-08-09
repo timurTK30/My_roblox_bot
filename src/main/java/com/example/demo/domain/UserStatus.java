@@ -5,5 +5,6 @@ public enum UserStatus {
     DONT_SENT,
     WAIT_FOR_SENT,
     WAIT_FOR_REPLY,
-    RECEIVE_MASSAGE
+    RECEIVE_MASSAGE,
+    WANT_UPDATE_MSG
 }
