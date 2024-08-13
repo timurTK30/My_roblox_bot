@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GameServiceImpl implements GameService {
@@ -58,5 +59,14 @@ public class GameServiceImpl implements GameService {
     @Override
     public GameDto getGameByName(String gameName) {
         return gameMapper.toDto(gameRepository.getGameByName(gameName).get());
+    }
+
+    @Override
+    public Optional<GameDto> getGameByGameId(Long id) {
+        Optional<Game> byId = gameRepository.findById(id);
+        if(byId.isPresent()){
+            return byId.map(game -> gameMapper.toDto(game));
+        }
+        return Optional.empty();
     }
 }

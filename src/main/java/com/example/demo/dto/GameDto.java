@@ -21,4 +21,19 @@ public class GameDto {
     private Creator creator;
     private Date createDate;
     private List<User> users;
+
+    @Override
+    public String toString() {
+        return "GameDto{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", price=" + price +
+                ", gameGenre='" + gameGenre + '\'' +
+                ", active=" + active +
+                ", photo='" + photo + '\'' +
+                ", creator=" + creator +
+                ", createDate=" + createDate +
+                '}';
+    }
 }

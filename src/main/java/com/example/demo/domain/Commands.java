@@ -7,7 +7,7 @@ public enum Commands {
 
     START("/start"),
     HELP("/help"),
-    GAME("/game"),
+    GAMES("/games"),
     READ_SUPP_MSG("/readSuppMsg");
 
     private final String cmd;

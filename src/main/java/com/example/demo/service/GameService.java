@@ -5,6 +5,7 @@ import com.example.demo.domain.GameGenre;
 import com.example.demo.dto.GameDto;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface GameService {
 
@@ -14,4 +15,5 @@ public interface GameService {
     void deleteByName(GameDto gameDto);
     List<GameDto> getGameByGenre(GameGenre genre);
     GameDto getGameByName(String gameName);
+    Optional<GameDto> getGameByGameId(Long id);
 }

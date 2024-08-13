@@ -79,11 +79,15 @@ public class MyBot extends TelegramLongPollingBot {
             help(chatId);
         } else if (text.startsWith(READ_SUPP_MSG.getCmd()) && isUserAdmin(chatId)) {
             readSuppMsg(chatId);
-        } else if (text.startsWith(GAME.getCmd())) {
+        } else if (text.equalsIgnoreCase(GAMES.getCmd())) {
             handleGameCommand(chatId);
+        } else if (text.startsWith("/game")) {
+            Long gameId = Long.valueOf(text.replaceAll("\\D+", ""));
+            getGameById(chatId, gameId);
         } else {
             handleUserMessage(chatId, text);
         }
+
     }
 
     private void handleCallbackQuery(CallbackQuery callbackQuery) {
@@ -274,6 +278,16 @@ public class MyBot extends TelegramLongPollingBot {
                 map(suppMsg -> suportMassageMapper.toUserChatInfo(suppMsg).toString()).toList(), massageDtos.size());
     }
 
+    public void getGameById(Long chatId, Long gameId){
+        StringBuilder stringBuilder = new StringBuilder();
+        String tempCreatorId = "пусто";
+        Optional<GameDto> gameByGameId = gameService.getGameByGameId(gameId);
+        gameByGameId.ifPresent(gameDto -> {
+            formatGameOutput(stringBuilder, 0, gameDto, tempCreatorId);
+            sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+        });
+    }
+
     public void readGames(Long chatId, GameGenre genre) {
         List<GameDto> gameByGenre;
         if (genre != null) {
@@ -285,44 +299,51 @@ public class MyBot extends TelegramLongPollingBot {
             sendMassegeToUser(chatId, "\uD83C\uDF1F Извините за неудобства, но игр с таким жанром пока что нет. \uD83C\uDF1F", null, 0);
         }
         StringBuilder stringBuilder = new StringBuilder();
+        //TODO
         String tempCreatorGroup = "пусто";
         for (int i = 0; i < gameByGenre.size(); i++) {
-            if (gameByGenre.get(i).getCreator() != null) {
-                tempCreatorGroup = gameByGenre.get(i).getCreator().getNameOfGroup();
-            }
-            stringBuilder.append(i + 1)
-                    .append(". ")
-                    .append("<b>").append("\uD83C\uDF1F Название игры: ")
-                    .append(gameByGenre.get(i).getName()).append("</b>")
-                    .append("\n")
-                    .append("\n")
-                    .append("<b>").append("\uD83D\uDCD6 Описание:").append("</b>")
-                    .append("\n")
-                    .append(gameByGenre.get(i).getDescription())
-                    .append("\n")
-                    .append("\n")
-                    .append("<b>").append("\uD83C\uDFAE Жанр: ").append("</b>")
-                    .append(gameByGenre.get(i).getGameGenre())
-                    .append("\n")
-                    .append("\n")
-                    .append("<b>").append("\uD83D\uDCB0 Цена: ").append("</b>")
-                    .append(gameByGenre.get(i).getPrice())
-                    .append("\n")
-                    .append("\n")
-                    .append("<b>").append("\uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB Aктив: ").append("</b>")
-                    .append(gameByGenre.get(i).getActive())
-                    .append("\n")
-                    .append("\n")
-                    .append("<b>").append("\uD83C\uDFE2 Разработчик: ").append("</b>")
-                    .append(tempCreatorGroup)
-                    .append("\n")
-                    .append("\n")
-                    .append("<b>").append("\uD83D\uDDD3 Дата создания:").append("</b>")
-                    .append(gameByGenre.get(i).getCreateDate());
+            GameDto gameDto = gameByGenre.get(i);
+            formatGameOutput(stringBuilder, i, gameDto, tempCreatorGroup);
 
-            sendPhotoToUser(chatId, gameByGenre.get(i).getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameByGenre.get(i).getName(), "Показать друзей для игры: " + gameByGenre.get(i).getName()), 1);
+            sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             stringBuilder.setLength(0);
         }
+    }
+
+    private void formatGameOutput(StringBuilder stringBuilder, int i, GameDto gameDto, String tempCreatorGroup) {
+        if (gameDto.getCreator() != null) {
+            tempCreatorGroup = gameDto.getCreator().getNameOfGroup();
+        }
+        stringBuilder.append(i + 1)
+                .append(". ")
+                .append("<b>").append("\uD83C\uDF1F Название игры: ")
+                .append(gameDto.getName()).append("</b>")
+                .append("( /game" + gameDto.getId() + " )")
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDCD6 Описание:").append("</b>")
+                .append("\n")
+                .append(gameDto.getDescription())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83C\uDFAE Жанр: ").append("</b>")
+                .append(gameDto.getGameGenre())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDCB0 Цена: ").append("</b>")
+                .append(gameDto.getPrice())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB Aктив: ").append("</b>")
+                .append(gameDto.getActive())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83C\uDFE2 Разработчик: ").append("</b>")
+                .append(tempCreatorGroup)
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDDD3 Дата создания:").append("</b>")
+                .append(gameDto.getCreateDate());
     }
 
     public boolean saveSuppMassageFromUser(Long chatId, String massage) {
