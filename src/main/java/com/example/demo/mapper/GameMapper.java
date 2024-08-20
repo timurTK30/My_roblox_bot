@@ -14,6 +14,7 @@ public class GameMapper {
         game.setName(dto.getName());
         game.setCreator(dto.getCreator());
         game.setPhoto(dto.getPhoto());
+        game.setGif(dto.getGif());
         game.setDescription(dto.getDescription());
         game.setPrice(dto.getPrice());
         game.setGameGenre(GameGenre.valueOf(dto.getGameGenre()));
@@ -28,6 +29,7 @@ public class GameMapper {
         gameDto.setId(game.getId());
         gameDto.setName(game.getName());
         gameDto.setPhoto(game.getPhoto());
+        gameDto.setGif(game.getGif());
         gameDto.setDescription(game.getDescription());
         gameDto.setPrice(game.getPrice());
         gameDto.setGameGenre(game.getGameGenre().name());

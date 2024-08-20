@@ -36,6 +36,8 @@ public class Game {
     private Date createDate;
     @Column(name = "photo")
     private String photo;
+    @Column(name = "gif")
+    private String gif;
     @ManyToOne
     private Creator creator;
     @OneToMany(mappedBy = "game")

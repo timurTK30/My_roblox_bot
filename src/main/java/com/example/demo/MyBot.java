@@ -16,12 +16,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -94,6 +98,7 @@ public class MyBot extends TelegramLongPollingBot {
         Long chatId = callbackQuery.getMessage().getChatId();
         String data = callbackQuery.getData();
 
+
         switch (data) {
             case "Зарегистрировать в системе\uD83D\uDC7E":
                 register(chatId, callbackQuery);
@@ -108,14 +113,15 @@ public class MyBot extends TelegramLongPollingBot {
                 handleNegativeFeedback(chatId, callbackQuery);
                 break;
             case "ALL":
-                readGames(chatId, null);
+                readGames(chatId, null, callbackQuery.getMessage().getMessageId());
                 break;
             case "HORROR":
             case "ADVENTURE":
             case "SHOOTER":
             case "TYCOON":
             case "SURVIVAL":
-                readGames(chatId, GameGenre.valueOf(data));
+                readGames(chatId, GameGenre.valueOf(data), callbackQuery.getMessage().getMessageId());
+
                 break;
             default:
                 if (data.startsWith("User")) {
@@ -125,7 +131,7 @@ public class MyBot extends TelegramLongPollingBot {
                 } else if (data.startsWith("Показать друзей")) {
                     showFriends(chatId, data);
                 } else if (data.startsWith("Оставить")) {
-                    sendMassegeToUser(chatId, "Рано или поздно но кто-то ответит на вашу проблему", null, 0);
+                    sendMessageToUser(chatId, "Рано или поздно но кто-то ответит на вашу проблему");
                 } else if (data.startsWith("Редактировать сообщение")) {
                     handleEditSuppMsg(chatId);
                 }
@@ -139,12 +145,12 @@ public class MyBot extends TelegramLongPollingBot {
                 .map(Enum::toString)
                 .collect(Collectors.toList());
         buttons.add("ALL");
-        sendMassegeToUser(chatId, "Выберите жанр", buttons, buttons.size() / 2);
+        sendMessageToUser(chatId, "Выберите жанр", buttons, buttons.size() / 2);
     }
 
     private void handleEditSuppMsg(Long chatId) {
         userService.updateStatusByChatId(chatId, "WANT_UPDATE_MSG");
-        sendMassegeToUser(chatId, "Напишите сообщение", null, 0);
+        sendMessageToUser(chatId, "Напишите сообщение");
     }
 
     private void handleUserMessage(Long chatId, String message) {
@@ -153,13 +159,13 @@ public class MyBot extends TelegramLongPollingBot {
 
             if (user.getStatus().equalsIgnoreCase("WAIT_FOR_SENT")) {
                 if (saveSuppMassageFromUser(chatId, message)) {
-                    sendMassegeToUser(chatId, "Сообщение отправлено", null, 0);
+                    sendMessageToUser(chatId, "Сообщение отправлено");
                     userService.updateStatusByChatId(chatId, "WAIT_FOR_REPLY");
                 } else {
-                    sendMassegeToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки", null, 0);
+                    sendMessageToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки");
                 }
             } else if (user.getRole().equalsIgnoreCase("ADMIN") && user.getAStatus().equalsIgnoreCase("WANT_REPLY")) {
-                sendMassegeToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
+                sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
             } else if (user.getStatus().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
 
@@ -173,11 +179,11 @@ public class MyBot extends TelegramLongPollingBot {
     private void handleAdminMessage(Long chatId) {
         if (!isSuppMsgExistByUserChatId(chatId)) {
             userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
-            sendMassegeToUser(chatId, "Введите сообщение", null, 0);
+            sendMessageToUser(chatId, "Введите сообщение");
         } else {
             SuportMassageDto supportMessage = supportMassageServiceImpl.getMassageByChatId(chatId).orElse(null);
             if (supportMessage != null) {
-                sendMassegeToUser(chatId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
+                sendMessageToUser(chatId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
                         List.of("Редактировать сообщение", "Оставить"), 1);
             }
         }
@@ -186,7 +192,7 @@ public class MyBot extends TelegramLongPollingBot {
     private void handleUserReplyRequest(Long chatId, String data) {
         String chatIdWaitingUser = data.replaceAll("\\D", "");
         userService.updateAdminStatusByChatId(chatId, AdminStatus.WANT_REPLY, Long.valueOf(chatIdWaitingUser));
-        sendMassegeToUser(chatId, "Напишите сообщение (" + chatIdWaitingUser + ")", null, 0);
+        sendMessageToUser(chatId, "Напишите сообщение (" + chatIdWaitingUser + ")");
     }
 
     private void handlePositiveFeedback(Long chatId) {
@@ -199,7 +205,7 @@ public class MyBot extends TelegramLongPollingBot {
         if (supportMessage != null) {
             String message = "Пользователь с ником @" + callbackQuery.getFrom().getUserName() +
                     " не одобрил помощь\n\n" + supportMessage.getMassage();
-            sendMassegeToUser(1622241974L, message, null, 0);
+            sendMessageToUser(1622241974L, message);
         }
     }
 
@@ -214,12 +220,14 @@ public class MyBot extends TelegramLongPollingBot {
     private void showFriends(Long chatId, String data) {
         String gameName = data.replaceAll("[^A-Za-z ]", "").trim();
         GameDto gameByName = gameService.getGameByName(gameName);
-        List<UserDto> friends = userService.getUserByGameId(gameByName.getId());
+        List<UserDto> friends = userService.getUserByGameId(gameByName.getId()).stream()
+                .filter(user -> !user.getChatId().equals(chatId))
+                .toList();
         if (!friends.isEmpty()) {
-            sendMassegeToUser(chatId, "@" + friends.get(0).getNickname(), null, 0);
+            sendMessageToUser(chatId, "@" + friends.get(0).getNickname());
             System.out.println(friends);
         } else {
-            sendMassegeToUser(chatId, "Нет друзей, играющих в эту игру", null, 0);
+            sendMessageToUser(chatId, "Нет друзей, играющих в эту игру");
         }
     }
 
@@ -232,7 +240,7 @@ public class MyBot extends TelegramLongPollingBot {
                 "А ещё я всегда обновляю свою базу данных, чтобы ты всегда был в курсе последних трендов и новых релизов. \n" +
                 "\n" +
                 "Так что не стесняйся, спрашивай обо всём, что тебе интересно!";
-        sendMassegeToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), 1);
+        sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), 1);
 
     }
 
@@ -251,7 +259,7 @@ public class MyBot extends TelegramLongPollingBot {
     }
 
     public void help(Long chatId) {
-        sendMassegeToUser(chatId, "Чем вам помочь?", List.of("Написать админу"), 1);
+        sendMessageToUser(chatId, "Чем вам помочь?", List.of("Написать админу"), 1);
     }
 
     public boolean isUserAdmin(Long chatId) {
@@ -274,51 +282,82 @@ public class MyBot extends TelegramLongPollingBot {
                     .append(" ")
                     .append(massageDtos.get(i).getMassage()).append("\n");
         }
-        sendMassegeToUser(chatId, stringBuilder.toString(), massageDtos.stream().
+        sendMessageToUser(chatId, stringBuilder.toString(), massageDtos.stream().
                 map(suppMsg -> suportMassageMapper.toUserChatInfo(suppMsg).toString()).toList(), massageDtos.size());
     }
 
-    public void getGameById(Long chatId, Long gameId){
+    public void getGameById(Long chatId, Long gameId) {
         StringBuilder stringBuilder = new StringBuilder();
         String tempCreatorId = "пусто";
         Optional<GameDto> gameByGameId = gameService.getGameByGameId(gameId);
         gameByGameId.ifPresent(gameDto -> {
-            formatGameOutput(stringBuilder, 0, gameDto, tempCreatorId);
-            sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+            showAllDescription(stringBuilder, gameDto, tempCreatorId);
+            if(gameDto.getGif() != null){
+                sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+            }else {
+                sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+            }
+
         });
     }
 
-    public void readGames(Long chatId, GameGenre genre) {
+    public void readGames(Long chatId, GameGenre genre, Integer msgId) {
         List<GameDto> gameByGenre;
+
         if (genre != null) {
             gameByGenre = gameService.getGameByGenre(genre);
         } else {
             gameByGenre = gameService.readAll();
         }
         if (gameByGenre.isEmpty()) {
-            sendMassegeToUser(chatId, "\uD83C\uDF1F Извините за неудобства, но игр с таким жанром пока что нет. \uD83C\uDF1F", null, 0);
+            sendMessageToUser(chatId, "\uD83C\uDF1F Извините за неудобства, но игр с таким жанром пока что нет. \uD83C\uDF1F");
         }
         StringBuilder stringBuilder = new StringBuilder();
         //TODO
         String tempCreatorGroup = "пусто";
         for (int i = 0; i < gameByGenre.size(); i++) {
             GameDto gameDto = gameByGenre.get(i);
-            formatGameOutput(stringBuilder, i, gameDto, tempCreatorGroup);
+            showShortDescription(stringBuilder, i, gameDto, tempCreatorGroup);
 
-            sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+
+            editMsgMedia(chatId, msgId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             stringBuilder.setLength(0);
         }
     }
 
-    private void formatGameOutput(StringBuilder stringBuilder, int i, GameDto gameDto, String tempCreatorGroup) {
+    private void showShortDescription(StringBuilder stringBuilder, int i, GameDto gameDto, String tempCreatorGroup) {
         if (gameDto.getCreator() != null) {
             tempCreatorGroup = gameDto.getCreator().getNameOfGroup();
         }
+
         stringBuilder.append(i + 1)
                 .append(". ")
                 .append("<b>").append("\uD83C\uDF1F Название игры: ")
                 .append(gameDto.getName()).append("</b>")
                 .append("( /game" + gameDto.getId() + " )")
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83C\uDFAE Жанр: ").append("</b>")
+                .append(gameDto.getGameGenre())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDCB0 Цена: ").append("</b>")
+                .append(gameDto.getPrice())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB Aктив: ").append("</b>")
+                .append(gameDto.getActive());
+    }
+
+    private void showAllDescription(StringBuilder stringBuilder, GameDto gameDto, String tempCreatorGroup) {
+        if (gameDto.getCreator() != null) {
+            tempCreatorGroup = gameDto.getCreator().getNameOfGroup();
+        }
+
+        stringBuilder.append(1)
+                .append(". ")
+                .append("<b>").append("\uD83C\uDF1F Название игры: ")
+                .append(gameDto.getName()).append("</b>")
                 .append("\n")
                 .append("\n")
                 .append("<b>").append("\uD83D\uDCD6 Описание:").append("</b>")
@@ -370,7 +409,10 @@ public class MyBot extends TelegramLongPollingBot {
 
     public void register(Long chatId, CallbackQuery callbackQuery) {
         if (isUserExist(chatId)) {
-            sendMassegeToUser(chatId, "Вы уже зарегестририваны", null, 0);
+            editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы уже зарегистрированы! ✅\n" +
+                    "\n" +
+                    "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
+                    "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
             return;
         }
         var queryFrom = callbackQuery.getFrom();
@@ -384,14 +426,36 @@ public class MyBot extends TelegramLongPollingBot {
         user.setAStatus(AdminStatus.DONT_WRITE);
         user.setTempChatIdForReply(0L);
         userService.save(userMapper.toDto(user));
-        sendMassegeToUser(chatId, "Вы успешно зарегистрированы в нашем боте✅\n" +
+        editMsg(chatId, callbackQuery.getMessage().getMessageId(),"Вы успешно зарегистрированы! ✅\n" +
                 "\n" +
-                "Успешного пользования☺\uFE0F", null, 0);
+                "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
+                "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
     }
 
     public boolean isUserExist(Long chatId) {
         UserDto userByChatId = userService.getUserByChatId(chatId);
         return userByChatId != null;
+    }
+
+    public void sendGifToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
+        SendAnimation sendAnimation = new SendAnimation();
+        sendAnimation.setChatId(chatId);
+
+        InputFile inputFile = new InputFile(new File(url));
+        sendAnimation.setAnimation(inputFile);
+        sendAnimation.setCaption(massage);
+        sendAnimation.setParseMode("HTML");
+
+        if (buttonText != null) {
+            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
+            sendAnimation.setReplyMarkup(inlineKeyboardMarkup);
+        }
+
+        try {
+            execute(sendAnimation);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
@@ -413,17 +477,63 @@ public class MyBot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendMassegeToUser(Long chatId, String massage, List<String> buttonText, int buttonRows) {
+    public void sendMessageToUser(Long chatId, String massage, List<String> buttonText, int buttonRows) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(massage);
         sendMessage.enableHtml(true);
-        if (buttonText != null) {
-            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
-            sendMessage.setReplyMarkup(inlineKeyboardMarkup);
-        }
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
+        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+
         try {
             execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendMessageToUser(Long chatId, String massage) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        sendMessage.setText(massage);
+        sendMessage.enableHtml(true);
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void editMsg(Long chatId, Integer msgId, String newText){
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(msgId);
+        editMessageText.setText(newText);
+
+        try {
+            execute(editMessageText);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void editMsgMedia(Long chatId, Integer msgId, String newText, String url, List<String> buttonText, int buttonRows){
+        EditMessageMedia editMessageMedia = new EditMessageMedia();
+        editMessageMedia.setChatId(chatId);
+        editMessageMedia.setMessageId(msgId);
+
+        InputMediaPhoto inputMediaPhoto = new InputMediaPhoto();
+        inputMediaPhoto.setMedia(new File(url), "photo.jpg");
+        inputMediaPhoto.setCaption(newText);
+        inputMediaPhoto.setParseMode("HTML");
+
+        editMessageMedia.setMedia(inputMediaPhoto);
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
+        editMessageMedia.setReplyMarkup(inlineKeyboardMarkup);
+        try {
+            execute(editMessageMedia);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
