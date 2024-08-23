@@ -19,6 +19,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -104,7 +105,7 @@ public class MyBot extends TelegramLongPollingBot {
                 register(chatId, callbackQuery);
                 break;
             case "Написать админу":
-                handleAdminMessage(chatId);
+                handleAdminMessage(chatId, callbackQuery.getMessage().getMessageId());
                 break;
             case "😀":
                 handlePositiveFeedback(chatId);
@@ -168,7 +169,11 @@ public class MyBot extends TelegramLongPollingBot {
                 sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
             } else if (user.getStatus().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
-
+                SuportMassageDto suportMassageDto = new SuportMassageDto();
+                suportMassageDto.setMassage(message);
+                suportMassageDto.setDate(new Date());
+                supportMassageServiceImpl.updateByChatId(suportMassageDto, chatId);
+                sendMessageToUser(chatId, "Ваше сообщение обновлено");
             }
         } catch (Exception e) {
             System.out.println("Человек не ожидает на отправку сообщений");
@@ -176,14 +181,14 @@ public class MyBot extends TelegramLongPollingBot {
     }
 
 
-    private void handleAdminMessage(Long chatId) {
+    private void handleAdminMessage(Long chatId, Integer msgId) {
         if (!isSuppMsgExistByUserChatId(chatId)) {
             userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
-            sendMessageToUser(chatId, "Введите сообщение");
+            editMsg(chatId, msgId, "Введите сообщение");
         } else {
             SuportMassageDto supportMessage = supportMassageServiceImpl.getMassageByChatId(chatId).orElse(null);
             if (supportMessage != null) {
-                sendMessageToUser(chatId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
+                editMsg(chatId, msgId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
                         List.of("Редактировать сообщение", "Оставить"), 1);
             }
         }
@@ -272,6 +277,7 @@ public class MyBot extends TelegramLongPollingBot {
         return massageByChatId.isPresent();
     }
 
+    //TODO починить пустоту супорт мсг
     public void readSuppMsg(Long chatId) {
         List<SuportMassageDto> massageDtos = supportMassageServiceImpl.readAll();
         StringBuilder stringBuilder = new StringBuilder();
@@ -292,9 +298,9 @@ public class MyBot extends TelegramLongPollingBot {
         Optional<GameDto> gameByGameId = gameService.getGameByGameId(gameId);
         gameByGameId.ifPresent(gameDto -> {
             showAllDescription(stringBuilder, gameDto, tempCreatorId);
-            if(gameDto.getGif() != null){
+            if (gameDto.getGif() != null) {
                 sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
-            }else {
+            } else {
                 sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             }
 
@@ -302,6 +308,8 @@ public class MyBot extends TelegramLongPollingBot {
     }
 
     public void readGames(Long chatId, GameGenre genre, Integer msgId) {
+
+        deleteMsg(chatId, msgId);
         List<GameDto> gameByGenre;
 
         if (genre != null) {
@@ -319,8 +327,7 @@ public class MyBot extends TelegramLongPollingBot {
             GameDto gameDto = gameByGenre.get(i);
             showShortDescription(stringBuilder, i, gameDto, tempCreatorGroup);
 
-
-            editMsgMedia(chatId, msgId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+            sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             stringBuilder.setLength(0);
         }
     }
@@ -426,7 +433,7 @@ public class MyBot extends TelegramLongPollingBot {
         user.setAStatus(AdminStatus.DONT_WRITE);
         user.setTempChatIdForReply(0L);
         userService.save(userMapper.toDto(user));
-        editMsg(chatId, callbackQuery.getMessage().getMessageId(),"Вы успешно зарегистрированы! ✅\n" +
+        editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы успешно зарегистрированы! ✅\n" +
                 "\n" +
                 "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
                 "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
@@ -505,7 +512,7 @@ public class MyBot extends TelegramLongPollingBot {
         }
     }
 
-    private void editMsg(Long chatId, Integer msgId, String newText){
+    private void editMsg(Long chatId, Integer msgId, String newText) {
         EditMessageText editMessageText = new EditMessageText();
         editMessageText.setChatId(chatId);
         editMessageText.setMessageId(msgId);
@@ -518,22 +525,29 @@ public class MyBot extends TelegramLongPollingBot {
         }
     }
 
-    private void editMsgMedia(Long chatId, Integer msgId, String newText, String url, List<String> buttonText, int buttonRows){
-        EditMessageMedia editMessageMedia = new EditMessageMedia();
-        editMessageMedia.setChatId(chatId);
-        editMessageMedia.setMessageId(msgId);
+    private void deleteMsg(Long chatId, Integer msgId){
+        DeleteMessage deleteMessage = new DeleteMessage();
+        deleteMessage.setChatId(chatId);
+        deleteMessage.setMessageId(msgId);
 
-        InputMediaPhoto inputMediaPhoto = new InputMediaPhoto();
-        inputMediaPhoto.setMedia(new File(url), "photo.jpg");
-        inputMediaPhoto.setCaption(newText);
-        inputMediaPhoto.setParseMode("HTML");
+        try {
+            execute(deleteMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        editMessageMedia.setMedia(inputMediaPhoto);
+    private void editMsg(Long chatId, Integer msgId, String newText, List<String> buttonText, int buttonRows) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(msgId);
+        editMessageText.setText(newText);
+        editMessageText.setParseMode("HTML");
 
         InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
-        editMessageMedia.setReplyMarkup(inlineKeyboardMarkup);
+        editMessageText.setReplyMarkup(inlineKeyboardMarkup);
         try {
-            execute(editMessageMedia);
+            execute(editMessageText);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }

@@ -6,5 +6,5 @@ public enum UserStatus {
     WAIT_FOR_SENT,
     WAIT_FOR_REPLY,
     RECEIVE_MASSAGE,
-    WANT_UPDATE_MSG
+    WANT_UPDATE_MSG;
 }
