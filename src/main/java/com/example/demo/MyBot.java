@@ -95,7 +95,8 @@ public class MyBot extends TelegramLongPollingBot {
             Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+",""));
             sendMessageToUser(chatId, "Хотите поменять роль?", List.of(Role.ADMIN.name(), Role.PREMIUM_USER.name(), Role.USER.name()), 2);
         } else {
-            // TODO:при отправки смс , выводит смс обновленно , пофисить статус смс
+            //TODO:пофиксить обновление сообщения у юзера , когда он этого хочет
+            //TODO:пофиксить обновление сообщения у юзера, при случайном отправвки смс
             handleUserMessage(chatId, text);
         }
 
