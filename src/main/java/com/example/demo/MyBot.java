@@ -86,10 +86,16 @@ public class MyBot extends TelegramLongPollingBot {
             readSuppMsg(chatId);
         } else if (text.equalsIgnoreCase(GAMES.getCmd())) {
             handleGameCommand(chatId);
-        } else if (text.startsWith("/game")) {
+        } else if (text.startsWith(GAME.getCmd())) {
             Long gameId = Long.valueOf(text.replaceAll("\\D+", ""));
             getGameById(chatId, gameId);
+        } else if (text.startsWith(BUY_SUBSCRIBE.getCmd())) {
+            subscription(chatId);
+        } else if (text.startsWith(SET_ROLE.getCmd()) && isUserAdmin(chatId)) {
+            Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+",""));
+            sendMessageToUser(chatId, "Хотите поменять роль?", List.of(Role.ADMIN.name(), Role.PREMIUM_USER.name(), Role.USER.name()), 2);
         } else {
+            // TODO:при отправки смс , выводит смс обновленно , пофисить статус смс
             handleUserMessage(chatId, text);
         }
 
@@ -122,7 +128,6 @@ public class MyBot extends TelegramLongPollingBot {
             case "TYCOON":
             case "SURVIVAL":
                 readGames(chatId, GameGenre.valueOf(data), callbackQuery.getMessage().getMessageId());
-
                 break;
             default:
                 if (data.startsWith("User")) {
@@ -135,6 +140,13 @@ public class MyBot extends TelegramLongPollingBot {
                     sendMessageToUser(chatId, "Рано или поздно но кто-то ответит на вашу проблему");
                 } else if (data.startsWith("Редактировать сообщение")) {
                     handleEditSuppMsg(chatId);
+                } else if (data.startsWith("Купить")) {
+                    String sub = data.replaceAll("Купить:", "");
+                    UserDto userByChatId = userService.getUserByChatId(chatId);
+                    sendMessageToUser(1622241974L ,"Имя: " + callbackQuery.getFrom().getFirstName() + "\n" +
+                            "Подписка: " + userByChatId.getRole() + "\n" +
+                            "Хочет купить: " + sub + "\n" +
+                            "Для связи: @" + userByChatId.getNickname());
                 }
                 break;
         }
@@ -249,18 +261,15 @@ public class MyBot extends TelegramLongPollingBot {
 
     }
 
-    public String getFriendByGameId(Long gameId, Long chatId) {
-        List<UserDto> userByGameId = userService.getUserByGameId(gameId).stream()
-                .filter(u -> !u.getChatId().equals(chatId)).toList();
-        StringBuilder stringBuilder = new StringBuilder();
-        userByGameId
-                .forEach(
-                        user -> {
-                            stringBuilder.append("@").append(user.getNickname()).append("\n");
-                        }
-                );
-
-        return stringBuilder.toString();
+    public void subscription(Long chatId){
+        String msg = "\uD83D\uDCE2 Подписки на нашем боте! \uD83C\uDF89\n" +
+                "\n" +
+                "✨ Премиум 5zł — доступ к эксклюзивным функциям и контенту, а также приоритетная поддержка. Откройте новые возможности для вашего аккаунта! \uD83D\uDC8E\n" +
+                "\n" +
+                "\uD83D\uDC51 Администратор 10zł — полный контроль над системой, управление пользователями и настройками. Эта подписка идеальна для тех, кто хочет иметь полный доступ и возможности управления. \uD83D\uDD27\n" +
+                "\n" +
+                "Выбирайте подписку, которая подходит именно вам, и начните пользоваться всеми преимуществами уже сегодня! \uD83D\uDE80";
+        sendMessageToUser(chatId, msg, List.of("Купить: Премиум✨", "Купить: Админ\uD83D\uDC51"), 2);
     }
 
     public void help(Long chatId) {
@@ -305,6 +314,10 @@ public class MyBot extends TelegramLongPollingBot {
             }
 
         });
+    }
+
+    private void updateRole(Long chatId){
+
     }
 
     public void readGames(Long chatId, GameGenre genre, Integer msgId) {

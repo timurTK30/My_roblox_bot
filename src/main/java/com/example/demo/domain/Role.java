@@ -3,5 +3,6 @@ package com.example.demo.domain;
 public enum Role {
 
     ADMIN,
-    USER
+    USER,
+    PREMIUM_USER
 }
