@@ -52,7 +52,7 @@ public class MyBot extends TelegramLongPollingBot {
     private final GameMapper gameMapper;
 
     @Autowired
-    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper) {
+    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper, Buttons buttons) {
         this.botConfig = botConfig;
         this.creatorService = creatorService;
         this.gameService = gameService;
@@ -108,7 +108,7 @@ public class MyBot extends TelegramLongPollingBot {
 
 
         switch (data) {
-            case "Зарегистрировать в системе\uD83D\uDC7E":
+            case "Зарегистрировать в системе":
                 register(chatId, callbackQuery);
                 break;
             case "Написать админу":
