@@ -45,6 +45,7 @@ public class SupportMassageServiceImpl implements SupportMassageService {
             SuportMassageDto massageDtoByChatId = massageByChatId.get();
             massageDtoByChatId.setMassage(suportMassageDto.getMassage());
             massageDtoByChatId.setDate(suportMassageDto.getDate());
+            save(massageDtoByChatId);
             return massageDtoByChatId;
         }
         return null;

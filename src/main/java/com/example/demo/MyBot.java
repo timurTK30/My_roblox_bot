@@ -20,13 +20,11 @@ import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -52,7 +50,7 @@ public class MyBot extends TelegramLongPollingBot {
     private final GameMapper gameMapper;
 
     @Autowired
-    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper, Buttons buttons) {
+    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper) {
         this.botConfig = botConfig;
         this.creatorService = creatorService;
         this.gameService = gameService;
@@ -92,11 +90,9 @@ public class MyBot extends TelegramLongPollingBot {
         } else if (text.startsWith(BUY_SUBSCRIBE.getCmd())) {
             subscription(chatId);
         } else if (text.startsWith(SET_ROLE.getCmd()) && isUserAdmin(chatId)) {
-            Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+",""));
-            sendMessageToUser(chatId, "Хотите поменять роль?", List.of(Role.ADMIN.name(), Role.PREMIUM_USER.name(), Role.USER.name()), 2);
+            Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+", ""));
+            sendMessageToUser(chatId, "Хотите поменять роль?", List.of(Role.ADMIN.name() + " " + chatIdUserForChange, Role.PREMIUM_USER.name() + " " + chatIdUserForChange, Role.USER.name() + " " + chatIdUserForChange), 2);
         } else {
-            //TODO:пофиксить обновление сообщения у юзера , когда он этого хочет
-            //TODO:пофиксить обновление сообщения у юзера, при случайном отправвки смс
             handleUserMessage(chatId, text);
         }
 
@@ -108,7 +104,7 @@ public class MyBot extends TelegramLongPollingBot {
 
 
         switch (data) {
-            case "Зарегистрировать в системе":
+            case "Зарегистрировать в системе\uD83D\uDC7E":
                 register(chatId, callbackQuery);
                 break;
             case "Написать админу":
@@ -144,10 +140,19 @@ public class MyBot extends TelegramLongPollingBot {
                 } else if (data.startsWith("Купить")) {
                     String sub = data.replaceAll("Купить:", "");
                     UserDto userByChatId = userService.getUserByChatId(chatId);
-                    sendMessageToUser(1622241974L ,"Имя: " + callbackQuery.getFrom().getFirstName() + "\n" +
+                    sendMessageToUser(1622241974L, "Имя: " + callbackQuery.getFrom().getFirstName() + "\n" +
                             "Подписка: " + userByChatId.getRole() + "\n" +
                             "Хочет купить: " + sub + "\n" +
-                            "Для связи: @" + userByChatId.getNickname());
+                            "Для связи: @" + userByChatId.getNickname() + "\n" +
+                            "/set_role" + userByChatId.getChatId());
+                    return;
+                } else if (data.startsWith(Role.ADMIN.name()) ||
+                        data.startsWith(Role.USER.name()) ||
+                        data.startsWith(Role.PREMIUM_USER.name())) {
+                    Long chatIdSelectedUser = Long.valueOf(data.replaceAll("\\D", ""));
+                    String chooseRole = data.replaceAll("\\d", "").trim();
+                    UserDto userByChatId = userService.updateRoleByChatId(chatIdSelectedUser, chooseRole);
+                    sendMessageToUser(chatId, userByChatId.toString());
                 }
                 break;
         }
@@ -170,23 +175,20 @@ public class MyBot extends TelegramLongPollingBot {
     private void handleUserMessage(Long chatId, String message) {
         try {
             UserDto user = userService.getUserByChatId(chatId);
-
-            if (user.getStatus().equalsIgnoreCase("WAIT_FOR_SENT")) {
+            if (user.getStatus().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name())) {
                 if (saveSuppMassageFromUser(chatId, message)) {
                     sendMessageToUser(chatId, "Сообщение отправлено");
-                    userService.updateStatusByChatId(chatId, "WAIT_FOR_REPLY");
+                    userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
                 } else {
                     sendMessageToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки");
                 }
-            } else if (user.getRole().equalsIgnoreCase("ADMIN") && user.getAStatus().equalsIgnoreCase("WANT_REPLY")) {
+            } else if (user.getRole().equalsIgnoreCase("ADMIN") && user.getAStatus().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
                 sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
             } else if (user.getStatus().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
-                SuportMassageDto suportMassageDto = new SuportMassageDto();
-                suportMassageDto.setMassage(message);
-                suportMassageDto.setDate(new Date());
-                supportMassageServiceImpl.updateByChatId(suportMassageDto, chatId);
+                saveSuppMassageFromUser(chatId, message);
                 sendMessageToUser(chatId, "Ваше сообщение обновлено");
+                userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
             }
         } catch (Exception e) {
             System.out.println("Человек не ожидает на отправку сообщений");
@@ -262,7 +264,7 @@ public class MyBot extends TelegramLongPollingBot {
 
     }
 
-    public void subscription(Long chatId){
+    public void subscription(Long chatId) {
         String msg = "\uD83D\uDCE2 Подписки на нашем боте! \uD83C\uDF89\n" +
                 "\n" +
                 "✨ Премиум 5zł — доступ к эксклюзивным функциям и контенту, а также приоритетная поддержка. Откройте новые возможности для вашего аккаунта! \uD83D\uDC8E\n" +
@@ -317,7 +319,7 @@ public class MyBot extends TelegramLongPollingBot {
         });
     }
 
-    private void updateRole(Long chatId){
+    private void updateRole(Long chatId) {
 
     }
 
@@ -539,7 +541,7 @@ public class MyBot extends TelegramLongPollingBot {
         }
     }
 
-    private void deleteMsg(Long chatId, Integer msgId){
+    private void deleteMsg(Long chatId, Integer msgId) {
         DeleteMessage deleteMessage = new DeleteMessage();
         deleteMessage.setChatId(chatId);
         deleteMessage.setMessageId(msgId);

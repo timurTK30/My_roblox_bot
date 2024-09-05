@@ -9,9 +9,7 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,7 +41,7 @@ public class UserServiceImpl implements UserService {
     public UserDto updateByChatId(UserDto userDto, Long chatId) {
         UserDto userByChatId = getUserByChatId(chatId);
         Game game = userMapper.toEntity(userDto).getGame();
-        if (game != null){
+        if (game != null) {
             userByChatId.setGame(userDto.getGame());
         }
         userByChatId.setNickname(userDto.getNickname());
@@ -94,5 +92,12 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> getUserByGameId(Long gameId) {
         List<User> usersByGameId = userRepository.getUserByGameId(gameId);
         return usersByGameId.stream().map(userMapper::toDto).toList();
+    }
+
+    @Override
+    public UserDto updateRoleByChatId(Long chatId, String role) {
+        UserDto userByChatId = getUserByChatId(chatId);
+        userByChatId.setRole(role);
+        return save(userByChatId);
     }
 }
