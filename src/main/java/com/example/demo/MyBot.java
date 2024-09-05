@@ -152,7 +152,8 @@ public class MyBot extends TelegramLongPollingBot {
                     Long chatIdSelectedUser = Long.valueOf(data.replaceAll("\\D", ""));
                     String chooseRole = data.replaceAll("\\d", "").trim();
                     UserDto userByChatId = userService.updateRoleByChatId(chatIdSelectedUser, chooseRole);
-                    sendMessageToUser(chatId, userByChatId.toString());
+                    sendMessageToUser(chatId, "Роль у: " + userByChatId.getNickname() + " на " + userByChatId.getRole());
+                    sendMessageToUser(chatIdSelectedUser, "Вам обновили роль на: " + userByChatId.getRole());
                 }
                 break;
         }
