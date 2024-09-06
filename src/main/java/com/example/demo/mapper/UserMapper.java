@@ -23,6 +23,7 @@ public class UserMapper {
         }
         user.setStatus(UserStatus.valueOf(dto.getStatus()));
         user.setAStatus(AdminStatus.valueOf(dto.getAStatus()));
+        user.setDateOfRegisterAcc(dto.getDateOfRegisterAcc());
         user.setTempChatIdForReply(dto.getTempChatIdForReply());
         user.setGame(dto.getGame());
         return user;
@@ -36,6 +37,7 @@ public class UserMapper {
         userDto.setRole(user.getRole().name());
         userDto.setStatus(user.getStatus().name());
         userDto.setAStatus(user.getAStatus().name());
+        userDto.setDateOfRegisterAcc(user.getDateOfRegisterAcc());
         userDto.setTempChatIdForReply(user.getTempChatIdForReply());
         userDto.setGame(user.getGame());
         return userDto;

@@ -30,6 +30,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -90,12 +92,33 @@ public class MyBot extends TelegramLongPollingBot {
         } else if (text.startsWith(BUY_SUBSCRIBE.getCmd())) {
             subscription(chatId);
         } else if (text.startsWith(SET_ROLE.getCmd()) && isUserAdmin(chatId)) {
-            Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+", ""));
-            sendMessageToUser(chatId, "Хотите поменять роль?", List.of(Role.ADMIN.name() + " " + chatIdUserForChange, Role.PREMIUM_USER.name() + " " + chatIdUserForChange, Role.USER.name() + " " + chatIdUserForChange), 2);
+            requestToChangeRole(text, chatId);
+        } else if (text.startsWith(PROFILE.getCmd())) {
+            UserDto userByChatId = userService.getUserByChatId(chatId);
+            GameDto gameByGameId = gameService.getGameByGameId(userByChatId.getGame().getId()).get();
+            String information = "👤 <b>Профиль пользователя</b>\n\n" +
+                    "📛 <b>Имя:</b> " + userByChatId.getNickname() + "\n" +
+                    "💼 <b>Подписка:</b> " + userByChatId.getRole() + "\n\n" +
+                    "🎮 <b>Игра, которую вы хотите сыграть с кем-то:</b> \n" +
+                    gameByGameId.getName() + " [Запросить игру](/game" + gameByGameId.getId() + ")\n\n" +
+                    "📅 <b>Дата регистрации:</b> " + userByChatId.getDateOfRegisterAcc() + "\n" +
+                    "⏳ <b>Ваш аккаунт существует:</b> " + Period.between(userByChatId.getDateOfRegisterAcc(), LocalDate.now()).getDays() + " дней\n\n" +
+                    "📊 <b>Статистика профиля:</b> \n" +
+                    "    • Ваша подписка предоставляет доступ к специальным функциям, таким как эксклюзивные игры и повышенные привилегии.\n" +
+                    "    • Регулярно участвуйте в играх с другими пользователями, чтобы зарабатывать бонусы и достижения.\n" +
+                    "    • Не забывайте обновлять свой профиль и следить за активностью в своем аккаунте!\n\n" +
+                    "💬 <b>Свяжитесь с поддержкой</b>, если у вас возникли вопросы: /help";
+            sendMessageToUser(chatId, information);
+
         } else {
             handleUserMessage(chatId, text);
         }
 
+    }
+
+    private void requestToChangeRole(String text, Long chatId) {
+        Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+", ""));
+        sendMessageToUser(chatId, "Хотите поменять роль?", List.of(Role.ADMIN.name() + " " + chatIdUserForChange, Role.PREMIUM_USER.name() + " " + chatIdUserForChange, Role.USER.name() + " " + chatIdUserForChange), 2);
     }
 
     private void handleCallbackQuery(CallbackQuery callbackQuery) {
@@ -138,25 +161,32 @@ public class MyBot extends TelegramLongPollingBot {
                 } else if (data.startsWith("Редактировать сообщение")) {
                     handleEditSuppMsg(chatId);
                 } else if (data.startsWith("Купить")) {
-                    String sub = data.replaceAll("Купить:", "");
-                    UserDto userByChatId = userService.getUserByChatId(chatId);
-                    sendMessageToUser(1622241974L, "Имя: " + callbackQuery.getFrom().getFirstName() + "\n" +
-                            "Подписка: " + userByChatId.getRole() + "\n" +
-                            "Хочет купить: " + sub + "\n" +
-                            "Для связи: @" + userByChatId.getNickname() + "\n" +
-                            "/set_role" + userByChatId.getChatId());
-                    return;
+                    requestToBuySub(callbackQuery, data, chatId);
                 } else if (data.startsWith(Role.ADMIN.name()) ||
                         data.startsWith(Role.USER.name()) ||
                         data.startsWith(Role.PREMIUM_USER.name())) {
-                    Long chatIdSelectedUser = Long.valueOf(data.replaceAll("\\D", ""));
-                    String chooseRole = data.replaceAll("\\d", "").trim();
-                    UserDto userByChatId = userService.updateRoleByChatId(chatIdSelectedUser, chooseRole);
-                    sendMessageToUser(chatId, "Роль у: " + userByChatId.getNickname() + " на " + userByChatId.getRole());
-                    sendMessageToUser(chatIdSelectedUser, "Вам обновили роль на: " + userByChatId.getRole());
+                    updateRole(data, chatId);
                 }
                 break;
         }
+    }
+
+    private void requestToBuySub(CallbackQuery callbackQuery, String data, Long chatId) {
+        String sub = data.replaceAll("Купить:", "");
+        UserDto userByChatId = userService.getUserByChatId(chatId);
+        sendMessageToUser(1622241974L, "Имя: " + callbackQuery.getFrom().getFirstName() + "\n" +
+                "Подписка: " + userByChatId.getRole() + "\n" +
+                "Хочет купить: " + sub + "\n" +
+                "Для связи: @" + userByChatId.getNickname() + "\n" +
+                "/set_role" + userByChatId.getChatId());
+    }
+
+    private void updateRole(String data, Long chatId) {
+        Long chatIdSelectedUser = Long.valueOf(data.replaceAll("\\D", ""));
+        String chooseRole = data.replaceAll("\\d", "").trim();
+        UserDto userByChatId = userService.updateRoleByChatId(chatIdSelectedUser, chooseRole);
+        sendMessageToUser(chatId, "Роль у: " + userByChatId.getNickname() + " на " + userByChatId.getRole());
+        sendMessageToUser(chatIdSelectedUser, "Вам обновили роль на: " + userByChatId.getRole());
     }
 
     private void handleGameCommand(Long chatId) {
@@ -311,7 +341,7 @@ public class MyBot extends TelegramLongPollingBot {
         Optional<GameDto> gameByGameId = gameService.getGameByGameId(gameId);
         gameByGameId.ifPresent(gameDto -> {
             showAllDescription(stringBuilder, gameDto, tempCreatorId);
-            if (gameDto.getGif() != null) {
+            if (gameDto.getGif() != null && !gameDto.getGif().isEmpty()) {
                 sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             } else {
                 sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
@@ -449,6 +479,7 @@ public class MyBot extends TelegramLongPollingBot {
         user.setStatus(UserStatus.DONT_SENT);
         user.setAStatus(AdminStatus.DONT_WRITE);
         user.setTempChatIdForReply(0L);
+        user.setDateOfRegisterAcc(LocalDate.now());
         userService.save(userMapper.toDto(user));
         editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы успешно зарегистрированы! ✅\n" +
                 "\n" +

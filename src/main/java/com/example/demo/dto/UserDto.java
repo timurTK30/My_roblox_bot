@@ -3,6 +3,8 @@ package com.example.demo.dto;
 import com.example.demo.domain.Game;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 public class UserDto {
 
@@ -12,6 +14,7 @@ public class UserDto {
     private String role;
     private String status;
     private String aStatus;
+    private LocalDate dateOfRegisterAcc;
     private Long tempChatIdForReply;
     private Game game;
 
@@ -24,6 +27,7 @@ public class UserDto {
                 ", role='" + role + '\'' +
                 ", status='" + status + '\'' +
                 ", aStatus='" + aStatus + '\'' +
+                ", dateOfRegisterAcc=" + dateOfRegisterAcc +
                 ", tempChatIdForReply=" + tempChatIdForReply +
                 '}';
     }
