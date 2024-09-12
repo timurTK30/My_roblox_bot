@@ -94,26 +94,36 @@ public class MyBot extends TelegramLongPollingBot {
         } else if (text.startsWith(SET_ROLE.getCmd()) && isUserAdmin(chatId)) {
             requestToChangeRole(text, chatId);
         } else if (text.startsWith(PROFILE.getCmd())) {
-            UserDto userByChatId = userService.getUserByChatId(chatId);
-            GameDto gameByGameId = gameService.getGameByGameId(userByChatId.getGame().getId()).get();
-            String information = "👤 <b>Профиль пользователя</b>\n\n" +
-                    "📛 <b>Имя:</b> " + userByChatId.getNickname() + "\n" +
-                    "💼 <b>Подписка:</b> " + userByChatId.getRole() + "\n\n" +
-                    "🎮 <b>Игра, которую вы хотите сыграть с кем-то:</b> \n" +
-                    gameByGameId.getName() + " [Запросить игру](/game" + gameByGameId.getId() + ")\n\n" +
-                    "📅 <b>Дата регистрации:</b> " + userByChatId.getDateOfRegisterAcc() + "\n" +
-                    "⏳ <b>Ваш аккаунт существует:</b> " + Period.between(userByChatId.getDateOfRegisterAcc(), LocalDate.now()).getDays() + " дней\n\n" +
-                    "📊 <b>Статистика профиля:</b> \n" +
-                    "    • Ваша подписка предоставляет доступ к специальным функциям, таким как эксклюзивные игры и повышенные привилегии.\n" +
-                    "    • Регулярно участвуйте в играх с другими пользователями, чтобы зарабатывать бонусы и достижения.\n" +
-                    "    • Не забывайте обновлять свой профиль и следить за активностью в своем аккаунте!\n\n" +
-                    "💬 <b>Свяжитесь с поддержкой</b>, если у вас возникли вопросы: /help";
-            sendMessageToUser(chatId, information);
-
+            getProfile(chatId);
         } else {
             handleUserMessage(chatId, text);
         }
 
+    }
+
+    private void getProfile(Long chatId) {
+        UserDto userByChatId = userService.getUserByChatId(chatId);
+        Game game = userByChatId.getGame();
+        StringBuilder information = new StringBuilder();
+        information.append("👤 <b>Профиль пользователя</b>\n\n")
+                .append("📛 <b>Имя:</b> ").append(userByChatId.getNickname()).append("\n")
+                .append("💼 <b>Подписка:</b> ").append(userByChatId.getRole()).append("\n\n");
+
+        if (game != null) {
+            information.append("🎮 <b>Игра, которую вы хотите сыграть с кем-то:</b> \n")
+                    .append(game.getName()).append(" [Запросить игру](/game").append(game.getId()).append(")\n\n");
+        }
+
+        information.append("📅 <b>Дата регистрации:</b> ").append(userByChatId.getDateOfRegisterAcc()).append("\n")
+                .append("⏳ <b>Ваш аккаунт существует:</b> ")
+                .append(Period.between(userByChatId.getDateOfRegisterAcc(), LocalDate.now()).getDays()).append(" дней\n\n")
+                .append("📊 <b>Статистика профиля:</b> \n")
+                .append("    • Ваша подписка предоставляет доступ к специальным функциям, таким как эксклюзивные игры и повышенные привилегии.\n")
+                .append("    • Регулярно участвуйте в играх с другими пользователями, чтобы зарабатывать бонусы и достижения.\n")
+                .append("    • Не забывайте обновлять свой профиль и следить за активностью в своем аккаунте!\n\n")
+                .append("💬 <b>Свяжитесь с поддержкой</b>, если у вас возникли вопросы: /help");
+
+        sendMessageToUser(chatId, information.toString());
     }
 
     private void requestToChangeRole(String text, Long chatId) {
@@ -129,6 +139,11 @@ public class MyBot extends TelegramLongPollingBot {
         switch (data) {
             case "Зарегистрировать в системе\uD83D\uDC7E":
                 register(chatId, callbackQuery);
+                List<String> commandsList = Arrays.stream(values()).toList().stream().filter(cmd -> !cmd.isCmdAdmin() && cmd.isNeedToWath()).map(Commands::getCmdName).toList();
+                sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
+                                "\n" +
+                                "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
+                        commandsList, commandsList.size() / 2);
                 break;
             case "Написать админу":
                 handleAdminMessage(chatId, callbackQuery.getMessage().getMessageId());
