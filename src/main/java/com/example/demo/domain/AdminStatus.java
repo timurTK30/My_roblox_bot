@@ -5,5 +5,6 @@ public enum AdminStatus {
     DONT_WRITE,
     WANT_REPLY,
     WRITE,
-    SENT
+    SENT,
+    NOTIFY_ALL_USERS;
 }

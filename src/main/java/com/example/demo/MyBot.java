@@ -82,8 +82,6 @@ public class MyBot extends TelegramLongPollingBot {
             wellcome(chatId);
         } else if (text.startsWith(HELP.getCmd())) {
             help(chatId);
-        } else if (text.startsWith(READ_SUPP_MSG.getCmd()) && isUserAdmin(chatId)) {
-            readSuppMsg(chatId);
         } else if (text.equalsIgnoreCase(GAMES.getCmd())) {
             handleGameCommand(chatId);
         } else if (text.startsWith(GAME.getCmd())) {
@@ -91,14 +89,32 @@ public class MyBot extends TelegramLongPollingBot {
             getGameById(chatId, gameId);
         } else if (text.startsWith(BUY_SUBSCRIBE.getCmd())) {
             subscription(chatId);
-        } else if (text.startsWith(SET_ROLE.getCmd()) && isUserAdmin(chatId)) {
-            requestToChangeRole(text, chatId);
         } else if (text.startsWith(PROFILE.getCmd())) {
             getProfile(chatId);
+        } else if (text.startsWith(MENU.getCmd())) {
+            getMenuByRole(chatId);
+        } else if (isUserAdmin(chatId)) {
+            if (text.startsWith(STATISTISC.getCmd())) {
+                statistics(chatId);
+            } else if (text.startsWith(RESTART.getCmd())) {
+                restart(chatId);
+            } else if (text.startsWith(SET_ROLE.getCmd())) {
+                requestToChangeRole(text, chatId);
+            } else if (text.startsWith(READ_SUPP_MSG.getCmd())) {
+                readSuppMsg(chatId);
+            }
         } else {
             handleUserMessage(chatId, text);
         }
 
+    }
+
+    private void getMenuByRole(Long chatId) {
+        if (isUserAdmin(chatId)) {
+            menuForAdmin(chatId);
+        } else {
+            menuForUser(chatId);
+        }
     }
 
     private void getProfile(Long chatId) {
@@ -139,11 +155,7 @@ public class MyBot extends TelegramLongPollingBot {
         switch (data) {
             case "Зарегистрировать в системе\uD83D\uDC7E":
                 register(chatId, callbackQuery);
-                List<String> commandsList = Arrays.stream(values()).toList().stream().filter(cmd -> !cmd.isCmdAdmin() && cmd.isNeedToWath()).map(Commands::getCmdName).toList();
-                sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
-                                "\n" +
-                                "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
-                        commandsList, commandsList.size() / 2);
+                getMenuByRole(chatId);
                 break;
             case "Написать админу":
                 handleAdminMessage(chatId, callbackQuery.getMessage().getMessageId());
@@ -164,6 +176,31 @@ public class MyBot extends TelegramLongPollingBot {
             case "SURVIVAL":
                 readGames(chatId, GameGenre.valueOf(data), callbackQuery.getMessage().getMessageId());
                 break;
+            case "\uD83D\uDC81Помошь":
+                help(chatId);
+                break;
+            case "🎮Игры":
+                handleGameCommand(chatId);
+                break;
+            case "📨Купить подписки":
+                subscription(chatId);
+                break;
+            case "ℹ️Профиль":
+                getProfile(chatId);
+                break;
+            case "Прочитать сообщение от юзера":
+                readSuppMsg(chatId);
+                break;
+            case "Перезагрузить бота":
+                restart(chatId);
+                break;
+            case "\uD83D\uDCCA Статистика использования бота":
+                statistics(chatId);
+                break;
+            case "✉\uFE0F Отправить сообщение всем пользователям":
+                sendMessageToUser(chatId, "Введите сообщение: ");
+                userService.updateAdminStatusByChatId(chatId, AdminStatus.NOTIFY_ALL_USERS, 0L);
+
             default:
                 if (data.startsWith("User")) {
                     handleUserReplyRequest(chatId, data);
@@ -184,6 +221,80 @@ public class MyBot extends TelegramLongPollingBot {
                 }
                 break;
         }
+    }
+
+    private void statistics(Long chatId) {
+        List<UserDto> userDtos = userService.readAll();
+        List<SuportMassageDto> massageDtos = supportMassageServiceImpl.readAll();
+        Commands[] commands = values();
+        long amountOfSuppMsg = massageDtos.size();
+        long amountOfUsers = userDtos.stream().filter(user -> !user.getRole().equalsIgnoreCase(Role.ADMIN.name())).count();
+        long amountOfAdmins = userDtos.stream().filter(user -> user.getRole().equalsIgnoreCase(Role.ADMIN.name())).count();
+        long amountOfCommands = commands.length;
+
+        sendMessageToUser(chatId, "Привет, Админ! Вот последние данные о активности вашего бота:\n" +
+                "\n" +
+                "1. <b>Всего пользователей: </b> " + amountOfUsers + " \uD83D\uDCC8\n" +
+                "2. <b>Всего администраторов: </b> " + amountOfAdmins + "\uD83D\uDC69\u200D\uD83D\uDCBC\uD83D\uDC68\u200D\uD83D\uDCBC\n" +
+                "3. <b>Отправлено сообщений в поддержку: </b> " + amountOfSuppMsg + " \uD83D\uDCAC\n" +
+                "4. <b>Всего команд: </b> " + amountOfCommands + "\uD83D\uDEE0");
+    }
+
+    private void restart(Long chatId) {
+        sendPhotoToUser(chatId, "C:\\project_java\\My_roblox_bot_new\\src\\main\\resources\\img\\fatalError.jpg", "Программа остоновлена", List.of("Bye bye"), 1);
+        System.exit(0);
+    }
+
+    private void menuForUser(Long chatId) {
+        List<String> commandsList = Arrays.stream(values()).toList().stream().filter(cmd -> !cmd.isCmdAdmin() && cmd.isNeedToShow()).map(Commands::getCmdName).toList();
+        sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
+                        "\n" +
+                        "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
+                commandsList, commandsList.size() / 2);
+    }
+
+    private void menuForAdmin(Long chatId) {
+        List<String> commandsList = Arrays.stream(values()).toList().stream().filter(Commands::isNeedToShow).map(Commands::getCmdName).toList();
+        sendMessageToUser(chatId, "\uD83D\uDC4B Привет, Администратор! Здесь ты можешь управлять игровым процессом и создавать задания для учеников. Выбирай команду и погружайся в обучение:\n" +
+                        "\n" +
+                        "⚙\uFE0F <b>Управление ботом </b>\n" +
+                        "\n" +
+                        "\uD83D\uDD04 Перезапустить бота (/restart) \n" +
+                        "\uD83D\uDEE0 Настроить команды\n" +
+                        "\uD83D\uDCCA Статистика использования бота (/statistics)\n" +
+                        "\n" +
+                        "\uD83C\uDFAE <b>Игровые Задания</b>\n" +
+                        "\n" +
+                        "\uD83C\uDFAF Создать новое задание\n" +
+                        "✏\uFE0F Редактировать существующие задания\n" +
+                        "\uD83C\uDFC6 Посмотреть лучших учеников\n" +
+                        "\n" +
+                        "\uD83D\uDCDA <b>Обучение</b>\n" +
+                        "\n" +
+                        "\uD83D\uDCA1 Добавить обучающий квест\n" +
+                        "❓ Создать викторину для проверки знаний\n" +
+                        "\n" +
+                        "\uD83C\uDFC5 <b>Прогресс и Награды</b>\n" +
+                        "\n" +
+                        "\uD83C\uDF81 Назначить награду за выполненные задания\n" +
+                        "\uD83D\uDCCA Проверить прогресс учеников\n" +
+                        "\n" +
+                        "\uD83D\uDCCA <b>Отчеты</b>\n" +
+                        "\n" +
+                        "\uD83D\uDD0E Посмотреть успехи и оценки учеников\n" +
+                        "\uD83D\uDCDD Сформировать отчет по заданиям\n" +
+                        "\n" +
+                        "\uD83D\uDCE2 <b>Уведомления</b>\n" +
+                        "\n" +
+                        "✉\uFE0F Отправить сообщение всем пользователям(/notifyAllUsers)\n" +
+                        "\uD83D\uDD14 Настроить уведомления\n" +
+                        "\n" +
+                        "\uD83D\uDCBC <b>Другое</b>\n" +
+                        "\n" +
+                        "\uD83D\uDCC5 Запланировать обновления\n" +
+                        "\uD83D\uDCBE Сделать резервную копию базы данных\n" +
+                        "\uD83D\uDCD6 Посмотреть историю обновлений бота",
+                commandsList, commandsList.size() / 2);
     }
 
     private void requestToBuySub(CallbackQuery callbackQuery, String data, Long chatId) {
@@ -228,6 +339,7 @@ public class MyBot extends TelegramLongPollingBot {
                 } else {
                     sendMessageToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки");
                 }
+                //TODO перенести проверку админа отдельно
             } else if (user.getRole().equalsIgnoreCase("ADMIN") && user.getAStatus().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
                 sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
@@ -235,6 +347,11 @@ public class MyBot extends TelegramLongPollingBot {
                 saveSuppMassageFromUser(chatId, message);
                 sendMessageToUser(chatId, "Ваше сообщение обновлено");
                 userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
+            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.NOTIFY_ALL_USERS.name())) {
+                List<UserDto> userDtos = userService.readAll();
+                for (UserDto u : userDtos) {
+                    sendMessageToUser(u.getChatId(), message);
+                }
             }
         } catch (Exception e) {
             System.out.println("Человек не ожидает на отправку сообщений");
@@ -327,7 +444,7 @@ public class MyBot extends TelegramLongPollingBot {
 
     public boolean isUserAdmin(Long chatId) {
         UserDto userByChatId = userService.getUserByChatId(chatId);
-        return userByChatId.getRole().equalsIgnoreCase("ADMIN");
+        return userByChatId.getRole().equalsIgnoreCase(Role.ADMIN.name());
     }
 
     public boolean isSuppMsgExistByUserChatId(Long chatId) {
@@ -363,10 +480,6 @@ public class MyBot extends TelegramLongPollingBot {
             }
 
         });
-    }
-
-    private void updateRole(Long chatId) {
-
     }
 
     public void readGames(Long chatId, GameGenre genre, Integer msgId) {
