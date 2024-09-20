@@ -16,7 +16,7 @@ public enum Commands {
     RESTART("/restart", "Перезагрузить бота", true, true),
     PROFILE("/profile","ℹ️Профиль", false, true),
     STATISTISC("/statistics", "📊 Статистика использования бота", true, true),
-    NOTIFY_ALL_USERS("/notifyAllUsers", "✉\uFE0F Отправить сообщение всем пользователям", true, true);
+    NOTIFY_ALL_USERS("/notifyAllUsers", "✉\uFE0F Отправить сообщение", true, true);
 
     private final String cmd;
     private final String cmdName;

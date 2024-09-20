@@ -102,6 +102,8 @@ public class MyBot extends TelegramLongPollingBot {
                 requestToChangeRole(text, chatId);
             } else if (text.startsWith(READ_SUPP_MSG.getCmd())) {
                 readSuppMsg(chatId);
+            } else {
+                handleAdminMessage(chatId, text);
             }
         } else {
             handleUserMessage(chatId, text);
@@ -197,7 +199,7 @@ public class MyBot extends TelegramLongPollingBot {
             case "\uD83D\uDCCA Статистика использования бота":
                 statistics(chatId);
                 break;
-            case "✉\uFE0F Отправить сообщение всем пользователям":
+            case "✉\uFE0F Отправить сообщение":
                 sendMessageToUser(chatId, "Введите сообщение: ");
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.NOTIFY_ALL_USERS, 0L);
 
@@ -329,6 +331,27 @@ public class MyBot extends TelegramLongPollingBot {
         sendMessageToUser(chatId, "Напишите сообщение");
     }
 
+    private void handleAdminMessage(Long chatId, String message) {
+        try {
+            UserDto user = userService.getUserByChatId(chatId);
+            if (user.getAStatus().equalsIgnoreCase(AdminStatus.NOTIFY_ALL_USERS.name())) {
+                List<UserDto> userDtos = userService.readAll();
+                for (UserDto u : userDtos) {
+                    sendMessageToUser(u.getChatId(), message);
+                }
+                userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
+                sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
+                userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
+            } else {
+                handleUserMessage(chatId, message);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Человек не ожидает на отправку сообщений");
+        }
+    }
+
     private void handleUserMessage(Long chatId, String message) {
         try {
             UserDto user = userService.getUserByChatId(chatId);
@@ -339,19 +362,10 @@ public class MyBot extends TelegramLongPollingBot {
                 } else {
                     sendMessageToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки");
                 }
-                //TODO перенести проверку админа отдельно
-            } else if (user.getRole().equalsIgnoreCase("ADMIN") && user.getAStatus().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
-                sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
-                userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
             } else if (user.getStatus().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
                 saveSuppMassageFromUser(chatId, message);
                 sendMessageToUser(chatId, "Ваше сообщение обновлено");
                 userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
-            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.NOTIFY_ALL_USERS.name())) {
-                List<UserDto> userDtos = userService.readAll();
-                for (UserDto u : userDtos) {
-                    sendMessageToUser(u.getChatId(), message);
-                }
             }
         } catch (Exception e) {
             System.out.println("Человек не ожидает на отправку сообщений");
