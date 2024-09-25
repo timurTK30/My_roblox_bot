@@ -16,9 +16,9 @@ import java.util.Optional;
 @Service
 public class GameServiceImpl implements GameService {
 
-    private GameRepository gameRepository;
+    private final GameRepository gameRepository;
 
-    private GameMapper gameMapper;
+    private final GameMapper gameMapper;
 
     @Autowired
     public GameServiceImpl(GameRepository gameRepository, GameMapper gameMapper) {

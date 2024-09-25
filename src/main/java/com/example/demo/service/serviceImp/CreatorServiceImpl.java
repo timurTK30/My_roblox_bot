@@ -15,9 +15,9 @@ import java.util.List;
 @Service
 public class CreatorServiceImpl implements CreatorService {
 
-    private CreatorRepository creatorRepository;
+    private final CreatorRepository creatorRepository;
 
-    private CreatorMapper creatorMapper;
+    private final CreatorMapper creatorMapper;
 
     @Autowired
     public CreatorServiceImpl(CreatorRepository creatorRepository, CreatorMapper creatorMapper) {

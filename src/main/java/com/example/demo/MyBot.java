@@ -10,6 +10,7 @@ import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.CreatorService;
 import com.example.demo.service.GameService;
+import com.example.demo.service.QuestService;
 import com.example.demo.service.UserService;
 import com.example.demo.service.serviceImp.SupportMassageServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -50,9 +51,10 @@ public class MyBot extends TelegramLongPollingBot {
     private final SupportMassageServiceImpl supportMassageServiceImpl;
     private final SuportMassageMapper suportMassageMapper;
     private final GameMapper gameMapper;
+    private final QuestService questService;
 
     @Autowired
-    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper) {
+    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper, QuestService questService) {
         this.botConfig = botConfig;
         this.creatorService = creatorService;
         this.gameService = gameService;
@@ -61,6 +63,7 @@ public class MyBot extends TelegramLongPollingBot {
         this.supportMassageServiceImpl = supportMassageServiceImpl;
         this.suportMassageMapper = suportMassageMapper;
         this.gameMapper = gameMapper;
+        this.questService = questService;
     }
 
     @Override
@@ -202,7 +205,12 @@ public class MyBot extends TelegramLongPollingBot {
             case "✉\uFE0F Отправить сообщение":
                 sendMessageToUser(chatId, "Введите сообщение: ");
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.NOTIFY_ALL_USERS, 0L);
-
+                break;
+            case "Доступные квесты":
+                System.out.println("quest");
+                break;
+            case "Создать квест":
+                questService.getQuestById(2L);
             default:
                 if (data.startsWith("User")) {
                     handleUserReplyRequest(chatId, data);
@@ -271,7 +279,7 @@ public class MyBot extends TelegramLongPollingBot {
                         "✏\uFE0F Редактировать существующие задания\n" +
                         "\uD83C\uDFC6 Посмотреть лучших учеников\n" +
                         "\n" +
-                        "\uD83D\uDCDA <b>Обучение</b>\n" +
+                        "\uD83D\uDCDA <b>Квесты</b>\n" +
                         "\n" +
                         "\uD83D\uDCA1 Добавить обучающий квест\n" +
                         "❓ Создать викторину для проверки знаний\n" +

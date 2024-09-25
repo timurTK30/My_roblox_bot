@@ -16,7 +16,9 @@ public enum Commands {
     RESTART("/restart", "Перезагрузить бота", true, true),
     PROFILE("/profile","ℹ️Профиль", false, true),
     STATISTISC("/statistics", "📊 Статистика использования бота", true, true),
-    NOTIFY_ALL_USERS("/notifyAllUsers", "✉\uFE0F Отправить сообщение", true, true);
+    NOTIFY_ALL_USERS("/notifyAllUsers", "✉\uFE0F Отправить сообщение", true, true),
+    SHOW_QUESTS("/quests", "Доступные квесты", false, true),
+    CREATE_QUESTS("/create_quests", "Создать квест", true, true);
 
     private final String cmd;
     private final String cmdName;
