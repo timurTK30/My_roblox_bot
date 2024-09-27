@@ -32,13 +32,15 @@ public class QuestServiceImpl implements QuestService {
     }
 
     @Override
-    public Quest updateById(Long id, Quest quest) {
-        return null;
+    public Optional<Quest> updateById(Long id, Quest quest) {
+        Optional<Quest> questById = getQuestById(id);
+        quest.setId(id);
+        return questById;
     }
 
     @Override
     public void deleteById(Long id) {
-
+        repository.deleteById(id);
     }
 
     @Override
