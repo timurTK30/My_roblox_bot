@@ -32,10 +32,20 @@ public class QuestServiceImpl implements QuestService {
     }
 
     @Override
-    public Optional<Quest> updateById(Long id, Quest quest) {
+    public boolean updateById(Long id, Quest quest) {
         Optional<Quest> questById = getQuestById(id);
-        quest.setId(id);
-        return questById;
+        if (questById.isEmpty()){
+            log.info("Такого квеста нет");
+            return false;
+        }
+        Quest notUpdatedQuest = questById.get();
+        notUpdatedQuest.setCreatorOfQuest(quest.getCreatorOfQuest());
+        notUpdatedQuest.setGame(quest.getGame());
+        notUpdatedQuest.setReward(quest.getReward());
+        notUpdatedQuest.setDeprecated(quest.isDeprecated());
+        notUpdatedQuest.setDescription(quest.getDescription());
+        save(quest);
+        return true;
     }
 
     @Override

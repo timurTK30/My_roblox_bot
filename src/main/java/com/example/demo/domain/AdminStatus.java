@@ -6,5 +6,6 @@ public enum AdminStatus {
     WANT_REPLY,
     WRITE,
     SENT,
-    NOTIFY_ALL_USERS;
+    NOTIFY_ALL_USERS,
+    CHANGE_DESCRIPTION_QUEST;
 }

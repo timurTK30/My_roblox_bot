@@ -210,7 +210,31 @@ public class MyBot extends TelegramLongPollingBot {
                 System.out.println("quest");
                 break;
             case "Создать квест":
-                questService.getQuestById(2L);
+                Quest quest = new Quest();
+                UserDto userByChatId = userService.getUserByChatId(chatId);
+                quest.setCreatorOfQuest(userMapper.toEntity(userByChatId));
+                quest.setDeprecated(false);
+                questService.save(quest);
+
+                String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
+
+                String questInfo = String.format(
+                        "🎮 <b>Квест:</b> %s \n\n" +
+                                "📝 <b>Описание:\n</b>%s\n\n" +
+                                "🏆 <b>Награда:</b>\n%s\n\n" +
+                                "👤 <b>Создатель квеста:</b>\n%s\n\n" +
+                                "📅 <b>Состояние:</b>\n%s",
+                        quest.getGame(),
+                        quest.getDescription(),
+                        quest.getReward(),
+                        quest.getCreatorOfQuest().getNickname(),
+                        status);
+                sendMessageToUser(chatId, questInfo);
+                break;
+            case "Добавить описание для квеста":
+                sendMessageToUser(chatId, "Введите описание: ");
+                userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
+                break;
             default:
                 if (data.startsWith("User")) {
                     handleUserReplyRequest(chatId, data);
@@ -351,7 +375,15 @@ public class MyBot extends TelegramLongPollingBot {
             } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
                 sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
-            } else {
+            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_DESCRIPTION_QUEST.name())){
+                Optional<Quest> questById = questService.getQuestById(1L);
+                Quest quest = questById.get();
+                quest.setDescription(message);
+                questService.updateById(1L, quest);
+
+            }
+
+            else {
                 handleUserMessage(chatId, message);
             }
 

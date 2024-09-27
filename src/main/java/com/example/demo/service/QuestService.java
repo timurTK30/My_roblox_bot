@@ -9,7 +9,7 @@ public interface QuestService {
 
     Quest save(Quest quest);
     List<Quest> readAll();
-    Optional<Quest> updateById(Long id, Quest quest);
+    boolean updateById(Long id, Quest quest);
     void deleteById(Long id);
     Optional<Quest> getQuestById(Long id);
 }
