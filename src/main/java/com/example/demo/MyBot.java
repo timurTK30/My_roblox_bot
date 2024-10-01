@@ -209,7 +209,11 @@ public class MyBot extends TelegramLongPollingBot {
             case "Доступные квесты":
                 System.out.println("quest");
                 break;
+            case "Квест меню":
+                menuForCreateQuest(chatId);
+                break;
             case "Создать квест":
+                //TODO переместить в метод
                 Quest quest = new Quest();
                 UserDto userByChatId = userService.getUserByChatId(chatId);
                 quest.setCreatorOfQuest(userMapper.toEntity(userByChatId));
@@ -229,11 +233,16 @@ public class MyBot extends TelegramLongPollingBot {
                         quest.getReward(),
                         quest.getCreatorOfQuest().getNickname(),
                         status);
-                sendMessageToUser(chatId, questInfo);
-                break;
-            case "Добавить описание для квеста":
-                sendMessageToUser(chatId, "Введите описание: ");
-                userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
+
+                Quest lastQuest = getLastQuest();
+
+                //TODO при создании квеста появляется кнопка "Создать квест id". Исправить!
+                List<String> commandsList = Arrays.stream(values()).toList().stream()
+                        .filter(Commands::isQuest)
+                        .map(Commands::getCmdName)
+                        .map(commands -> commands.concat(" " + lastQuest.getId()))
+                        .toList();
+                sendMessageToUser(chatId, questInfo, commandsList, commandsList.size());
                 break;
             default:
                 if (data.startsWith("User")) {
@@ -252,9 +261,18 @@ public class MyBot extends TelegramLongPollingBot {
                         data.startsWith(Role.USER.name()) ||
                         data.startsWith(Role.PREMIUM_USER.name())) {
                     updateRole(data, chatId);
+                } else if (data.startsWith("Добавить описание для квеста")){
+                    sendMessageToUser(chatId, "Введите описание: ");
+                    userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
                 }
                 break;
         }
+    }
+
+    private Quest getLastQuest() {
+        List<Quest> questList = questService.readAll();
+        Quest lastQuest = questList.get(questList.size() - 1);
+        return lastQuest;
     }
 
     private void statistics(Long chatId) {
@@ -288,7 +306,11 @@ public class MyBot extends TelegramLongPollingBot {
     }
 
     private void menuForAdmin(Long chatId) {
-        List<String> commandsList = Arrays.stream(values()).toList().stream().filter(Commands::isNeedToShow).map(Commands::getCmdName).toList();
+        List<String> commandsList = Arrays.stream(values()).toList().stream()
+                .filter(commands -> !commands.isQuest())
+                .filter(Commands::isCmdAdmin)
+                .map(Commands::getCmdName)
+                .toList();
         sendMessageToUser(chatId, "\uD83D\uDC4B Привет, Администратор! Здесь ты можешь управлять игровым процессом и создавать задания для учеников. Выбирай команду и погружайся в обучение:\n" +
                         "\n" +
                         "⚙\uFE0F <b>Управление ботом </b>\n" +
@@ -329,6 +351,14 @@ public class MyBot extends TelegramLongPollingBot {
                         "\uD83D\uDCBE Сделать резервную копию базы данных\n" +
                         "\uD83D\uDCD6 Посмотреть историю обновлений бота",
                 commandsList, commandsList.size() / 2);
+    }
+
+    private void menuForCreateQuest(Long chatId) {
+        List<String> commandsList = Arrays.stream(values()).toList().stream()
+                .filter(Commands::isQuest)
+                .map(Commands::getCmdName)
+                .toList();
+        sendMessageToUser(chatId, "В этом спецельном меню ты сможешь создавать и настраивать квесты", commandsList, commandsList.size() / 2);
     }
 
     private void requestToBuySub(CallbackQuery callbackQuery, String data, Long chatId) {
@@ -375,15 +405,15 @@ public class MyBot extends TelegramLongPollingBot {
             } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
                 sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
-            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_DESCRIPTION_QUEST.name())){
-                Optional<Quest> questById = questService.getQuestById(1L);
+            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_DESCRIPTION_QUEST.name())) {
+                //TODO исправить , чтобы мы в методе обновить квест указывали id
+                Optional<Quest> questById = questService.getQuestById(getLastQuest().getId());
                 Quest quest = questById.get();
                 quest.setDescription(message);
-                questService.updateById(1L, quest);
+                questService.updateById(getLastQuest().getId(), quest);
+                userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
 
-            }
-
-            else {
+            } else {
                 handleUserMessage(chatId, message);
             }
 
