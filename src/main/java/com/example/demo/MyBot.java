@@ -264,6 +264,9 @@ public class MyBot extends TelegramLongPollingBot {
                 } else if (data.startsWith("Добавить описание для квеста")){
                     sendMessageToUser(chatId, "Введите описание: ");
                     userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
+                } else if (data.startsWith("Добавить награду")){
+                    sendMessageToUser(chatId, "Ввидите награду: ");
+                    userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
                 }
                 break;
         }
@@ -413,7 +416,14 @@ public class MyBot extends TelegramLongPollingBot {
                 questService.updateById(getLastQuest().getId(), quest);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
 
-            } else {
+            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_REWARD_QUEST.name())){
+                Optional<Quest> questById = questService.getQuestById(getLastQuest().getId());
+                Quest quest = questById.get();
+                quest.setReward(message);
+                questService.updateById(getLastQuest().getId(), quest);
+                userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+            }
+            else {
                 handleUserMessage(chatId, message);
             }
 
