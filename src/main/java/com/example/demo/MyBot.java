@@ -207,7 +207,12 @@ public class MyBot extends TelegramLongPollingBot {
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.NOTIFY_ALL_USERS, 0L);
                 break;
             case "Доступные квесты":
-                System.out.println("quest");
+                List<Quest> questList = questService.readAll();
+                questList.forEach(quest -> {
+                    String outputQuest = outputQuest(quest);
+                    String btn = quest.isDeprecated() ? quest.getId() + " Изменить на ✅" : quest.getId() + " Изменить на ❌";
+                    sendMessageToUser(chatId, outputQuest, List.of(btn), 1);
+                });
                 break;
             case "Квест меню":
                 menuForCreateQuest(chatId);
@@ -220,19 +225,7 @@ public class MyBot extends TelegramLongPollingBot {
                 quest.setDeprecated(false);
                 questService.save(quest);
 
-                String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
-
-                String questInfo = String.format(
-                        "🎮 <b>Квест:</b> %s \n\n" +
-                                "📝 <b>Описание:\n</b>%s\n\n" +
-                                "🏆 <b>Награда:</b>\n%s\n\n" +
-                                "👤 <b>Создатель квеста:</b>\n%s\n\n" +
-                                "📅 <b>Состояние:</b>\n%s",
-                        quest.getGame(),
-                        quest.getDescription(),
-                        quest.getReward(),
-                        quest.getCreatorOfQuest().getNickname(),
-                        status);
+                String questInfo = outputQuest(quest);
 
                 Quest lastQuest = getLastQuest();
 
@@ -261,12 +254,28 @@ public class MyBot extends TelegramLongPollingBot {
                         data.startsWith(Role.USER.name()) ||
                         data.startsWith(Role.PREMIUM_USER.name())) {
                     updateRole(data, chatId);
-                } else if (data.startsWith("Добавить описание для квеста")){
+                } else if (data.startsWith("Добавить описание для квеста")) {
                     sendMessageToUser(chatId, "Введите описание: ");
                     userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
-                } else if (data.startsWith("Добавить награду")){
+                } else if (data.startsWith("Добавить награду")) {
                     sendMessageToUser(chatId, "Ввидите награду: ");
                     userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
+                } else if (data.startsWith("Добавить игру")) {
+                    sendMessageToUser(chatId, "Введите название игры: ");
+                    userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_GAME_QUEST, 0L);
+                } else if (data.contains("Изменить на")) {
+                    Long id = Long.valueOf(data.substring(0, 1));
+                    Optional<Quest> questById = questService.getQuestById(id);
+
+                    if (questById.isEmpty()) {
+                        sendMessageToUser(chatId, "Такого квеста нет");
+                        return;
+                    }
+
+                    Quest existQuest = questById.get();
+                    existQuest.setDeprecated(data.endsWith("❌"));
+
+                    questService.updateById(id, existQuest);
                 }
                 break;
         }
@@ -382,6 +391,22 @@ public class MyBot extends TelegramLongPollingBot {
         sendMessageToUser(chatIdSelectedUser, "Вам обновили роль на: " + userByChatId.getRole());
     }
 
+    private String outputQuest(Quest quest) {
+        String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
+        String gameName = quest.getGame() != null ? quest.getGame().getName() : "нет игры";
+        return String.format(
+                "🎮 <b>Квест для игры:</b> %s \n\n" +
+                        "📝 <b>Описание:\n</b>%s\n\n" +
+                        "🏆 <b>Награда:</b>\n%s\n\n" +
+                        "👤 <b>Создатель квеста:</b>\n%s\n\n" +
+                        "📅 <b>Состояние:</b>\n%s",
+                gameName,
+                quest.getDescription(),
+                quest.getReward(),
+                quest.getCreatorOfQuest().getNickname(),
+                status);
+    }
+
     private void handleGameCommand(Long chatId) {
         GameGenre[] gameGenres = GameGenre.values();
         List<String> buttons = Arrays.stream(gameGenres)
@@ -416,14 +441,26 @@ public class MyBot extends TelegramLongPollingBot {
                 questService.updateById(getLastQuest().getId(), quest);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
 
-            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_REWARD_QUEST.name())){
+            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_REWARD_QUEST.name())) {
                 Optional<Quest> questById = questService.getQuestById(getLastQuest().getId());
                 Quest quest = questById.get();
                 quest.setReward(message);
                 questService.updateById(getLastQuest().getId(), quest);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
-            }
-            else {
+            } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_GAME_QUEST.name())) {
+                Optional<Quest> questById = questService.getQuestById(getLastQuest().getId());
+                Quest quest = questById.get();
+                GameDto gameByName = gameService.getGameByName(message);
+                quest.setGame(gameMapper.toEntity(gameByName));
+                questService.updateById(quest.getId(), quest);
+                userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+//                if (gameByName != null) {
+//                    quest.setGame(gameMapper.toEntity(gameByName));
+//                    questService.updateById(getLastQuest().getId(), quest);
+//                } else {
+//                    sendMessageToUser(chatId, "Данной игри которую вы вписали нету 🫤");
+//                }
+            } else {
                 handleUserMessage(chatId, message);
             }
 

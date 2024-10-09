@@ -17,15 +17,15 @@ public class Quest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
-    @PrimaryKeyJoinColumn(name = "game")
+    @ManyToOne
+    @JoinColumn(name = "game")
     private Game game;
     @Column(name = "description")
     private String description;
     @Column(name = "reward")
     private String reward;
-    @OneToOne
-    @PrimaryKeyJoinColumn(name = "creator_of_quest")
+    @ManyToOne
+    @JoinColumn(name = "creator_of_quest")
     private User creatorOfQuest;
     @Column(name = "is_deprecated")
     private boolean isDeprecated;

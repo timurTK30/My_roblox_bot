@@ -26,5 +26,4 @@ public class GameDto {
     @ToString.Exclude
     private List<User> users;
 
-
 }
