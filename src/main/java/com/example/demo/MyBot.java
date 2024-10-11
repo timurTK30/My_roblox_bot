@@ -237,6 +237,15 @@ public class MyBot extends TelegramLongPollingBot {
                         .toList();
                 sendMessageToUser(chatId, questInfo, commandsList, commandsList.size());
                 break;
+            case "Удалить старие квесты":
+                List<Quest> quests = questService.readAll();
+                for (Quest q: quests){
+                    if (q.isDeprecated()){
+                        questService.deleteById(q.getId());
+                        sendMessageToUser(chatId, "Квест с id " + q.getId() + " бил удален");
+                    }
+                }
+                break;
             default:
                 if (data.startsWith("User")) {
                     handleUserReplyRequest(chatId, data);

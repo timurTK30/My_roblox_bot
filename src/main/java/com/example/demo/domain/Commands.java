@@ -22,7 +22,8 @@ public enum Commands {
     ADD_GAME_FOR_QUEST("/addGameForQuest", "Добавить игру для квеста", true, true, true),
     ADD_DECRIPCION_FOR_QUEST("/addDescriptionForQuest", "Добавить описание для квеста", true, true, true),
     QUEST_MENU("/questMenu", "Квест меню", true, true, false),
-    ADD_REWARD_FOR_QUEST("/addReward", "Добавить награду", true, true, true);
+    ADD_REWARD_FOR_QUEST("/addReward", "Добавить награду", true, true, true),
+    CLEAR_ALL_DEPRECATED("/clearAllDeprecated", "Удалить старие квесты", true, true, true);
 
 
     private final String cmd;
