@@ -19,11 +19,9 @@ public enum Commands {
     NOTIFY_ALL_USERS("/notifyAllUsers", "✉\uFE0F Отправить сообщение", true, true, false),
     SHOW_QUESTS("/quests", "Доступные квесты", true, true, false),
     CREATE_QUESTS("/create_quests", "Создать квест", true, true, true),
-    ADD_GAME_FOR_QUEST("/addGameForQuest", "Добавить игру для квеста", true, true, true),
-    ADD_DECRIPCION_FOR_QUEST("/addDescriptionForQuest", "Добавить описание для квеста", true, true, true),
     QUEST_MENU("/questMenu", "Квест меню", true, true, false),
-    ADD_REWARD_FOR_QUEST("/addReward", "Добавить награду", true, true, true),
-    CLEAR_ALL_DEPRECATED("/clearAllDeprecated", "Удалить старие квесты", true, true, true);
+    CLEAR_ALL_DEPRECATED("/clearAllDeprecated", "Удалить старие квесты", true, true, true),
+    EDIT_QUEST("/editQuest", "Редоктировать", true, true, false);
 
 
     private final String cmd;

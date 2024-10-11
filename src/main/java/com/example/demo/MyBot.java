@@ -207,12 +207,7 @@ public class MyBot extends TelegramLongPollingBot {
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.NOTIFY_ALL_USERS, 0L);
                 break;
             case "Доступные квесты":
-                List<Quest> questList = questService.readAll();
-                questList.forEach(quest -> {
-                    String outputQuest = outputQuest(quest);
-                    String btn = quest.isDeprecated() ? quest.getId() + " Изменить на ✅" : quest.getId() + " Изменить на ❌";
-                    sendMessageToUser(chatId, outputQuest, List.of(btn), 1);
-                });
+                readAllQuests(chatId);
                 break;
             case "Квест меню":
                 menuForCreateQuest(chatId);
@@ -229,22 +224,14 @@ public class MyBot extends TelegramLongPollingBot {
 
                 Quest lastQuest = getLastQuest();
 
-                //TODO при создании квеста появляется кнопка "Создать квест id". Исправить!
-                List<String> commandsList = Arrays.stream(values()).toList().stream()
-                        .filter(Commands::isQuest)
-                        .map(Commands::getCmdName)
+                List<String> commandsList = Arrays.stream(QuestCommands.values()).toList().stream()
+                        .map(QuestCommands::getCmdName)
                         .map(commands -> commands.concat(" " + lastQuest.getId()))
                         .toList();
                 sendMessageToUser(chatId, questInfo, commandsList, commandsList.size());
                 break;
             case "Удалить старие квесты":
-                List<Quest> quests = questService.readAll();
-                for (Quest q: quests){
-                    if (q.isDeprecated()){
-                        questService.deleteById(q.getId());
-                        sendMessageToUser(chatId, "Квест с id " + q.getId() + " бил удален");
-                    }
-                }
+                deleteDeprecatedQuest(chatId);
                 break;
             default:
                 if (data.startsWith("User")) {
@@ -263,13 +250,13 @@ public class MyBot extends TelegramLongPollingBot {
                         data.startsWith(Role.USER.name()) ||
                         data.startsWith(Role.PREMIUM_USER.name())) {
                     updateRole(data, chatId);
-                } else if (data.startsWith("Добавить описание для квеста")) {
+                } else if (data.startsWith(QuestCommands.ADD_DECRIPCION_FOR_QUEST.getCmdName())) {
                     sendMessageToUser(chatId, "Введите описание: ");
                     userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
-                } else if (data.startsWith("Добавить награду")) {
+                } else if (data.startsWith(QuestCommands.ADD_REWARD_FOR_QUEST.getCmdName())) {
                     sendMessageToUser(chatId, "Ввидите награду: ");
                     userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
-                } else if (data.startsWith("Добавить игру")) {
+                } else if (data.startsWith(QuestCommands.ADD_GAME_FOR_QUEST.getCmdName())) {
                     sendMessageToUser(chatId, "Введите название игры: ");
                     userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_GAME_QUEST, 0L);
                 } else if (data.contains("Изменить на")) {
@@ -287,6 +274,32 @@ public class MyBot extends TelegramLongPollingBot {
                     questService.updateById(id, existQuest);
                 }
                 break;
+        }
+    }
+
+    private void readAllQuests(Long chatId) {
+        List<Quest> questList = questService.readAll();
+
+        if (questList.isEmpty()) {
+            sendMessageToUser(chatId, "Квестов нет");
+            return;
+        }
+        questList.forEach(quest -> {
+            String outputQuest = outputQuest(quest);
+            String btn1 = quest.isDeprecated() ? quest.getId() + " Изменить на ✅" : quest.getId() + " Изменить на ❌";
+            String btn2 = EDIT_QUEST.getCmdName() + " " + quest.getId();
+            sendMessageToUser(chatId, outputQuest, List.of(btn1, btn2), 2);
+        });
+
+    }
+
+    private void deleteDeprecatedQuest(Long chatId) {
+        List<Quest> quests = questService.readAll();
+        for (Quest q : quests) {
+            if (q.isDeprecated()) {
+                questService.deleteById(q.getId());
+                sendMessageToUser(chatId, "Квест с id " + q.getId() + " бил удален");
+            }
         }
     }
 
@@ -460,15 +473,14 @@ public class MyBot extends TelegramLongPollingBot {
                 Optional<Quest> questById = questService.getQuestById(getLastQuest().getId());
                 Quest quest = questById.get();
                 GameDto gameByName = gameService.getGameByName(message);
+                if (gameByName == null) {
+                    sendMessageToUser(chatId, "Данной игри которую вы вписали нету 🫤");
+                    userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                    return;
+                }
                 quest.setGame(gameMapper.toEntity(gameByName));
                 questService.updateById(quest.getId(), quest);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
-//                if (gameByName != null) {
-//                    quest.setGame(gameMapper.toEntity(gameByName));
-//                    questService.updateById(getLastQuest().getId(), quest);
-//                } else {
-//                    sendMessageToUser(chatId, "Данной игри которую вы вписали нету 🫤");
-//                }
             } else {
                 handleUserMessage(chatId, message);
             }

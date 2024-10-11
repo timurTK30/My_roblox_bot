@@ -58,14 +58,15 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public GameDto getGameByName(String gameName) {
-        return gameMapper.toDto(gameRepository.getGameByName(gameName).get());
+        Optional<Game> game = gameRepository.getGameByName(gameName);
+        return game.map(gameMapper::toDto).orElse(null);
     }
 
     @Override
     public Optional<GameDto> getGameByGameId(Long id) {
         Optional<Game> byId = gameRepository.findById(id);
         if(byId.isPresent()){
-            return byId.map(game -> gameMapper.toDto(game));
+            return byId.map(gameMapper::toDto);
         }
         return Optional.empty();
     }
