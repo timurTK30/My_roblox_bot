@@ -272,6 +272,8 @@ public class MyBot extends TelegramLongPollingBot {
                     existQuest.setDeprecated(data.endsWith("❌"));
 
                     questService.updateById(id, existQuest);
+                } else if (data.contains(EDIT_QUEST.getCmdName())){
+                    sendMessageToUser(chatId, "Кал бек кюери");
                 }
                 break;
         }
@@ -287,7 +289,7 @@ public class MyBot extends TelegramLongPollingBot {
         questList.forEach(quest -> {
             String outputQuest = outputQuest(quest);
             String btn1 = quest.isDeprecated() ? quest.getId() + " Изменить на ✅" : quest.getId() + " Изменить на ❌";
-            String btn2 = EDIT_QUEST.getCmdName() + " " + quest.getId();
+            String btn2 = quest.getId() + " " + EDIT_QUEST.getCmdName();
             sendMessageToUser(chatId, outputQuest, List.of(btn1, btn2), 2);
         });
 
