@@ -26,6 +26,7 @@ public class UserMapper {
         user.setDateOfRegisterAcc(dto.getDateOfRegisterAcc());
         user.setTempChatIdForReply(dto.getTempChatIdForReply());
         user.setGame(dto.getGame());
+        user.setExecutiveQuest(dto.getExecutiveQuest());
         return user;
     }
 
@@ -40,6 +41,7 @@ public class UserMapper {
         userDto.setDateOfRegisterAcc(user.getDateOfRegisterAcc());
         userDto.setTempChatIdForReply(user.getTempChatIdForReply());
         userDto.setGame(user.getGame());
+        userDto.setExecutiveQuest(user.getExecutiveQuest());
         return userDto;
     }
 }

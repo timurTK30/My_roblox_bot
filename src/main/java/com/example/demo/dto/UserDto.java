@@ -1,6 +1,7 @@
 package com.example.demo.dto;
 
 import com.example.demo.domain.Game;
+import com.example.demo.domain.Quest;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ public class UserDto {
     private LocalDate dateOfRegisterAcc;
     private Long tempChatIdForReply;
     private Game game;
+    private Quest executiveQuest;
 
     @Override
     public String toString() {

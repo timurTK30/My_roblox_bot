@@ -39,5 +39,8 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "game_id")
     private Game game;
+    @ManyToOne
+    @JoinColumn(name = "executive_quest")
+    private Quest executiveQuest;
 
 }

@@ -12,4 +12,5 @@ public interface QuestService {
     boolean updateById(Long id, Quest quest);
     void deleteById(Long id);
     Optional<Quest> getQuestById(Long id);
+    Quest getQuestByGame(String game);
 }

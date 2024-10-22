@@ -21,7 +21,7 @@ public enum Commands {
     CREATE_QUESTS("/create_quests", "Создать квест", true, true, true),
     QUEST_MENU("/questMenu", "Квест меню", true, true, false),
     CLEAR_ALL_DEPRECATED("/clearAllDeprecated", "Удалить старие квесты", true, true, true),
-    EDIT_QUEST("/editQuest", "Редоктировать", true, true, false);
+    QUESTS("/quests", "Квесты", false, true, false);
 
 
     private final String cmd;

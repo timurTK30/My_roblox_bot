@@ -2,11 +2,13 @@ package com.example.demo.service.serviceImp;
 
 import com.example.demo.domain.Quest;
 import com.example.demo.repository.QuestRepository;
+import com.example.demo.service.GameService;
 import com.example.demo.service.QuestService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,10 +17,12 @@ import java.util.Optional;
 public class QuestServiceImpl implements QuestService {
 
     private final QuestRepository repository;
+    private final GameService gameService;
 
     @Autowired
-    public QuestServiceImpl(QuestRepository repository) {
+    public QuestServiceImpl(QuestRepository repository, GameService gameService) {
         this.repository = repository;
+        this.gameService = gameService;
     }
 
     @Override
@@ -34,7 +38,7 @@ public class QuestServiceImpl implements QuestService {
     @Override
     public boolean updateById(Long id, Quest quest) {
         Optional<Quest> questById = getQuestById(id);
-        if (questById.isEmpty()){
+        if (questById.isEmpty()) {
             log.info("Такого квеста нет");
             return false;
         }
@@ -56,12 +60,17 @@ public class QuestServiceImpl implements QuestService {
     @Override
     public Optional<Quest> getQuestById(Long id) {
         Optional<Quest> byId = repository.findById(id);
-        if(byId.isPresent()){
+        if (byId.isPresent()) {
             return byId;
         }
 
         log.info("Такого квеста нет. Id = {}", id);
         return Optional.empty();
+    }
+
+    @Override
+    public Quest getQuestByGame(String game) {
+        return repository.getQuestByGameId(gameService.getGameByName(game).getId());
     }
 
 
