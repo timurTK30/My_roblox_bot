@@ -13,4 +13,5 @@ public interface QuestService {
     void deleteById(Long id);
     Optional<Quest> getQuestById(Long id);
     Quest getQuestByGame(String game);
+    Quest getQuestByGameId(Long id);
 }

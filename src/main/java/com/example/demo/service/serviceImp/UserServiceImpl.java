@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService {
         userByChatId.setAStatus(userDto.getAStatus());
         userByChatId.setTempChatIdForReply(userDto.getTempChatIdForReply());
         userByChatId.setRole(userDto.getRole());
+        userByChatId.setExecutiveQuest(userDto.getExecutiveQuest());
         userRepository.save(userMapper.toEntity(userByChatId));
         return userByChatId;
     }

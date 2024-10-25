@@ -73,5 +73,8 @@ public class QuestServiceImpl implements QuestService {
         return repository.getQuestByGameId(gameService.getGameByName(game).getId());
     }
 
-
+    @Override
+    public Quest getQuestByGameId(Long id) {
+        return repository.getQuestByGameId(id);
+    }
 }

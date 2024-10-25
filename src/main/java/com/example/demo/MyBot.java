@@ -98,6 +98,10 @@ public class MyBot extends TelegramLongPollingBot {
             getProfile(chatId);
         } else if (text.startsWith(MENU.getCmd())) {
             getMenuByRole(chatId);
+        } else if (text.startsWith(QUEST_BY_ID.getCmd())) {
+            Long id = Long.valueOf(text.replaceAll("/quest", ""));
+            Optional<Quest> questById = questService.getQuestById(id);
+            outputQuestWithCustomBtn(chatId, questById.get(), List.of("Отменить квест"));
         } else if (isUserAdmin(chatId)) {
             if (text.startsWith(STATISTISC.getCmd())) {
                 statistics(chatId);
@@ -126,6 +130,7 @@ public class MyBot extends TelegramLongPollingBot {
 
     private void getProfile(Long chatId) {
         UserDto userByChatId = userService.getUserByChatId(chatId);
+        Quest quest = userByChatId.getExecutiveQuest();
         Game game = userByChatId.getGame();
         StringBuilder information = new StringBuilder();
         information.append("👤 <b>Профиль пользователя</b>\n\n")
@@ -144,6 +149,10 @@ public class MyBot extends TelegramLongPollingBot {
                 .append("    • Ваша подписка предоставляет доступ к специальным функциям, таким как эксклюзивные игры и повышенные привилегии.\n")
                 .append("    • Регулярно участвуйте в играх с другими пользователями, чтобы зарабатывать бонусы и достижения.\n")
                 .append("    • Не забывайте обновлять свой профиль и следить за активностью в своем аккаунте!\n\n")
+                .append("<b>Принятый квест:</b>\n")
+                .append(quest.getGame().getName())
+                .append("(/quest").append(quest.getId()).append(" )")
+                .append("\n\n")
                 .append("💬 <b>Свяжитесь с поддержкой</b>, если у вас возникли вопросы: /help");
 
         sendMessageToUser(chatId, information.toString());
@@ -223,7 +232,7 @@ public class MyBot extends TelegramLongPollingBot {
                 questService.save(quest);
 
                 Quest lastQuest = getLastQuest();
-                outputQuest(chatId, lastQuest);
+                outputQuestForAdmin(chatId, lastQuest);
                 break;
             case "Удалить старие квесты":
                 deleteDeprecatedQuest(chatId);
@@ -260,20 +269,21 @@ public class MyBot extends TelegramLongPollingBot {
                         .filter(this::checkListForNulls)
                         .filter(q -> !q.isDeprecated())
                         .toList();
-                List<String> uniqueGameNames = questList.stream()
+                List<Game> gameList = questList.stream()
                         .map(Quest::getGame)
+                        .toList();
+                List<String> uniqueGameNames = gameList.stream()
                         .map(Game::getName)
                         .distinct()
                         .toList();
-                List<String> callBack = uniqueGameNames.stream()
-                        .map(btn -> String.join("_", btn, "quest", "1"))
+                List<String> callBack = gameList.stream()
+                        .map(game -> String.join("_", game.getName(), "quest", game.getId().toString()))
                         .toList();
 
                 if (uniqueGameNames.isEmpty()) {
                     sendMessageToUser(chatId, "Здесь пока нет квестов");
                     break;
                 }
-                System.out.println(callBack);
                 sendMessageToUser(chatId, "Вибирите игру:", uniqueGameNames, callBack, uniqueGameNames.size() / 2);
                 break;
             default:
@@ -310,11 +320,21 @@ public class MyBot extends TelegramLongPollingBot {
                     questService.updateById(existQuest.getId(), existQuest);
                 } else if (data.contains(EDIT_QUEST.getCmdName())) {
                     Quest existQuest = getQuestByIdFromCallback(chatId, data);
-                    outputQuest(chatId, existQuest);
+                    outputQuestForAdmin(chatId, existQuest);
 
                 } else if (data.startsWith("Принять квест")) {
                     String gameName = data.replaceAll("Принять квест", "").trim();
                     Quest questByName = questService.getQuestByGame(gameName);
+                    UserDto userForUpdate = userService.getUserByChatId(chatId);
+                    userForUpdate.setExecutiveQuest(questByName);
+                    userService.updateByChatId(userForUpdate, chatId);
+                    sendMessageToUser(chatId, "Квест принят");
+
+                } else if (data.contains("_quest_")) {
+                    String[] splitData = data.split("_");
+                    Long gameId = Long.valueOf(splitData[splitData.length - 1]);
+                    Quest questByGameId = questService.getQuestByGameId(gameId);
+                    outputQuestWithCustomBtn(chatId, questByGameId, List.of("Принять квест " + questByGameId.getGame().getName(), "Отменить квест"));
                 }
                 break;
         }
@@ -474,7 +494,7 @@ public class MyBot extends TelegramLongPollingBot {
         sendMessageToUser(chatIdSelectedUser, "Вам обновили роль на: " + userByChatId.getRole());
     }
 
-    private void outputQuest(Long chatId, Quest quest) {
+    private void outputQuestForAdmin(Long chatId, Quest quest) {
         String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
         String gameName = quest.getGame() != null ? quest.getGame().getName() : "нет игры";
         String format = String.format(
