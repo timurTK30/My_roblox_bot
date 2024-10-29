@@ -166,6 +166,7 @@ public class MyBot extends TelegramLongPollingBot {
     private void handleCallbackQuery(CallbackQuery callbackQuery) {
         Long chatId = callbackQuery.getMessage().getChatId();
         String data = callbackQuery.getData();
+        System.out.println(data);
 
 
         switch (data) {
@@ -252,14 +253,14 @@ public class MyBot extends TelegramLongPollingBot {
                 break;
             case "Все квесты": {
                 List<Quest> questList = questService.readAll().stream()
-                        .filter(q -> !q.isDeprecated())
+                        .filter(q -> !q.isDeprecated() && checkListForNulls(q))
                         .toList();
                 if (questList.isEmpty()) {
                     sendMessageToUser(chatId, "Здесь пока нет квестов");
                     break;
                 }
                 questList.forEach(existQuest -> {
-                    outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест " + existQuest.getGame().getName(), "Отменить квест"));
+                    outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + existQuest.getId(), "Отменить квест " + existQuest.getId()));
                 });
 
                 break;
@@ -276,8 +277,8 @@ public class MyBot extends TelegramLongPollingBot {
                         .map(Game::getName)
                         .distinct()
                         .toList();
-                List<String> callBack = gameList.stream()
-                        .map(game -> String.join("_", game.getName(), "quest", game.getId().toString()))
+                List<String> callBack = questList.stream()
+                        .map(tempQuest -> String.join("_", tempQuest.getGame().getName(), "quest", tempQuest.getId().toString()))
                         .toList();
 
                 if (uniqueGameNames.isEmpty()) {
@@ -323,18 +324,24 @@ public class MyBot extends TelegramLongPollingBot {
                     outputQuestForAdmin(chatId, existQuest);
 
                 } else if (data.startsWith("Принять квест")) {
-                    String gameName = data.replaceAll("Принять квест", "").trim();
-                    Quest questByName = questService.getQuestByGame(gameName);
+                    Long questId = Long.valueOf(data.replaceAll("Принять квест", "").trim());
+                    Quest questById = questService.getQuestById(questId).get();
                     UserDto userForUpdate = userService.getUserByChatId(chatId);
-                    userForUpdate.setExecutiveQuest(questByName);
+                    userForUpdate.setExecutiveQuest(questById);
                     userService.updateByChatId(userForUpdate, chatId);
                     sendMessageToUser(chatId, "Квест принят");
 
                 } else if (data.contains("_quest_")) {
                     String[] splitData = data.split("_");
-                    Long gameId = Long.valueOf(splitData[splitData.length - 1]);
-                    Quest questByGameId = questService.getQuestByGameId(gameId);
-                    outputQuestWithCustomBtn(chatId, questByGameId, List.of("Принять квест " + questByGameId.getGame().getName(), "Отменить квест"));
+                    Long questId = Long.valueOf(splitData[splitData.length - 1]);
+                    Quest questById = questService.getQuestById(questId).get();
+                    outputQuestWithCustomBtn(chatId, questById, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + questId, "Отменить квест " + questId));
+                } else if (data.startsWith("Отменить квест")){
+                    UserDto userForDeleteQuest = userService.getUserByChatId(chatId);
+                    userForDeleteQuest.setExecutiveQuest(null);
+                    userService.updateByChatId(userForDeleteQuest, chatId);
+                    sendMessageToUser(chatId, "Квест был отменен");
+
                 }
                 break;
         }
@@ -517,7 +524,7 @@ public class MyBot extends TelegramLongPollingBot {
         sendMessageToUser(chatId, format, commandsList, commandsList.size());
     }
 
-    private void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn) {
+    private void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn, List<String> callBack){
         String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
         String gameName = quest.getGame() != null ? quest.getGame().getName() : "нет игры";
         String format = String.format(
@@ -532,7 +539,11 @@ public class MyBot extends TelegramLongPollingBot {
                 quest.getCreatorOfQuest().getNickname(),
                 status);
 
-        sendMessageToUser(chatId, format, btn, btn.size());
+        sendMessageToUser(chatId, format, btn, callBack, btn.size());
+    }
+
+    private void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn) {
+        outputQuestWithCustomBtn(chatId, quest, btn, Collections.emptyList());
     }
 
     private void handleGameCommand(Long chatId) {
