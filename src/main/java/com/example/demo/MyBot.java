@@ -325,18 +325,24 @@ public class MyBot extends TelegramLongPollingBot {
 
                 } else if (data.startsWith("Принять квест")) {
                     Long questId = Long.valueOf(data.replaceAll("Принять квест", "").trim());
+                    Quest executiveQuest = userService.getUserByChatId(chatId).getExecutiveQuest();
+
+                    String msg = "Квест принят";
+                    if (executiveQuest != null) {
+                        msg = "Ваш прошлый квест (/quest" + executiveQuest.getId() + ") был заменен";
+                    }
                     Quest questById = questService.getQuestById(questId).get();
                     UserDto userForUpdate = userService.getUserByChatId(chatId);
                     userForUpdate.setExecutiveQuest(questById);
                     userService.updateByChatId(userForUpdate, chatId);
-                    sendMessageToUser(chatId, "Квест принят");
+                    sendMessageToUser(chatId, msg);
 
                 } else if (data.contains("_quest_")) {
                     String[] splitData = data.split("_");
                     Long questId = Long.valueOf(splitData[splitData.length - 1]);
                     Quest questById = questService.getQuestById(questId).get();
                     outputQuestWithCustomBtn(chatId, questById, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + questId, "Отменить квест " + questId));
-                } else if (data.startsWith("Отменить квест")){
+                } else if (data.startsWith("Отменить квест")) {
                     UserDto userForDeleteQuest = userService.getUserByChatId(chatId);
                     userForDeleteQuest.setExecutiveQuest(null);
                     userService.updateByChatId(userForDeleteQuest, chatId);
@@ -524,7 +530,7 @@ public class MyBot extends TelegramLongPollingBot {
         sendMessageToUser(chatId, format, commandsList, commandsList.size());
     }
 
-    private void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn, List<String> callBack){
+    private void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn, List<String> callBack) {
         String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
         String gameName = quest.getGame() != null ? quest.getGame().getName() : "нет игры";
         String format = String.format(
