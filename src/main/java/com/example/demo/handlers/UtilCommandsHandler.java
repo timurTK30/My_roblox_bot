@@ -3,8 +3,11 @@ package com.example.demo.handlers;
 import com.example.demo.config.BotSender;
 import com.example.demo.domain.Quest;
 import com.example.demo.domain.Role;
+import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
+import com.example.demo.service.SupportMassageService;
+import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,6 +33,8 @@ import java.util.Optional;
 public class UtilCommandsHandler {
 
     private final BotSender botSender;
+    private final UserService userService;
+    private final SupportMassageService supportMassageService;
 
     public void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn, List<String> callBack) {
         String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
@@ -138,7 +143,7 @@ public class UtilCommandsHandler {
         }
     }
 
-    private void editMsg(Long chatId, Integer msgId, String newText) {
+    public void editMsg(Long chatId, Integer msgId, String newText) {
         EditMessageText editMessageText = new EditMessageText();
         editMessageText.setChatId(chatId);
         editMessageText.setMessageId(msgId);
@@ -151,7 +156,7 @@ public class UtilCommandsHandler {
         }
     }
 
-    private void deleteMsg(Long chatId, Integer msgId) {
+    public void deleteMsg(Long chatId, Integer msgId) {
         DeleteMessage deleteMessage = new DeleteMessage();
         deleteMessage.setChatId(chatId);
         deleteMessage.setMessageId(msgId);
@@ -209,9 +214,44 @@ public class UtilCommandsHandler {
     }
 
     public boolean isSuppMsgExistByUserChatId(Long chatId) {
-        Optional<SuportMassageDto> massageByChatId = supportMassageServiceImpl.getMassageByChatId(chatId);
+        Optional<SuportMassageDto> massageByChatId = supportMassageService.getMassageByChatId(chatId);
         return massageByChatId.isPresent();
     }
 
+    public void showAllDescription(StringBuilder stringBuilder, GameDto gameDto, String tempCreatorGroup) {
+        if (gameDto.getCreator() != null) {
+            tempCreatorGroup = gameDto.getCreator().getNameOfGroup();
+        }
+
+        stringBuilder.append(1)
+                .append(". ")
+                .append("<b>").append("\uD83C\uDF1F Название игры: ")
+                .append(gameDto.getName()).append("</b>")
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDCD6 Описание:").append("</b>")
+                .append("\n")
+                .append(gameDto.getDescription())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83C\uDFAE Жанр: ").append("</b>")
+                .append(gameDto.getGameGenre())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDCB0 Цена: ").append("</b>")
+                .append(gameDto.getPrice())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB Aктив: ").append("</b>")
+                .append(gameDto.getActive())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83C\uDFE2 Разработчик: ").append("</b>")
+                .append(tempCreatorGroup)
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDDD3 Дата создания:").append("</b>")
+                .append(gameDto.getCreateDate());
+    }
 
 }

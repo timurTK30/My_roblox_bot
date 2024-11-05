@@ -18,5 +18,6 @@ public interface UserService {
     UserDto updateAdminStatusByChatId(Long chatId, AdminStatus adminStatus, Long tempChatId);
     List<UserDto> getUserByGameId(Long gameId);
     UserDto updateRoleByChatId(Long chatId, String role);
+    Boolean isUserAdmin(Long chatId);
 
 }

@@ -5,11 +5,11 @@ import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
 import com.example.demo.mapper.GameMapper;
+import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.GameService;
 import com.example.demo.service.QuestService;
 import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
-import com.example.demo.service.serviceImp.supportMassageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,9 @@ public class UserCommandsHandler {
     private final GameService gameService;
     private final GameMapper gameMapper;
     private final UserService userService;
+    private final UserMapper userMapper;
     private final SupportMassageService supportMassageService;
+    private final UtilCommandsHandler util;
 
     private void handleIncomingMessage(Message message) {
         String text = message.getText();
@@ -57,14 +59,14 @@ public class UserCommandsHandler {
         } else if (text.startsWith(QUEST_BY_ID.getCmd())) {
             Long id = Long.valueOf(text.replaceAll("/quest", ""));
             Optional<Quest> questById = questService.getQuestById(id);
-            outputQuestWithCustomBtn(chatId, questById.get(), List.of("Отменить квест"));
+            util.outputQuestWithCustomBtn(chatId, questById.get(), List.of("Отменить квест"));
         } else {
             handleUserMessage(chatId, text);
         }
 
     }
 
-    private void wellcome(Long chatId) {
+    public void wellcome(Long chatId) {
         String text = "Привет! \uD83D\uDE0A <b>Я бот по игре Roblox.</b> \n" +
                 "Я могу показать тебе самые интересные игры в этом мире. \n" +
                 "\n" +
@@ -73,12 +75,12 @@ public class UserCommandsHandler {
                 "А ещё я всегда обновляю свою базу данных, чтобы ты всегда был в курсе последних трендов и новых релизов. \n" +
                 "\n" +
                 "Так что не стесняйся, спрашивай обо всём, что тебе интересно!";
-        sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), 1);
+        util.sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), 1);
 
     }
 
     private void help(Long chatId) {
-        sendMessageToUser(chatId, "Чем вам помочь?", List.of("Написать админу"), 1);
+        util.sendMessageToUser(chatId, "Чем вам помочь?", List.of("Написать админу"), 1);
     }
 
     private void handleGameCommand(Long chatId) {
@@ -87,7 +89,7 @@ public class UserCommandsHandler {
                 .map(Enum::toString)
                 .collect(Collectors.toList());
         buttons.add("ALL");
-        sendMessageToUser(chatId, "Выберите жанр", buttons, buttons.size() / 2);
+        util.sendMessageToUser(chatId, "Выберите жанр", buttons, buttons.size() / 2);
     }
 
     private void getGameById(Long chatId, Long gameId) {
@@ -95,11 +97,11 @@ public class UserCommandsHandler {
         String tempCreatorId = "пусто";
         Optional<GameDto> gameByGameId = gameService.getGameByGameId(gameId);
         gameByGameId.ifPresent(gameDto -> {
-            showAllDescription(stringBuilder, gameDto, tempCreatorId);
+            util.showAllDescription(stringBuilder, gameDto, tempCreatorId);
             if (gameDto.getGif() != null && !gameDto.getGif().isEmpty()) {
-                sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+                util.sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             } else {
-                sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+                util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             }
 
         });
@@ -113,7 +115,7 @@ public class UserCommandsHandler {
                 "\uD83D\uDC51 Администратор 10zł — полный контроль над системой, управление пользователями и настройками. Эта подписка идеальна для тех, кто хочет иметь полный доступ и возможности управления. \uD83D\uDD27\n" +
                 "\n" +
                 "Выбирайте подписку, которая подходит именно вам, и начните пользоваться всеми преимуществами уже сегодня! \uD83D\uDE80";
-        sendMessageToUser(chatId, msg, List.of("Купить: Премиум✨", "Купить: Админ\uD83D\uDC51"), 2);
+        util.sendMessageToUser(chatId, msg, List.of("Купить: Премиум✨", "Купить: Админ\uD83D\uDC51"), 2);
     }
 
     private void getProfile(Long chatId) {
@@ -143,12 +145,12 @@ public class UserCommandsHandler {
                 .append("\n\n")
                 .append("💬 <b>Свяжитесь с поддержкой</b>, если у вас возникли вопросы: /help");
 
-        sendMessageToUser(chatId, information.toString());
+        util.sendMessageToUser(chatId, information.toString());
     }
 
     private void menuForUser(Long chatId) {
         List<String> commandsList = Arrays.stream(values()).toList().stream().filter(cmd -> !cmd.isCmdAdmin() && cmd.isNeedToShow()).map(Commands::getCmdName).toList();
-        sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
+        util.sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
                         "\n" +
                         "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
                 commandsList, commandsList.size() / 2);
@@ -156,8 +158,8 @@ public class UserCommandsHandler {
     }
 
     public void register(Long chatId, CallbackQuery callbackQuery) {
-        if (isUserExist(chatId)) {
-            editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы уже зарегистрированы! ✅\n" +
+        if (util.isUserExist(chatId)) {
+            util.editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы уже зарегистрированы! ✅\n" +
                     "\n" +
                     "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
                     "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
@@ -175,14 +177,10 @@ public class UserCommandsHandler {
         user.setTempChatIdForReply(0L);
         user.setDateOfRegisterAcc(LocalDate.now());
         userService.save(userMapper.toDto(user));
-        editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы успешно зарегистрированы! ✅\n" +
+        util.editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы успешно зарегистрированы! ✅\n" +
                 "\n" +
                 "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
                 "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
-    }
-
-    private void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn) {
-        outputQuestWithCustomBtn(chatId, quest, btn, Collections.emptyList());
     }
 
     private void handleGameApplication(Long chatId, String data) {
@@ -200,10 +198,10 @@ public class UserCommandsHandler {
                 .filter(user -> !user.getChatId().equals(chatId))
                 .toList();
         if (!friends.isEmpty()) {
-            sendMessageToUser(chatId, "@" + friends.get(0).getNickname());
+            util.sendMessageToUser(chatId, "@" + friends.get(0).getNickname());
             System.out.println(friends);
         } else {
-            sendMessageToUser(chatId, "Нет друзей, играющих в эту игру");
+            util.sendMessageToUser(chatId, "Нет друзей, играющих в эту игру");
         }
     }
 
@@ -212,14 +210,14 @@ public class UserCommandsHandler {
             UserDto user = userService.getUserByChatId(chatId);
             if (user.getStatus().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name())) {
                 if (saveSuppMassageFromUser(chatId, message)) {
-                    sendMessageToUser(chatId, "Сообщение отправлено");
+                    util.sendMessageToUser(chatId, "Сообщение отправлено");
                     userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
                 } else {
-                    sendMessageToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки");
+                    util.sendMessageToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки");
                 }
             } else if (user.getStatus().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
                 saveSuppMassageFromUser(chatId, message);
-                sendMessageToUser(chatId, "Ваше сообщение обновлено");
+                util.sendMessageToUser(chatId, "Ваше сообщение обновлено");
                 userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
             }
         } catch (Exception e) {
@@ -237,7 +235,7 @@ public class UserCommandsHandler {
         if (supportMessage != null) {
             String message = "Пользователь с ником @" + callbackQuery.getFrom().getUserName() +
                     " не одобрил помощь\n\n" + supportMessage.getMassage();
-            sendMessageToUser(1622241974L, message);
+            util.sendMessageToUser(1622241974L, message);
         }
     }
 
@@ -265,7 +263,7 @@ public class UserCommandsHandler {
 
     private void handleEditSuppMsg(Long chatId) {
         userService.updateStatusByChatId(chatId, "WANT_UPDATE_MSG");
-        sendMessageToUser(chatId, "Напишите сообщение");
+        util.sendMessageToUser(chatId, "Напишите сообщение");
     }
 
 }

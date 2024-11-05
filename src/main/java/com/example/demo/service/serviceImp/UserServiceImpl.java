@@ -2,6 +2,7 @@ package com.example.demo.service.serviceImp;
 
 import com.example.demo.domain.AdminStatus;
 import com.example.demo.domain.Game;
+import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import com.example.demo.dto.UserDto;
 import com.example.demo.mapper.UserMapper;
@@ -100,5 +101,10 @@ public class UserServiceImpl implements UserService {
         UserDto userByChatId = getUserByChatId(chatId);
         userByChatId.setRole(role);
         return save(userByChatId);
+    }
+
+    @Override
+    public Boolean isUserAdmin(Long chatId) {
+        return getUserByChatId(chatId).getRole().equalsIgnoreCase(Role.ADMIN.name());
     }
 }

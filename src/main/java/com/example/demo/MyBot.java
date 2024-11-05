@@ -5,6 +5,8 @@ import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
+import com.example.demo.handlers.UserCommandsHandler;
+import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.mapper.UserMapper;
@@ -54,9 +56,10 @@ public class MyBot extends TelegramLongPollingBot {
     private final SuportMassageMapper suportMassageMapper;
     private final GameMapper gameMapper;
     private final QuestService questService;
+    private final UserCommandsHandler userCH;
 
     @Autowired
-    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper, QuestService questService) {
+    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper, QuestService questService, UserCommandsHandler userCH) {
         this.botConfig = botConfig;
         this.creatorService = creatorService;
         this.gameService = gameService;
@@ -66,6 +69,7 @@ public class MyBot extends TelegramLongPollingBot {
         this.suportMassageMapper = suportMassageMapper;
         this.gameMapper = gameMapper;
         this.questService = questService;
+        this.userCH = userCH;
     }
 
     @Override
@@ -84,7 +88,7 @@ public class MyBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
 
         if (text.startsWith(START.getCmd())) {
-            wellcome(chatId);
+            userCH.wellcome(chatId);
         } else if (text.startsWith(HELP.getCmd())) {
             help(chatId);
         } else if (text.equalsIgnoreCase(GAMES.getCmd())) {
