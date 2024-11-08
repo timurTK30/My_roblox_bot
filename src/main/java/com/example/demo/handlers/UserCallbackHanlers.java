@@ -8,7 +8,7 @@ public class UserCallbackHanlers implements BasicHandlers{
         return callbackData.matches(
                 "(Зарегистрировать в системе|😀|😡|ALL|HORROR|ADVENTURE" +
                         "|SHOOTER|TYCOON|SURVIVAL|Оставить заяву.*)"
-        )
+        );
     }
 
     @Override
