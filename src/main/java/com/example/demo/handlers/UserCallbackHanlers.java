@@ -7,7 +7,7 @@ public class UserCallbackHanlers implements BasicHandlers{
     public boolean canHandle(String callbackData) {
         return callbackData.matches(
                 "(Зарегистрировать в системе|😀|😡|ALL|HORROR|ADVENTURE" +
-                        "|SHOOTER|TYCOON|SURVIVAL|Оставить заяву)"
+                        "|SHOOTER|TYCOON|SURVIVAL|Оставить заяву.*)"
         )
     }
 
