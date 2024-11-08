@@ -18,13 +18,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static com.example.demo.domain.Commands.values;
+import static com.example.demo.domain.Commands.*;
 import static com.example.demo.domain.QuestCommands.EDIT_QUEST;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class AdminCommandsHandler {
+public class AdminCommandsHandler implements BasicHandlers{
 
     private final UtilCommandsHandler util;
     private final UserService userService;
@@ -33,6 +33,29 @@ public class AdminCommandsHandler {
     private final GameService gameService;
     private final GameMapper gameMapper;
     private final QuestService questService;
+
+    @Override
+    public boolean canHandle(String text) {
+        return Arrays.stream(Commands.values())
+                .filter(Commands::isCmdAdmin)
+                .anyMatch(command -> command.name().startsWith(text));
+    }
+
+    //TODO проработать отправку сообщений (не команд)
+    @Override
+    public void handle(Long chatId, String text) {
+        if (text.startsWith(STATISTISC.getCmd())) {
+            statistics(chatId);
+        } else if (text.startsWith(RESTART.getCmd())) {
+            restart(chatId);
+        } else if (text.startsWith(SET_ROLE.getCmd())) {
+            requestToChangeRole(text, chatId);
+        } else if (text.startsWith(READ_SUPP_MSG.getCmd())) {
+            readSuppMsg(chatId);
+        } else {
+            handleAdminMessage(chatId, text);
+        }
+    }
 
     private void menuForAdmin(Long chatId) {
         List<String> commandsList = Arrays.stream(values()).toList().stream()

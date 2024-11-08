@@ -27,7 +27,7 @@ import static com.example.demo.domain.UserStatus.WANT_UPDATE_MSG;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class UserCommandsHandler {
+public class UserCommandsHandler implements BasicHandlers{
     
     private final QuestService questService;
     private final GameService gameService;
@@ -37,10 +37,15 @@ public class UserCommandsHandler {
     private final SupportMassageService supportMassageService;
     private final UtilCommandsHandler util;
 
-    private void handleIncomingMessage(Message message) {
-        String text = message.getText();
-        Long chatId = message.getChatId();
+    @Override
+    public boolean canHandle(String text) {
+        return Arrays.stream(Commands.values())
+                .filter(command -> !command.isCmdAdmin() && !command.isQuest())
+                .anyMatch(command -> command.name().startsWith(text));
+    }
 
+    @Override
+    public void handle(Long chatId, String text) {
         if (text.startsWith(START.getCmd())) {
             wellcome(chatId);
         } else if (text.startsWith(HELP.getCmd())) {
@@ -63,7 +68,6 @@ public class UserCommandsHandler {
         } else {
             handleUserMessage(chatId, text);
         }
-
     }
 
     public void wellcome(Long chatId) {
