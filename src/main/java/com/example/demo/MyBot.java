@@ -7,6 +7,8 @@ import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
 import com.example.demo.handlers.UserCommandsHandler;
 import com.example.demo.handlers.UtilCommandsHandler;
+import com.example.demo.handlers.service.CallbackService;
+import com.example.demo.handlers.service.CommandService;
 import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.mapper.UserMapper;
@@ -15,6 +17,7 @@ import com.example.demo.service.GameService;
 import com.example.demo.service.QuestService;
 import com.example.demo.service.UserService;
 import com.example.demo.service.serviceImp.SupportMassageServiceImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +48,7 @@ import static com.example.demo.domain.UserStatus.WANT_UPDATE_MSG;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class MyBot extends TelegramLongPollingBot {
 
     private final BotConfig botConfig;
@@ -57,29 +61,17 @@ public class MyBot extends TelegramLongPollingBot {
     private final GameMapper gameMapper;
     private final QuestService questService;
     private final UserCommandsHandler userCH;
-
-    @Autowired
-    public MyBot(BotConfig botConfig, CreatorService creatorService, GameService gameService, UserService userService, UserMapper userMapper, SupportMassageServiceImpl supportMassageServiceImpl, SuportMassageMapper suportMassageMapper, GameMapper gameMapper, QuestService questService, UserCommandsHandler userCH) {
-        this.botConfig = botConfig;
-        this.creatorService = creatorService;
-        this.gameService = gameService;
-        this.userService = userService;
-        this.userMapper = userMapper;
-        this.supportMassageServiceImpl = supportMassageServiceImpl;
-        this.suportMassageMapper = suportMassageMapper;
-        this.gameMapper = gameMapper;
-        this.questService = questService;
-        this.userCH = userCH;
-    }
+    private final CallbackService callbackService;
+    private final CommandService commandService;
 
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
-            handleIncomingMessage(update.getMessage());
+            commandService.handleCommand(update.getMessage());
         }
 
         if (update.hasCallbackQuery()) {
-            handleCallbackQuery(update.getCallbackQuery());
+            callbackService.handleCallback(update.getCallbackQuery());
         }
     }
 
