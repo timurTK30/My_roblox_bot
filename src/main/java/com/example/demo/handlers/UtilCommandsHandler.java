@@ -58,6 +58,37 @@ public class UtilCommandsHandler {
         outputQuestWithCustomBtn(chatId, quest, btn, Collections.emptyList());
     }
 
+    public List<String> removeSignAndEnglishLetter(List<String> commandsList) {
+        return commandsList.stream()
+                .map(command -> command.replaceAll("[^а-яА-ЯёЁ\\s]", "").trim()).toList();
+    }
+
+    public void showShortDescription(StringBuilder stringBuilder, int i, GameDto gameDto, String tempCreatorGroup) {
+        if (gameDto.getCreator() != null) {
+            tempCreatorGroup = gameDto.getCreator().getNameOfGroup();
+        }
+
+        stringBuilder.append(i + 1)
+                .append(". ")
+                .append("<b>").append("\uD83C\uDF1F Название игры: ")
+                .append(gameDto.getName()).append("</b>")
+                .append("( /game" + gameDto.getId() + " )")
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83C\uDFAE Жанр: ").append("</b>")
+                .append(gameDto.getGameGenre())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDCB0 Цена: ").append("</b>")
+                .append(gameDto.getPrice())
+                .append("\n")
+                .append("\n")
+                .append("<b>").append("\uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB Aктив: ").append("</b>")
+                .append(gameDto.getActive());
+    }
+
+
+
     public void sendMessageToUser(Long chatId, String massage) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
@@ -103,7 +134,7 @@ public class UtilCommandsHandler {
         }
     }
 
-    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
+    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText,List<String> callbacks, int buttonRows) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
 
@@ -112,7 +143,7 @@ public class UtilCommandsHandler {
         sendPhoto.setCaption(massage);
         sendPhoto.setParseMode("HTML");
         if (buttonText != null) {
-            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
+            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, callbacks, buttonRows);
             sendPhoto.setReplyMarkup(inlineKeyboardMarkup);
         }
         try {

@@ -63,6 +63,7 @@ public class AdminCommandsHandler implements BasicHandlers{
                 .filter(Commands::isCmdAdmin)
                 .map(Commands::getCmdName)
                 .toList();
+        List<String> callback = util.removeSignAndEnglishLetter(commandsList);
         util.sendMessageToUser(chatId, "\uD83D\uDC4B Привет, Администратор! Здесь ты можешь управлять игровым процессом и создавать задания для учеников. Выбирай команду и погружайся в обучение:\n" +
                         "\n" +
                         "⚙\uFE0F <b>Управление ботом </b>\n" +
@@ -102,7 +103,7 @@ public class AdminCommandsHandler implements BasicHandlers{
                         "\uD83D\uDCC5 Запланировать обновления\n" +
                         "\uD83D\uDCBE Сделать резервную копию базы данных\n" +
                         "\uD83D\uDCD6 Посмотреть историю обновлений бота",
-                commandsList, commandsList.size() / 2);
+                commandsList, callback, commandsList.size() / 2);
     }
 
     private void statistics(Long chatId) {
@@ -130,21 +131,29 @@ public class AdminCommandsHandler implements BasicHandlers{
     //TODO починить пустоту супорт мсг
     public void readSuppMsg(Long chatId) {
         List<SuportMassageDto> massageDtos = supportMassageService.readAll();
+        List<String> buttonsSuppMsgId = massageDtos.stream().
+                map(suppMsg -> suppMsg.getId().toString()).toList();
+        List<String> callback = massageDtos.stream()
+                .map(msg -> String.join("_", "user", msg.getChatId().toString()))
+                .toList();
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < massageDtos.size(); i++) {
-            stringBuilder.append(i + 1)
+            stringBuilder.append(buttonsSuppMsgId.get(i))
                     .append(". ")
                     .append(massageDtos.get(i).getChatId())
                     .append(" ")
                     .append(massageDtos.get(i).getMassage()).append("\n");
         }
-        util.sendMessageToUser(chatId, stringBuilder.toString(), massageDtos.stream().
-                map(suppMsg -> suportMassageMapper.toUserChatInfo(suppMsg).toString()).toList(), massageDtos.size());
+        util.sendMessageToUser(chatId, stringBuilder.toString(), buttonsSuppMsgId, callback, massageDtos.size());
     }
 
     private void requestToChangeRole(String text, Long chatId) {
         Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+", ""));
-        util.sendMessageToUser(chatId, "Хотите поменять роль?", List.of(Role.ADMIN.name() + " " + chatIdUserForChange, Role.PREMIUM_USER.name() + " " + chatIdUserForChange, Role.USER.name() + " " + chatIdUserForChange), 2);
+        util.sendMessageToUser(chatId, "Хотите поменять роль?",
+                List.of(Role.ADMIN.name(), Role.PREMIUM_USER.name(), Role.USER.name()),
+                List.of("change_role_admin_" + chatIdUserForChange,
+                        "change_role_premium_" + chatIdUserForChange,
+                        "change_role_user_" + chatIdUserForChange), 2);
     }
 
     private void updateRole(String data, Long chatId) {
@@ -160,7 +169,8 @@ public class AdminCommandsHandler implements BasicHandlers{
                 .filter(Commands::isQuest)
                 .map(Commands::getCmdName)
                 .toList();
-        util.sendMessageToUser(chatId, "В этом спецельном меню ты сможешь создавать и настраивать квесты", commandsList, commandsList.size() / 2);
+        List<String> callback = util.removeSignAndEnglishLetter(commandsList);
+        util.sendMessageToUser(chatId, "В этом спецельном меню ты сможешь создавать и настраивать квесты", commandsList, callback, commandsList.size() / 2);
     }
 
     private void readAllQuestsForAdmin(Long chatId) {
@@ -206,9 +216,10 @@ public class AdminCommandsHandler implements BasicHandlers{
         List<String> commandsList = Arrays.stream(QuestCommands.values()).toList().stream()
                 .filter(QuestCommands::isCreateNewQuest)
                 .map(QuestCommands::getCmdName)
-                .map(commands -> commands.concat(" " + quest.getId()))
                 .toList();
-        util.sendMessageToUser(chatId, format, commandsList, commandsList.size());
+        List<String> callbacks = util.removeSignAndEnglishLetter(commandsList).stream()
+                .map(callback -> callback.concat("_" + quest.getId())).toList();
+        util.sendMessageToUser(chatId, format, commandsList, callbacks, commandsList.size());
     }
 
     private Quest getQuestByIdFromCallback(Long chatId, String data) {

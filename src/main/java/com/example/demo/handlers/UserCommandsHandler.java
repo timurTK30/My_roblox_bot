@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -56,7 +55,7 @@ public class UserCommandsHandler implements BasicHandlers{
             Long gameId = Long.valueOf(text.replaceAll("\\D+", ""));
             getGameById(chatId, gameId);
         } else if (text.startsWith(BUY_SUBSCRIBE.getCmd())) {
-            subscription(chatId);
+            buySubscription(chatId);
         } else if (text.startsWith(PROFILE.getCmd())) {
             getProfile(chatId);
         } else if (text.startsWith(MENU.getCmd())) {
@@ -79,7 +78,7 @@ public class UserCommandsHandler implements BasicHandlers{
                 "А ещё я всегда обновляю свою базу данных, чтобы ты всегда был в курсе последних трендов и новых релизов. \n" +
                 "\n" +
                 "Так что не стесняйся, спрашивай обо всём, что тебе интересно!";
-        util.sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), 1);
+        util.sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), List.of("Зарегистрировать"), 1);
 
     }
 
@@ -111,7 +110,7 @@ public class UserCommandsHandler implements BasicHandlers{
         });
     }
 
-    public void subscription(Long chatId) {
+    public void buySubscription(Long chatId) {
         String msg = "\uD83D\uDCE2 Подписки на нашем боте! \uD83C\uDF89\n" +
                 "\n" +
                 "✨ Премиум 5zł — доступ к эксклюзивным функциям и контенту, а также приоритетная поддержка. Откройте новые возможности для вашего аккаунта! \uD83D\uDC8E\n" +
@@ -119,7 +118,8 @@ public class UserCommandsHandler implements BasicHandlers{
                 "\uD83D\uDC51 Администратор 10zł — полный контроль над системой, управление пользователями и настройками. Эта подписка идеальна для тех, кто хочет иметь полный доступ и возможности управления. \uD83D\uDD27\n" +
                 "\n" +
                 "Выбирайте подписку, которая подходит именно вам, и начните пользоваться всеми преимуществами уже сегодня! \uD83D\uDE80";
-        util.sendMessageToUser(chatId, msg, List.of("Купить: Премиум✨", "Купить: Админ\uD83D\uDC51"), 2);
+        util.sendMessageToUser(chatId, msg, List.of("Купить: Премиум✨", "Купить: Админ\uD83D\uDC51"),
+                List.of("request_buy_premium", "request_buy_admin"), 2);
     }
 
     private void getProfile(Long chatId) {
@@ -152,12 +152,38 @@ public class UserCommandsHandler implements BasicHandlers{
         util.sendMessageToUser(chatId, information.toString());
     }
 
+    public void readGames(Long chatId, GameGenre genre, Integer msgId) {
+
+        util.deleteMsg(chatId, msgId);
+        List<GameDto> gameByGenre;
+
+        if (genre != null) {
+            gameByGenre = gameService.getGameByGenre(genre);
+        } else {
+            gameByGenre = gameService.readAll();
+        }
+        if (gameByGenre.isEmpty()) {
+            util.sendMessageToUser(chatId, "\uD83C\uDF1F Извините за неудобства, но игр с таким жанром пока что нет. \uD83C\uDF1F");
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        //TODO
+        String tempCreatorGroup = "пусто";
+        for (int i = 0; i < gameByGenre.size(); i++) {
+            GameDto gameDto = gameByGenre.get(i);
+            util.showShortDescription(stringBuilder, i, gameDto, tempCreatorGroup);
+
+            util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву", "Показать друзей"), List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
+            stringBuilder.setLength(0);
+        }
+    }
+
     private void menuForUser(Long chatId) {
         List<String> commandsList = Arrays.stream(values()).toList().stream().filter(cmd -> !cmd.isCmdAdmin() && cmd.isNeedToShow()).map(Commands::getCmdName).toList();
+        List<String> callback = util.removeSignAndEnglishLetter(commandsList);
         util.sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
                         "\n" +
                         "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
-                commandsList, commandsList.size() / 2);
+                commandsList, callback , commandsList.size() / 2);
 
     }
 

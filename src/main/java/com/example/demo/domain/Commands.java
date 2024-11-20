@@ -7,7 +7,7 @@ public enum Commands {
 
     START("/start", "🛫Старт", false, false, false),
     MENU("/menu", "Меню возможностей", false, false , false),
-    HELP("/help", "💁Помошь", false, true , false),
+    HELP("/help", "🙋Помошь", false, true , false),
     GAMES("/games", "🎮Игры", false, true , false),
     READ_SUPP_MSG("/readSuppMsg", "Прочитать сообщение от юзера", true, true, false),
     GAME("/game", "🧭Определенная игра", false, false, false),

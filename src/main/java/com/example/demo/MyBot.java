@@ -6,7 +6,6 @@ import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
 import com.example.demo.handlers.UserCommandsHandler;
-import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.handlers.service.CallbackService;
 import com.example.demo.handlers.service.CommandService;
 import com.example.demo.mapper.GameMapper;
@@ -20,7 +19,6 @@ import com.example.demo.service.serviceImp.SupportMassageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
@@ -67,6 +65,7 @@ public class MyBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
+            menuForUser(update.getMessage().getChatId());
             commandService.handleCommand(update.getMessage());
         }
 
@@ -156,7 +155,11 @@ public class MyBot extends TelegramLongPollingBot {
 
     private void requestToChangeRole(String text, Long chatId) {
         Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+", ""));
-        sendMessageToUser(chatId, "Хотите поменять роль?", List.of(Role.ADMIN.name() + " " + chatIdUserForChange, Role.PREMIUM_USER.name() + " " + chatIdUserForChange, Role.USER.name() + " " + chatIdUserForChange), 2);
+        sendMessageToUser(chatId, "Хотите поменять роль?",
+                List.of(Role.ADMIN.name(), Role.PREMIUM_USER.name(), Role.USER.name()),
+                List.of("change_role_admin_" + chatIdUserForChange,
+                        "change_role_premium_" + chatIdUserForChange,
+                        "change_role_user_" + chatIdUserForChange), 2);
     }
 
     private void handleCallbackQuery(CallbackQuery callbackQuery) {
@@ -422,11 +425,17 @@ public class MyBot extends TelegramLongPollingBot {
 
     private void menuForUser(Long chatId) {
         List<String> commandsList = Arrays.stream(values()).toList().stream().filter(cmd -> !cmd.isCmdAdmin() && cmd.isNeedToShow()).map(Commands::getCmdName).toList();
+        List<String> callback = removeSignAndEnglishLetter(commandsList);
         sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
                         "\n" +
                         "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
-                commandsList, commandsList.size() / 2);
+                commandsList, callback , commandsList.size() / 2);
 
+    }
+
+    private List<String> removeSignAndEnglishLetter(List<String> commandsList) {
+        return commandsList.stream()
+                .map(command -> command.replaceAll("[^а-яА-ЯёЁ\\s]", "").trim()).toList();
     }
 
     private void menuForAdmin(Long chatId) {
@@ -435,6 +444,7 @@ public class MyBot extends TelegramLongPollingBot {
                 .filter(Commands::isCmdAdmin)
                 .map(Commands::getCmdName)
                 .toList();
+        List<String> callback = removeSignAndEnglishLetter(commandsList);
         sendMessageToUser(chatId, "\uD83D\uDC4B Привет, Администратор! Здесь ты можешь управлять игровым процессом и создавать задания для учеников. Выбирай команду и погружайся в обучение:\n" +
                         "\n" +
                         "⚙\uFE0F <b>Управление ботом </b>\n" +
@@ -474,7 +484,7 @@ public class MyBot extends TelegramLongPollingBot {
                         "\uD83D\uDCC5 Запланировать обновления\n" +
                         "\uD83D\uDCBE Сделать резервную копию базы данных\n" +
                         "\uD83D\uDCD6 Посмотреть историю обновлений бота",
-                commandsList, commandsList.size() / 2);
+                commandsList, callback, commandsList.size() / 2);
     }
 
     private void menuForCreateQuest(Long chatId) {
@@ -482,7 +492,8 @@ public class MyBot extends TelegramLongPollingBot {
                 .filter(Commands::isQuest)
                 .map(Commands::getCmdName)
                 .toList();
-        sendMessageToUser(chatId, "В этом спецельном меню ты сможешь создавать и настраивать квесты", commandsList, commandsList.size() / 2);
+        List<String> callback = removeSignAndEnglishLetter(commandsList);
+        sendMessageToUser(chatId, "В этом спецельном меню ты сможешь создавать и настраивать квесты", commandsList, callback, commandsList.size() / 2);
     }
 
     private void requestToBuySub(CallbackQuery callbackQuery, String data, Long chatId) {
@@ -521,9 +532,10 @@ public class MyBot extends TelegramLongPollingBot {
         List<String> commandsList = Arrays.stream(QuestCommands.values()).toList().stream()
                 .filter(QuestCommands::isCreateNewQuest)
                 .map(QuestCommands::getCmdName)
-                .map(commands -> commands.concat(" " + quest.getId()))
                 .toList();
-        sendMessageToUser(chatId, format, commandsList, commandsList.size());
+        List<String> callbacks = removeSignAndEnglishLetter(commandsList).stream()
+                .map(callback -> callback.concat("_" + quest.getId())).toList();
+        sendMessageToUser(chatId, format, commandsList, callbacks, commandsList.size());
     }
 
     private void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn, List<String> callBack) {
@@ -572,7 +584,7 @@ public class MyBot extends TelegramLongPollingBot {
                 }
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
             } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
-                sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
+                sendMessageToUser(user.getTempChatIdForReply(), message, List.of("😀", "😡"), List.of("ok_reply", "bad_reply"), 1);
                 userService.updateAdminStatusByChatId(chatId, AdminStatus.SENT, 0L);
             } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_DESCRIPTION_QUEST.name())) {
                 //TODO исправить , чтобы мы в методе обновить квест указывали id
@@ -694,7 +706,7 @@ public class MyBot extends TelegramLongPollingBot {
                 "А ещё я всегда обновляю свою базу данных, чтобы ты всегда был в курсе последних трендов и новых релизов. \n" +
                 "\n" +
                 "Так что не стесняйся, спрашивай обо всём, что тебе интересно!";
-        sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), 1);
+        sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), List.of("Зарегистрировать"), 1);
 
     }
 
@@ -706,7 +718,8 @@ public class MyBot extends TelegramLongPollingBot {
                 "\uD83D\uDC51 Администратор 10zł — полный контроль над системой, управление пользователями и настройками. Эта подписка идеальна для тех, кто хочет иметь полный доступ и возможности управления. \uD83D\uDD27\n" +
                 "\n" +
                 "Выбирайте подписку, которая подходит именно вам, и начните пользоваться всеми преимуществами уже сегодня! \uD83D\uDE80";
-        sendMessageToUser(chatId, msg, List.of("Купить: Премиум✨", "Купить: Админ\uD83D\uDC51"), 2);
+        sendMessageToUser(chatId, msg, List.of("Купить: Премиум✨", "Купить: Админ\uD83D\uDC51"),
+                List.of("request_buy_premium", "request_buy_admin"), 2);
     }
 
     public void help(Long chatId) {
@@ -726,16 +739,20 @@ public class MyBot extends TelegramLongPollingBot {
     //TODO починить пустоту супорт мсг
     public void readSuppMsg(Long chatId) {
         List<SuportMassageDto> massageDtos = supportMassageServiceImpl.readAll();
+        List<String> buttonsUserId = massageDtos.stream().
+                map(suppMsg -> suppMsg.getId().toString()).toList();
+        List<String> callback = massageDtos.stream()
+                .map(msg -> String.join("_", "user", msg.getChatId().toString()))
+                .toList();
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < massageDtos.size(); i++) {
-            stringBuilder.append(i + 1)
+            stringBuilder.append(buttonsUserId.get(i))
                     .append(". ")
                     .append(massageDtos.get(i).getChatId())
                     .append(" ")
                     .append(massageDtos.get(i).getMassage()).append("\n");
         }
-        sendMessageToUser(chatId, stringBuilder.toString(), massageDtos.stream().
-                map(suppMsg -> suportMassageMapper.toUserChatInfo(suppMsg).toString()).toList(), massageDtos.size());
+        sendMessageToUser(chatId, stringBuilder.toString(), buttonsUserId, callback, massageDtos.size());
     }
 
     public void getGameById(Long chatId, Long gameId) {
@@ -773,7 +790,7 @@ public class MyBot extends TelegramLongPollingBot {
             GameDto gameDto = gameByGenre.get(i);
             showShortDescription(stringBuilder, i, gameDto, tempCreatorGroup);
 
-            sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+            sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву", "Показать друзей"), List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
             stringBuilder.setLength(0);
         }
     }
@@ -912,7 +929,7 @@ public class MyBot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
+    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText,List<String> callbacks, int buttonRows) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
 
@@ -921,7 +938,7 @@ public class MyBot extends TelegramLongPollingBot {
         sendPhoto.setCaption(massage);
         sendPhoto.setParseMode("HTML");
         if (buttonText != null) {
-            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
+            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, callbacks, buttonRows);
             sendPhoto.setReplyMarkup(inlineKeyboardMarkup);
         }
         try {
