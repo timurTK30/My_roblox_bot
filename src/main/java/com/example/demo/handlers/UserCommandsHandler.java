@@ -104,7 +104,7 @@ public class UserCommandsHandler implements BasicHandlers{
             if (gameDto.getGif() != null && !gameDto.getGif().isEmpty()) {
                 util.sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             } else {
-                util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+                util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву", "Показать друзей"), List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
             }
 
         });
