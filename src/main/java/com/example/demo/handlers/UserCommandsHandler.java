@@ -151,16 +151,14 @@ public class UserCommandsHandler implements BasicHandlers{
 
         util.sendMessageToUser(chatId, information.toString());
     }
-
-    public void readGames(Long chatId, GameGenre genre, Integer msgId) {
-
+    public void readGames(Long chatId, String genre, Integer msgId) {
         util.deleteMsg(chatId, msgId);
         List<GameDto> gameByGenre;
 
-        if (genre != null) {
-            gameByGenre = gameService.getGameByGenre(genre);
-        } else {
+        if (genre.equalsIgnoreCase("ALL")) {
             gameByGenre = gameService.readAll();
+        } else {
+            gameByGenre = gameService.getGameByGenre(GameGenre.valueOf(genre));
         }
         if (gameByGenre.isEmpty()) {
             util.sendMessageToUser(chatId, "\uD83C\uDF1F Извините за неудобства, но игр с таким жанром пока что нет. \uD83C\uDF1F");
@@ -255,15 +253,16 @@ public class UserCommandsHandler implements BasicHandlers{
         }
     }
 
-    private void handlePositiveFeedback(Long chatId) {
+    public void handlePositiveFeedback(Long chatId) {
         supportMassageService.deleteByChatId(chatId);
         userService.updateStatusByChatId(chatId, "DONT_SENT");
     }
 
-    private void handleNegativeFeedback(Long chatId, CallbackQuery callbackQuery) {
+    public void handleNegativeFeedback(Long chatId) {
         SuportMassageDto supportMessage = supportMassageService.getMassageByChatId(chatId).orElse(null);
+        UserDto userByChatId = userService.getUserByChatId(chatId);
         if (supportMessage != null) {
-            String message = "Пользователь с ником @" + callbackQuery.getFrom().getUserName() +
+            String message = "Пользователь с ником @" + userByChatId.getNickname() +
                     " не одобрил помощь\n\n" + supportMessage.getMassage();
             util.sendMessageToUser(1622241974L, message);
         }

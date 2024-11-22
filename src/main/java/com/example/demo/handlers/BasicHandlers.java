@@ -1,7 +1,9 @@
 package com.example.demo.handlers;
 
+import com.example.demo.util.CommandData;
+
 public interface BasicHandlers {
 
-    boolean canHandle(String text);
-    void handle(Long chatId, String text);
+    boolean canHandle(CommandData data);
+    void handle(Long chatId, CommandData data);
 }

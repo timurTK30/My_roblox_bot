@@ -1,16 +1,20 @@
 package com.example.demo.handlers;
 
+import com.example.demo.util.CommandData;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserCallbackHanlers implements BasicHandlers{
 
+    private final UserCommandsHandler userCommandsHandler;
 
     @Override
-    public boolean canHandle(String callbackData) {
-        System.out.println(callbackData);
+    public boolean canHandle(CommandData commandData) {
+        System.out.println(commandData);
 //        return callbackData.matches(
 //                "(^Зарегистрировать в системе|😀|😡|ALL|HORROR|ADVENTURE" +
 //                        "|SHOOTER|TYCOON|SURVIVAL|Оставить заяву.*|Написать админу| *.Помошь" +
@@ -23,25 +27,26 @@ public class UserCallbackHanlers implements BasicHandlers{
     }
 
     @Override
-    public void handle(Long chatId, String data) {
+    public void handle(Long chatId, CommandData commandData) {
+        String data = commandData.getData();
+        Integer msgId = commandData.getMsgId();
         switch (data){
             case "Зарегистрировать":
+                userCommandsHandler.wellcome(chatId);
                 break;
             case "ok_reply":
+                userCommandsHandler.handlePositiveFeedback(chatId);
                 break;
             case "bad_reply":
+                userCommandsHandler.handleNegativeFeedback(chatId);
                 break;
             case "ALL":
-                break;
             case "HORROR":
-                break;
             case "ADVENTURE":
-                break;
             case "SHOOTER":
-                break;
             case "TYCOON":
-                break;
             case "SURVIVAL":
+                userCommandsHandler.readGames(chatId, data, msgId);
                 break;
             case "Написать админу":
                 break;

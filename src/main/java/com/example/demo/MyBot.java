@@ -637,7 +637,7 @@ public class MyBot extends TelegramLongPollingBot {
                 userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
             }
         } catch (Exception e) {
-            System.out.println("Человек не ожидает на отправку сообщений");
+        System.out.println("Человек не ожидает на отправку сообщени");
         }
     }
 

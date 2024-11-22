@@ -1,13 +1,14 @@
 package com.example.demo.handlers;
 
+import com.example.demo.util.CommandData;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AdminCallbackHandlers implements BasicHandlers{
 
     @Override
-    public boolean canHandle(String callbackData) {
-        String replacedData = callbackData.replaceAll("[^a-zA-Zа-яА-ЯёЁ\\s]", "").trim();
+    public boolean canHandle(CommandData data) {
+        String replacedData = data.getData().replaceAll("[^a-zA-Zа-яА-ЯёЁ\\s]", "").trim();
         return replacedData.matches(
                 "(^Прочитать сообщение от юзера|Перезагрузить бота|Статистика использования бота" +
                         "|Доступные квесты|Квест меню|Создать квест|Удалить старие квесты" +
@@ -18,8 +19,10 @@ public class AdminCallbackHandlers implements BasicHandlers{
     }
 
     @Override
-    public void handle(Long chatId, String callbackData) {
-        switch (callbackData) {
+    public void handle(Long chatId, CommandData commandData) {
+        String data = commandData.getData();
+        Integer msgId = commandData.getMsgId();
+        switch (data) {
             case "Прочитать сообщение от юзера":
                 break;
             case "Перезагрузить бота":
@@ -39,17 +42,17 @@ public class AdminCallbackHandlers implements BasicHandlers{
             case "Отправить сообщение":
                 break;
             default:
-                if(callbackData.startsWith("User")){
+                if(data.startsWith("user")){
 
-                } else if (callbackData.startsWith("Редоктировать")) {
+                } else if (data.startsWith("Редоктировать")) {
 
-                } else if (callbackData.startsWith("Добавить награду для квеста")) {
+                } else if (data.startsWith("Добавить награду для квеста")) {
 
-                } else if (callbackData.startsWith("Добавить описание для квеста")) {
+                } else if (data.startsWith("Добавить описание для квеста")) {
 
-                } else if (callbackData.startsWith("Добавить игру для квеста")) {
+                } else if (data.startsWith("Добавить игру для квеста")) {
 
-                } else if (callbackData.contains("Изменить на")) {
+                } else if (data.contains("Изменить на")) {
 
                 }
         }
