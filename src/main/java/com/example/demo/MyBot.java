@@ -238,53 +238,18 @@ public class MyBot extends TelegramLongPollingBot {
                 deleteDeprecatedQuest(chatId);
                 break;
             case "Прочитать доступные игры":
-                List<GameDto> gameDtos = gameService.readAll();
-                StringBuilder stringBuilder = new StringBuilder();
-                gameDtos.forEach(gameDto -> {
-                    stringBuilder.append(gameDto.getName())
-                            .append(" ( /game").append(gameDto.getId()).append(" )")
-                            .append("\n");
-                });
-                sendMessageToUser(chatId, stringBuilder.toString());
+                allGames(chatId);
                 break;
             case "Квесты":
                 sendMessageToUser(chatId, "Какая будет категория?", List.of("Все квесты", "Поиск по играх"), 2);
                 break;
             case "Все квесты": {
-                List<Quest> questList = questService.readAll().stream()
-                        .filter(q -> !q.isDeprecated() && checkListForNulls(q))
-                        .toList();
-                if (questList.isEmpty()) {
-                    sendMessageToUser(chatId, "Здесь пока нет квестов");
-                    break;
-                }
-                questList.forEach(existQuest -> {
-                    outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + existQuest.getId(), "Отменить квест " + existQuest.getId()));
-                });
+                allQuests(chatId);
 
                 break;
             }
             case "Поиск по играх":
-                List<Quest> questList = questService.readAll().stream()
-                        .filter(this::checkListForNulls)
-                        .filter(q -> !q.isDeprecated())
-                        .toList();
-                List<Game> gameList = questList.stream()
-                        .map(Quest::getGame)
-                        .toList();
-                List<String> uniqueGameNames = gameList.stream()
-                        .map(Game::getName)
-                        .distinct()
-                        .toList();
-                List<String> callBack = questList.stream()
-                        .map(tempQuest -> String.join("_", tempQuest.getGame().getName(), "quest", tempQuest.getId().toString()))
-                        .toList();
-
-                if (uniqueGameNames.isEmpty()) {
-                    sendMessageToUser(chatId, "Здесь пока нет квестов");
-                    break;
-                }
-                sendMessageToUser(chatId, "Вибирите игру:", uniqueGameNames, callBack, uniqueGameNames.size() / 2);
+                findForGames(chatId);
                 break;
             default:
                 if (data.startsWith("User")) {
@@ -350,6 +315,53 @@ public class MyBot extends TelegramLongPollingBot {
                 }
                 break;
         }
+    }
+
+    private void findForGames(Long chatId) {
+        List<Quest> questList = questService.readAll().stream()
+                .filter(this::checkListForNulls)
+                .filter(q -> !q.isDeprecated())
+                .toList();
+        List<Game> gameList = questList.stream()
+                .map(Quest::getGame)
+                .toList();
+        List<String> uniqueGameNames = gameList.stream()
+                .map(Game::getName)
+                .distinct()
+                .toList();
+        List<String> callBack = questList.stream()
+                .map(tempQuest -> String.join("_", tempQuest.getGame().getName(), "quest", tempQuest.getId().toString()))
+                .toList();
+
+        if (uniqueGameNames.isEmpty()) {
+            sendMessageToUser(chatId, "Здесь пока нет квестов");
+            return;
+        }
+        sendMessageToUser(chatId, "Вибирите игру:", uniqueGameNames, callBack, uniqueGameNames.size() / 2);
+    }
+
+    private void allQuests(Long chatId) {
+        List<Quest> questList = questService.readAll().stream()
+                .filter(q -> !q.isDeprecated() && checkListForNulls(q))
+                .toList();
+        if (questList.isEmpty()) {
+            sendMessageToUser(chatId, "Здесь пока нет квестов");
+            return;
+        }
+        questList.forEach(existQuest -> {
+            outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + existQuest.getId(), "Отменить квест " + existQuest.getId()));
+        });
+    }
+
+    private void allGames(Long chatId) {
+        List<GameDto> gameDtos = gameService.readAll();
+        StringBuilder stringBuilder = new StringBuilder();
+        gameDtos.forEach(gameDto -> {
+            stringBuilder.append(gameDto.getName())
+                    .append(" ( /game").append(gameDto.getId()).append(" )")
+                    .append("\n");
+        });
+        sendMessageToUser(chatId, stringBuilder.toString());
     }
 
     private void readAllQuestsForAdmin(Long chatId) {

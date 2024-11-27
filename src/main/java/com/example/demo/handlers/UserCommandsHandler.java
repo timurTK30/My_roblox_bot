@@ -82,11 +82,11 @@ public class UserCommandsHandler implements BasicHandlers{
 
     }
 
-    private void help(Long chatId) {
+    public void help(Long chatId) {
         util.sendMessageToUser(chatId, "Чем вам помочь?", List.of("Написать админу"), 1);
     }
 
-    private void handleGameCommand(Long chatId) {
+    public void handleGameCommand(Long chatId) {
         GameGenre[] gameGenres = GameGenre.values();
         List<String> buttons = Arrays.stream(gameGenres)
                 .map(Enum::toString)
@@ -122,7 +122,54 @@ public class UserCommandsHandler implements BasicHandlers{
                 List.of("request_buy_premium", "request_buy_admin"), 2);
     }
 
-    private void getProfile(Long chatId) {
+    public void allQuests(Long chatId) {
+        List<Quest> questList = questService.readAll().stream()
+                .filter(q -> !q.isDeprecated() && util.checkListForNulls(q))
+                .toList();
+        if (questList.isEmpty()) {
+            util.sendMessageToUser(chatId, "Здесь пока нет квестов");
+            return;
+        }
+        questList.forEach(existQuest -> {
+            util.outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + existQuest.getId(), "Отменить квест " + existQuest.getId()));
+        });
+    }
+
+    public void findForGames(Long chatId) {
+        List<Quest> questList = questService.readAll().stream()
+                .filter(this::util.checkListForNulls)
+                .filter(q -> !q.isDeprecated())
+                .toList();
+        List<Game> gameList = questList.stream()
+                .map(Quest::getGame)
+                .toList();
+        List<String> uniqueGameNames = gameList.stream()
+                .map(Game::getName)
+                .distinct()
+                .toList();
+        List<String> callBack = questList.stream()
+                .map(tempQuest -> String.join("_", tempQuest.getGame().getName(), "quest", tempQuest.getId().toString()))
+                .toList();
+
+        if (uniqueGameNames.isEmpty()) {
+            util.sendMessageToUser(chatId, "Здесь пока нет квестов");
+            return;
+        }
+        util.sendMessageToUser(chatId, "Вибирите игру:", uniqueGameNames, callBack, uniqueGameNames.size() / 2);
+    }
+
+    public void allGames(Long chatId) {
+        List<GameDto> gameDtos = gameService.readAll();
+        StringBuilder stringBuilder = new StringBuilder();
+        gameDtos.forEach(gameDto -> {
+            stringBuilder.append(gameDto.getName())
+                    .append(" ( /game").append(gameDto.getId()).append(" )")
+                    .append("\n");
+        });
+        util.sendMessageToUser(chatId, stringBuilder.toString());
+    }
+
+    public void getProfile(Long chatId) {
         UserDto userByChatId = userService.getUserByChatId(chatId);
         Quest quest = userByChatId.getExecutiveQuest();
         Game game = userByChatId.getGame();
@@ -172,6 +219,19 @@ public class UserCommandsHandler implements BasicHandlers{
 
             util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву", "Показать друзей"), List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
             stringBuilder.setLength(0);
+        }
+    }
+
+    public void handleAdminMessage(Long chatId, Integer msgId) {
+        if (!util.isSuppMsgExistByUserChatId(chatId)) {
+            userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
+            util.editMsg(chatId, msgId, "Введите сообщение");
+        } else {
+            SuportMassageDto supportMessage = supportMassageService.getMassageByChatId(chatId).orElse(null);
+            if (supportMessage != null) {
+                util.editMsg(chatId, msgId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
+                        List.of("Редактировать сообщение", "Оставить"), 1);
+            }
         }
     }
 

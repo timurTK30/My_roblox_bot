@@ -10,6 +10,7 @@ import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -242,6 +243,12 @@ public class UtilCommandsHandler {
     public boolean isUserAdmin(Long chatId) {
         UserDto userByChatId = userService.getUserByChatId(chatId);
         return userByChatId.getRole().equalsIgnoreCase(Role.ADMIN.name());
+    }
+
+    public boolean checkListForNulls(Quest quest) {
+        return ObjectUtils.allNotNull(
+                quest.getId(), quest.getReward(), quest.getGame()
+        );
     }
 
     public boolean isSuppMsgExistByUserChatId(Long chatId) {
