@@ -307,14 +307,18 @@ public class MyBot extends TelegramLongPollingBot {
                     Quest questById = questService.getQuestById(questId).get();
                     outputQuestWithCustomBtn(chatId, questById, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + questId, "Отменить квест " + questId));
                 } else if (data.startsWith("Отменить квест")) {
-                    UserDto userForDeleteQuest = userService.getUserByChatId(chatId);
-                    userForDeleteQuest.setExecutiveQuest(null);
-                    userService.updateByChatId(userForDeleteQuest, chatId);
-                    sendMessageToUser(chatId, "Квест был отменен");
+                    cancelQuest(chatId);
 
                 }
                 break;
         }
+    }
+
+    public void cancelQuest(Long chatId) {
+        UserDto userForDeleteQuest = userService.getUserByChatId(chatId);
+        userForDeleteQuest.setExecutiveQuest(null);
+        userService.updateByChatId(userForDeleteQuest, chatId);
+        sendMessageToUser(chatId, "Квест был отменен");
     }
 
     private void findForGames(Long chatId) {
@@ -349,7 +353,7 @@ public class MyBot extends TelegramLongPollingBot {
             return;
         }
         questList.forEach(existQuest -> {
-            outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + existQuest.getId(), "Отменить квест " + existQuest.getId()));
+            outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + existQuest.getId(), "Отменить квест"));
         });
     }
 
@@ -431,7 +435,7 @@ public class MyBot extends TelegramLongPollingBot {
     }
 
     private void restart(Long chatId) {
-        sendPhotoToUser(chatId, "C:\\project_java\\My_roblox_bot_new\\src\\main\\resources\\img\\fatalError.jpg", "Программа остоновлена", List.of("Bye bye"), 1);
+        //sendPhotoToUser(chatId, "C:\\project_java\\My_roblox_bot_new\\src\\main\\resources\\img\\fatalError.jpg", "Программа остоновлена", List.of("Bye bye"), 1);
         System.exit(0);
     }
 
@@ -776,7 +780,7 @@ public class MyBot extends TelegramLongPollingBot {
             if (gameDto.getGif() != null && !gameDto.getGif().isEmpty()) {
                 sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             } else {
-                sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+                //sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
             }
 
         });

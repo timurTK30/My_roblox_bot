@@ -6,6 +6,7 @@ import com.example.demo.handlers.AdminCommandsHandler;
 import com.example.demo.handlers.UserCommandsHandler;
 import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.service.UserService;
+import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,14 +26,15 @@ public class CommandService {
     public void handleCommand(Message message){
         Long chatId = message.getChatId();
         String text = message.getText();
+        CommandData commandData = new CommandData(text, message.getMessageId());
         try {
             UserDto userByChatId = userService.getUserByChatId(chatId);
             Boolean isAdmin = userService.isUserAdmin(userByChatId.getChatId());
 
-            if (isAdmin && adminHandler.canHandle(text)){
-                adminHandler.handle(chatId, text);
-            } else if (userHandler.canHandle(text)) {
-                userHandler.handle(chatId, text);
+            if (isAdmin && adminHandler.canHandle(commandData)){
+                adminHandler.handle(chatId, commandData);
+            } else if (userHandler.canHandle(commandData)) {
+                userHandler.handle(chatId, commandData);
             } else {
                 utilHandler.sendMessageToUser(chatId, "Неизвестная команда. Используйте /help для списка команд.");
             }

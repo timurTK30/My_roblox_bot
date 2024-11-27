@@ -10,6 +10,7 @@ import com.example.demo.service.GameService;
 import com.example.demo.service.QuestService;
 import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
+import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -37,14 +38,15 @@ public class UserCommandsHandler implements BasicHandlers{
     private final UtilCommandsHandler util;
 
     @Override
-    public boolean canHandle(String text) {
+    public boolean canHandle(CommandData text) {
         return Arrays.stream(Commands.values())
                 .filter(command -> !command.isCmdAdmin() && !command.isQuest())
-                .anyMatch(command -> command.name().startsWith(text));
+                .anyMatch(command -> command.name().startsWith(text.getData()));
     }
 
     @Override
-    public void handle(Long chatId, String text) {
+    public void handle(Long chatId, CommandData commandData) {
+        String text = commandData.getData();
         if (text.startsWith(START.getCmd())) {
             wellcome(chatId);
         } else if (text.startsWith(HELP.getCmd())) {
@@ -136,8 +138,9 @@ public class UserCommandsHandler implements BasicHandlers{
     }
 
     public void findForGames(Long chatId) {
+
         List<Quest> questList = questService.readAll().stream()
-                .filter(this::util.checkListForNulls)
+                .filter(util::checkListForNulls)
                 .filter(q -> !q.isDeprecated())
                 .toList();
         List<Game> gameList = questList.stream()
@@ -156,6 +159,13 @@ public class UserCommandsHandler implements BasicHandlers{
             return;
         }
         util.sendMessageToUser(chatId, "Вибирите игру:", uniqueGameNames, callBack, uniqueGameNames.size() / 2);
+    }
+
+    public void cancelQuest(Long chatId) {
+        UserDto userForDeleteQuest = userService.getUserByChatId(chatId);
+        userForDeleteQuest.setExecutiveQuest(null);
+        userService.updateByChatId(userForDeleteQuest, chatId);
+        util.sendMessageToUser(chatId, "Квест был отменен");
     }
 
     public void allGames(Long chatId) {
@@ -229,8 +239,10 @@ public class UserCommandsHandler implements BasicHandlers{
         } else {
             SuportMassageDto supportMessage = supportMassageService.getMassageByChatId(chatId).orElse(null);
             if (supportMessage != null) {
-                util.editMsg(chatId, msgId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
+                util.sendMessageToUser(chatId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
                         List.of("Редактировать сообщение", "Оставить"), 1);
+//                util.editMsg(chatId, msgId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
+//                        List.of("Редактировать сообщение", "Оставить"), 1);
             }
         }
     }
@@ -271,16 +283,16 @@ public class UserCommandsHandler implements BasicHandlers{
                 "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
     }
 
-    private void handleGameApplication(Long chatId, String data) {
-        String gameName = data.replaceAll("[^A-Za-z ]", "").trim();
+    public void handleGameApplication(Long chatId, String data) {
+        String gameName = data.replaceAll("leave_request_", "").trim();
         GameDto gameDto = gameService.getGameByName(gameName);
         UserDto userDto = userService.getUserByChatId(chatId);
         userDto.setGame(gameMapper.toEntity(gameDto));
         userService.updateByChatId(userDto, chatId);
     }
 
-    private void showFriends(Long chatId, String data) {
-        String gameName = data.replaceAll("[^A-Za-z ]", "").trim();
+    public void showFriends(Long chatId, String data) {
+        String gameName = data.replaceAll("show_friends_", "").trim();
         GameDto gameByName = gameService.getGameByName(gameName);
         List<UserDto> friends = userService.getUserByGameId(gameByName.getId()).stream()
                 .filter(user -> !user.getChatId().equals(chatId))

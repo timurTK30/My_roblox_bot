@@ -79,12 +79,24 @@ public class UserCallbackHanlers implements BasicHandlers{
                 userCommandsHandler.findForGames(chatId);
                 break;
             case "Отменить квест":
+                userCommandsHandler.cancelQuest(chatId);
                 break;
             case "request_buy_admin":
             case "request_buy_premium":
+                util.requestToBuySub(data, chatId);
                 break;
             default:
-                log.warn("📉UserCallbackHanlers -> не найдена кнопка");
+                if(data.startsWith("leave_request_")){
+                    userCommandsHandler.handleGameApplication(chatId, data);
+                    break;
+                } else if (data.startsWith("show_friends_")) {
+                    userCommandsHandler.showFriends(chatId, data);
+                    break;
+                } else {
+                    log.warn("📉UserCallbackHanlers -> не найдена кнопка -> " + data);
+                }
+
+
         }
     }
 }

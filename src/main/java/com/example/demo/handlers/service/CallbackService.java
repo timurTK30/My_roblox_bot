@@ -28,7 +28,6 @@ public class CallbackService {
             } else if (userCallback.canHandle(commandData)) {
                 userCallback.handle(chatId, commandData);
             }
-            utilHandler.sendMessageToUser(chatId, data + " -> " + userCallback.canHandle(data));
         } catch (Exception e){
             throw new RuntimeException("handleCallback- там ошибка");
         }

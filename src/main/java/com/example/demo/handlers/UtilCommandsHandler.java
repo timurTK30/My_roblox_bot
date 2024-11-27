@@ -17,6 +17,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -154,6 +155,10 @@ public class UtilCommandsHandler {
         }
     }
 
+    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows){
+        sendPhotoToUser(chatId, url, massage, buttonText, Collections.emptyList(), buttonRows);
+    }
+
     public void sendGifToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
         SendAnimation sendAnimation = new SendAnimation();
         sendAnimation.setChatId(chatId);
@@ -249,6 +254,16 @@ public class UtilCommandsHandler {
         return ObjectUtils.allNotNull(
                 quest.getId(), quest.getReward(), quest.getGame()
         );
+    }
+
+    public void requestToBuySub(String data, Long chatId) {
+        String sub = data.replaceAll("request_buy_", "");
+        UserDto userByChatId = userService.getUserByChatId(chatId);
+        sendMessageToUser(1622241974L, "Имя: " + userByChatId.getNickname() + "\n" +
+                "Подписка: " + userByChatId.getRole() + "\n" +
+                "Хочет купить: " + sub + "\n" +
+                "Для связи: @" + userByChatId.getNickname() + "\n" +
+                "/set_role" + userByChatId.getChatId());
     }
 
     public boolean isSuppMsgExistByUserChatId(Long chatId) {

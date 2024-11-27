@@ -10,6 +10,7 @@ import com.example.demo.service.GameService;
 import com.example.demo.service.QuestService;
 import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
+import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -35,15 +36,16 @@ public class AdminCommandsHandler implements BasicHandlers{
     private final QuestService questService;
 
     @Override
-    public boolean canHandle(String text) {
+    public boolean canHandle(CommandData text) {
         return Arrays.stream(Commands.values())
                 .filter(Commands::isCmdAdmin)
-                .anyMatch(command -> command.name().startsWith(text));
+                .anyMatch(command -> command.name().startsWith(text.getData()));
     }
 
     //TODO проработать отправку сообщений (не команд)
     @Override
-    public void handle(Long chatId, String text) {
+    public void handle(Long chatId, CommandData commandData) {
+        String text = commandData.getData();
         if (text.startsWith(STATISTISC.getCmd())) {
             statistics(chatId);
         } else if (text.startsWith(RESTART.getCmd())) {
