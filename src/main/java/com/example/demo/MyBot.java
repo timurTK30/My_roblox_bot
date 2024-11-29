@@ -5,7 +5,7 @@ import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
-import com.example.demo.handlers.UserCommandsHandler;
+import com.example.demo.handlers.user.UserCommandsHandler;
 import com.example.demo.handlers.service.CallbackService;
 import com.example.demo.handlers.service.CommandService;
 import com.example.demo.mapper.GameMapper;
@@ -225,14 +225,7 @@ public class MyBot extends TelegramLongPollingBot {
                 break;
             case "Создать квест":
                 //TODO переместить в метод
-                Quest quest = new Quest();
-                UserDto userByChatId = userService.getUserByChatId(chatId);
-                quest.setCreatorOfQuest(userMapper.toEntity(userByChatId));
-                quest.setDeprecated(false);
-                questService.save(quest);
-
-                Quest lastQuest = getLastQuest();
-                outputQuestForAdmin(chatId, lastQuest);
+                createQuest(chatId);
                 break;
             case "Удалить старие квесты":
                 deleteDeprecatedQuest(chatId);
@@ -269,20 +262,13 @@ public class MyBot extends TelegramLongPollingBot {
                         data.startsWith(Role.PREMIUM_USER.name())) {
                     updateRole(data, chatId);
                 } else if (data.startsWith(QuestCommands.ADD_DECRIPCION_FOR_QUEST.getCmdName())) {
-                    sendMessageToUser(chatId, "Введите описание: ");
-                    userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
+                    requestToAddDescriptionForQuest(chatId);
                 } else if (data.startsWith(QuestCommands.ADD_REWARD_FOR_QUEST.getCmdName())) {
-                    sendMessageToUser(chatId, "Ввидите награду: ");
-                    userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
+                    requestToAddRewardForQuest(chatId);
                 } else if (data.startsWith(QuestCommands.ADD_GAME_FOR_QUEST.getCmdName())) {
-                    sendMessageToUser(chatId, "Введите название игры: ", List.of("Прочитать доступные игры"), 1);
-                    userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_GAME_QUEST, 0L);
+                    requestToAddGameForQuest(chatId);
                 } else if (data.contains("Изменить на")) {
-                    //TODO сделать, чтобы старое сообщение менялось на новое , editMSG
-                    Quest existQuest = getQuestByIdFromCallback(chatId, data);
-                    existQuest.setDeprecated(data.endsWith("❌"));
-
-                    questService.updateById(existQuest.getId(), existQuest);
+                    changeQuestStatus(chatId, data);
                 } else if (data.contains(EDIT_QUEST.getCmdName())) {
                     Quest existQuest = getQuestByIdFromCallback(chatId, data);
                     outputQuestForAdmin(chatId, existQuest);
@@ -312,6 +298,40 @@ public class MyBot extends TelegramLongPollingBot {
                 }
                 break;
         }
+    }
+
+    public void changeQuestStatus(Long chatId, String data) {
+        //TODO сделать, чтобы старое сообщение менялось на новое , editMSG
+        Quest existQuest = getQuestByIdFromCallback(chatId, data);
+        existQuest.setDeprecated(data.endsWith("❌"));
+
+        questService.updateById(existQuest.getId(), existQuest);
+    }
+
+    public void requestToAddGameForQuest(Long chatId) {
+        sendMessageToUser(chatId, "Введите название игры: ", List.of("Прочитать доступные игры"), 1);
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_GAME_QUEST, 0L);
+    }
+
+    public void requestToAddDescriptionForQuest(Long chatId) {
+        sendMessageToUser(chatId, "Введите описание: ");
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
+    }
+
+    public void requestToAddRewardForQuest(Long chatId) {
+        sendMessageToUser(chatId, "Ввидите награду: ");
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
+    }
+
+    public void createQuest(Long chatId) {
+        Quest quest = new Quest();
+        UserDto userByChatId = userService.getUserByChatId(chatId);
+        quest.setCreatorOfQuest(userMapper.toEntity(userByChatId));
+        quest.setDeprecated(false);
+        questService.save(quest);
+
+        Quest lastQuest = getLastQuest();
+        outputQuestForAdmin(chatId, lastQuest);
     }
 
     public void cancelQuest(Long chatId) {

@@ -1,5 +1,7 @@
-package com.example.demo.handlers;
+package com.example.demo.handlers.user;
 
+import com.example.demo.handlers.BasicHandlers;
+import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,30 +12,28 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class UserCallbackHanlers implements BasicHandlers{
+public class UserCallbackHanlers implements BasicHandlers {
 
     private final UserCommandsHandler userCommandsHandler;
     private final UtilCommandsHandler util;
 
     @Override
     public boolean canHandle(CommandData commandData) {
-        System.out.println(commandData);
-//        return callbackData.matches(
-//                "(^Зарегистрировать в системе|😀|😡|ALL|HORROR|ADVENTURE" +
-//                        "|SHOOTER|TYCOON|SURVIVAL|Оставить заяву.*|Написать админу| *.Помошь" +
-//                        "|Игры|Купить подписки|Профиль|Доступные квесты|Прочитать доступные игры" +
-//                        "|Квесты|Все квесты|Поиск по играх|Показать друзей.*|Оставить.*" +
-//                        "|Редактировать сообщение.*|Купить.*|ADMIN.*|USER.*|PREMIUM_USER.*" +
-//                        "|Принять квест.*| *._quest_.*|Отменить квест)"
-//        );
-        return true;
+        String callbackData = commandData.getData();
+        return callbackData.matches(
+            "(^Зарегистрировать|ok_reply|bad_reply|ALL|HORROR|ADVENTURE" +
+                "|SHOOTER|TYCOON|SURVIVAL|Написать админу|Помошь|Игры|Купить подписки" +
+                "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
+                "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
+                "|show_friends_.*)"
+        );
     }
 
     @Override
     public void handle(Long chatId, CommandData commandData) {
         String data = commandData.getData();
         Integer msgId = commandData.getMsgId();
-        switch (data){
+        switch (data) {
             case "Зарегистрировать":
                 userCommandsHandler.wellcome(chatId);
                 break;
@@ -86,17 +86,15 @@ public class UserCallbackHanlers implements BasicHandlers{
                 util.requestToBuySub(data, chatId);
                 break;
             default:
-                if(data.startsWith("leave_request_")){
+                if (data.startsWith("leave_request_")) {
                     userCommandsHandler.handleGameApplication(chatId, data);
                     break;
                 } else if (data.startsWith("show_friends_")) {
                     userCommandsHandler.showFriends(chatId, data);
                     break;
                 } else {
-                    log.warn("📉UserCallbackHanlers -> не найдена кнопка -> " + data);
+                    log.warn("UserCallbackHanlers -> не найдена кнопка -> " + data);
                 }
-
-
         }
     }
 }

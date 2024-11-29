@@ -1,11 +1,14 @@
-package com.example.demo.handlers;
+package com.example.demo.handlers.admin;
 
 import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
+import com.example.demo.handlers.BasicHandlers;
+import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.SuportMassageMapper;
+import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.GameService;
 import com.example.demo.service.QuestService;
 import com.example.demo.service.SupportMassageService;
@@ -25,7 +28,7 @@ import static com.example.demo.domain.QuestCommands.EDIT_QUEST;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class AdminCommandsHandler implements BasicHandlers{
+public class AdminCommandsHandler implements BasicHandlers {
 
     private final UtilCommandsHandler util;
     private final UserService userService;
@@ -33,6 +36,7 @@ public class AdminCommandsHandler implements BasicHandlers{
     private final SuportMassageMapper suportMassageMapper;
     private final GameService gameService;
     private final GameMapper gameMapper;
+    private final UserMapper userMapper;
     private final QuestService questService;
 
     @Override
@@ -51,7 +55,7 @@ public class AdminCommandsHandler implements BasicHandlers{
         } else if (text.startsWith(RESTART.getCmd())) {
             restart(chatId);
         } else if (text.startsWith(SET_ROLE.getCmd())) {
-            requestToChangeRole(text, chatId);
+            requestToChangeRole(chatId, text);
         } else if (text.startsWith(READ_SUPP_MSG.getCmd())) {
             readSuppMsg(chatId);
         } else {
@@ -108,7 +112,7 @@ public class AdminCommandsHandler implements BasicHandlers{
                 commandsList, callback, commandsList.size() / 2);
     }
 
-    private void statistics(Long chatId) {
+    public void statistics(Long chatId) {
         List<UserDto> userDtos = userService.readAll();
         List<SuportMassageDto> massageDtos = supportMassageService.readAll();
         Commands[] commands = values();
@@ -125,7 +129,7 @@ public class AdminCommandsHandler implements BasicHandlers{
                 "4. <b>Всего команд: </b> " + amountOfCommands + "\uD83D\uDEE0");
     }
 
-    private void restart(Long chatId) {
+    public void restart(Long chatId) {
         util.sendPhotoToUser(chatId, "C:\\project_java\\My_roblox_bot_new\\src\\main\\resources\\img\\fatalError.jpg", "Программа остоновлена", List.of("Bye bye"), 1);
         System.exit(0);
     }
@@ -149,7 +153,36 @@ public class AdminCommandsHandler implements BasicHandlers{
         util.sendMessageToUser(chatId, stringBuilder.toString(), buttonsSuppMsgId, callback, massageDtos.size());
     }
 
-    private void requestToChangeRole(String text, Long chatId) {
+    public void handleUserReplyRequest(Long chatId, String data) {
+        String chatIdWaitingUser = data.replaceAll("\\D", "");
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.WANT_REPLY, Long.valueOf(chatIdWaitingUser));
+        util.sendMessageToUser(chatId, "Напишите сообщение (" + chatIdWaitingUser + ")");
+    }
+
+    public void requestToAddRewardForQuest(Long chatId) {
+        util.sendMessageToUser(chatId, "Введите награду: ");
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
+    }
+
+    public void requestToAddDescriptionForQuest(Long chatId) {
+        util.sendMessageToUser(chatId, "Введите описание: ");
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
+    }
+
+    public void changeQuestStatus(Long chatId, String data) {
+        //TODO сделать, чтобы старое сообщение менялось на новое , editMSG
+        Quest existQuest = getQuestByIdFromCallback(chatId, data);
+        existQuest.setDeprecated(data.endsWith("❌"));
+
+        questService.updateById(existQuest.getId(), existQuest);
+    }
+
+    public void requestToAddGameForQuest(Long chatId) {
+        util.sendMessageToUser(chatId, "Введите название игры: ", List.of("Прочитать доступные игры"), 1);
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.CHANGE_GAME_QUEST, 0L);
+    }
+
+    private void requestToChangeRole(Long chatId, String text) {
         Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+", ""));
         util.sendMessageToUser(chatId, "Хотите поменять роль?",
                 List.of(Role.ADMIN.name(), Role.PREMIUM_USER.name(), Role.USER.name()),
@@ -166,7 +199,7 @@ public class AdminCommandsHandler implements BasicHandlers{
         util.sendMessageToUser(chatIdSelectedUser, "Вам обновили роль на: " + userByChatId.getRole());
     }
 
-    private void menuForCreateQuest(Long chatId) {
+    public void menuForCreateQuest(Long chatId) {
         List<String> commandsList = Arrays.stream(values()).toList().stream()
                 .filter(Commands::isQuest)
                 .map(Commands::getCmdName)
@@ -175,7 +208,7 @@ public class AdminCommandsHandler implements BasicHandlers{
         util.sendMessageToUser(chatId, "В этом спецельном меню ты сможешь создавать и настраивать квесты", commandsList, callback, commandsList.size() / 2);
     }
 
-    private void readAllQuestsForAdmin(Long chatId) {
+    public void readAllQuestsForAdmin(Long chatId) {
         List<Quest> questList = questService.readAll();
 
         if (questList.isEmpty()) {
@@ -190,7 +223,18 @@ public class AdminCommandsHandler implements BasicHandlers{
 
     }
 
-    private void deleteDeprecatedQuest(Long chatId) {
+    public void createQuest(Long chatId) {
+        Quest quest = new Quest();
+        UserDto userByChatId = userService.getUserByChatId(chatId);
+        quest.setCreatorOfQuest(userMapper.toEntity(userByChatId));
+        quest.setDeprecated(false);
+        questService.save(quest);
+
+        Quest lastQuest = getLastQuest();
+        outputQuestForAdmin(chatId, lastQuest);
+    }
+
+    public void deleteDeprecatedQuest(Long chatId) {
         List<Quest> quests = questService.readAll();
         for (Quest q : quests) {
             if (q.isDeprecated()) {
@@ -200,7 +244,7 @@ public class AdminCommandsHandler implements BasicHandlers{
         }
     }
 
-    private void outputQuestForAdmin(Long chatId, Quest quest) {
+    public void outputQuestForAdmin(Long chatId, Quest quest) {
         String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
         String gameName = quest.getGame() != null ? quest.getGame().getName() : "нет игры";
         String format = String.format(
@@ -224,7 +268,7 @@ public class AdminCommandsHandler implements BasicHandlers{
         util.sendMessageToUser(chatId, format, commandsList, callbacks, commandsList.size());
     }
 
-    private Quest getQuestByIdFromCallback(Long chatId, String data) {
+    public Quest getQuestByIdFromCallback(Long chatId, String data) {
         Long id = Long.valueOf(data.substring(0, data.indexOf(" ")));
         Optional<Quest> questById = questService.getQuestById(id);
 
@@ -284,5 +328,10 @@ public class AdminCommandsHandler implements BasicHandlers{
         } catch (Exception e) {
             System.out.println("Человек не ожидает на отправку сообщений");
         }
+    }
+
+    public void requestToNotifyAllUsers(Long chatId) {
+        util.sendMessageToUser(chatId, "Введите сообщение: ");
+        userService.updateAdminStatusByChatId(chatId, AdminStatus.NOTIFY_ALL_USERS, 0L);
     }
 }

@@ -1,9 +1,11 @@
-package com.example.demo.handlers;
+package com.example.demo.handlers.user;
 
 import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
+import com.example.demo.handlers.BasicHandlers;
+import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.GameService;
@@ -27,7 +29,7 @@ import static com.example.demo.domain.UserStatus.WANT_UPDATE_MSG;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class UserCommandsHandler implements BasicHandlers{
+public class UserCommandsHandler implements BasicHandlers {
     
     private final QuestService questService;
     private final GameService gameService;

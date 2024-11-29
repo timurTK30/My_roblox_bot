@@ -1,7 +1,6 @@
 package com.example.demo.handlers.service;
 
-import com.example.demo.handlers.UserCallbackHanlers;
-import com.example.demo.handlers.UserCommandsHandler;
+import com.example.demo.handlers.user.UserCallbackHanlers;
 import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.service.UserService;
 import com.example.demo.util.CommandData;

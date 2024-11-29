@@ -1,15 +1,13 @@
 package com.example.demo.handlers.service;
 
-import com.example.demo.domain.Role;
 import com.example.demo.dto.UserDto;
-import com.example.demo.handlers.AdminCommandsHandler;
-import com.example.demo.handlers.UserCommandsHandler;
+import com.example.demo.handlers.admin.AdminCommandsHandler;
+import com.example.demo.handlers.user.UserCommandsHandler;
 import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.service.UserService;
 import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
