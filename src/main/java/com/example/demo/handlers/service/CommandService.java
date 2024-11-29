@@ -24,7 +24,7 @@ public class CommandService {
     public void handleCommand(Message message){
         Long chatId = message.getChatId();
         String text = message.getText();
-        CommandData commandData = new CommandData(text, message.getMessageId());
+        CommandData commandData = new CommandData(text, message.getMessageId(), chatId);
         try {
             UserDto userByChatId = userService.getUserByChatId(chatId);
             Boolean isAdmin = userService.isUserAdmin(userByChatId.getChatId());
