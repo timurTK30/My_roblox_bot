@@ -19,7 +19,7 @@ public class CallbackService {
     public void handleCallback(CallbackQuery callback){
         String data = callback.getData();
         Long chatId = callback.getMessage().getChatId();
-        CommandData commandData = new CommandData(data, callback.getMessage().getMessageId());
+        CommandData commandData = new CommandData(data, callback.getMessage().getMessageId(), chatId);
         try {
             Boolean isAdmin = userService.isUserAdmin(chatId);
             if (isAdmin){

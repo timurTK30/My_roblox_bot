@@ -10,4 +10,5 @@ public class CommandData {
 
     private final String data;
     private final Integer msgId;
+    private final Long chatId;
 }

@@ -1,5 +1,7 @@
 package com.example.demo.handlers.admin;
 
+import static com.example.demo.domain.QuestCommands.ADD_DECRIPCION_FOR_QUEST;
+import static com.example.demo.domain.QuestCommands.ADD_GAME_FOR_QUEST;
 import static com.example.demo.domain.QuestCommands.ADD_REWARD_FOR_QUEST;
 import static com.example.demo.domain.QuestCommands.EDIT_QUEST;
 
@@ -58,6 +60,9 @@ public class AdminCallbackHandlers implements BasicHandlers {
             case "Отправить сообщение":
                 adminCommandsHandler.requestToNotifyAllUsers(chatId);
                 break;
+            case "Меню возможностей":
+                adminCommandsHandler.menuForAdmin(chatId);
+                break;
             default:
                 if (data.startsWith("user")) {
                     adminCommandsHandler.handleUserReplyRequest(chatId, data);
@@ -66,12 +71,14 @@ public class AdminCallbackHandlers implements BasicHandlers {
                     adminCommandsHandler.outputQuestForAdmin(chatId, existQuest);
                 } else if (data.startsWith(ADD_REWARD_FOR_QUEST.getCmdName())) {
                     adminCommandsHandler.requestToAddRewardForQuest(chatId);
-                } else if (data.startsWith("Добавить описание для квеста")) {
+                } else if (data.startsWith(ADD_DECRIPCION_FOR_QUEST.getCmdName())) {
                     adminCommandsHandler.requestToAddDescriptionForQuest(chatId);
-                } else if (data.startsWith("Добавить игру для квеста")) {
+                } else if (data.startsWith(ADD_GAME_FOR_QUEST.getCmdName())) {
                     adminCommandsHandler.requestToAddGameForQuest(chatId);
                 } else if (data.contains("Изменить на")) {
                     adminCommandsHandler.changeQuestStatus(chatId, data);
+                } else if (data.contains("change_role_")) {
+                    adminCommandsHandler.updateRole(chatId, data);
                 }
         }
     }

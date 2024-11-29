@@ -1,6 +1,24 @@
 package com.example.demo.handlers.user;
 
-import com.example.demo.domain.*;
+import static com.example.demo.domain.Commands.BUY_SUBSCRIBE;
+import static com.example.demo.domain.Commands.GAME;
+import static com.example.demo.domain.Commands.GAMES;
+import static com.example.demo.domain.Commands.HELP;
+import static com.example.demo.domain.Commands.MENU;
+import static com.example.demo.domain.Commands.PROFILE;
+import static com.example.demo.domain.Commands.QUEST_BY_ID;
+import static com.example.demo.domain.Commands.START;
+import static com.example.demo.domain.Commands.values;
+import static com.example.demo.domain.UserStatus.WANT_UPDATE_MSG;
+
+import com.example.demo.domain.AdminStatus;
+import com.example.demo.domain.Commands;
+import com.example.demo.domain.Game;
+import com.example.demo.domain.GameGenre;
+import com.example.demo.domain.Quest;
+import com.example.demo.domain.Role;
+import com.example.demo.domain.User;
+import com.example.demo.domain.UserStatus;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
@@ -13,24 +31,23 @@ import com.example.demo.service.QuestService;
 import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.CommandData;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.example.demo.domain.Commands.*;
-import static com.example.demo.domain.UserStatus.WANT_UPDATE_MSG;
-
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class UserCommandsHandler implements BasicHandlers {
-    
+
     private final QuestService questService;
     private final GameService gameService;
     private final GameMapper gameMapper;
@@ -41,9 +58,18 @@ public class UserCommandsHandler implements BasicHandlers {
 
     @Override
     public boolean canHandle(CommandData text) {
-        return Arrays.stream(Commands.values())
-                .filter(command -> !command.isCmdAdmin() && !command.isQuest())
-                .anyMatch(command -> command.name().startsWith(text.getData()));
+        boolean isUserCommand = Arrays.stream(Commands.values())
+            .filter(command -> !command.isCmdAdmin() && !command.isQuest())
+            .anyMatch(command -> command.name().startsWith(text.getData()));
+
+        UserDto user = userService.getUserByChatId(text.getChatId());
+
+        boolean hasUserStatus = user != null && (
+            user.getStatus().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name()) ||
+                user.getStatus().equalsIgnoreCase(UserStatus.WANT_UPDATE_MSG.name())
+        );
+
+        return isUserCommand || hasUserStatus;
     }
 
     @Override
@@ -75,14 +101,17 @@ public class UserCommandsHandler implements BasicHandlers {
 
     public void wellcome(Long chatId) {
         String text = "Привет! \uD83D\uDE0A <b>Я бот по игре Roblox.</b> \n" +
-                "Я могу показать тебе самые интересные игры в этом мире. \n" +
-                "\n" +
-                "От захватывающих приключений до захватывающих соревнований - <i>я знаю всё!</i> Просто напиши мне свои предпочтения, и я подберу для тебя что-то увлекательное! \uD83C\uDFAE✨\n" +
-                "\n" +
-                "А ещё я всегда обновляю свою базу данных, чтобы ты всегда был в курсе последних трендов и новых релизов. \n" +
-                "\n" +
-                "Так что не стесняйся, спрашивай обо всём, что тебе интересно!";
-        util.sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"), List.of("Зарегистрировать"), 1);
+            "Я могу показать тебе самые интересные игры в этом мире. \n" +
+            "\n" +
+            "От захватывающих приключений до захватывающих соревнований - <i>я знаю всё!</i> Просто напиши мне свои предпочтения, и я подберу для тебя что-то увлекательное! \uD83C\uDFAE✨\n"
+            +
+            "\n" +
+            "А ещё я всегда обновляю свою базу данных, чтобы ты всегда был в курсе последних трендов и новых релизов. \n"
+            +
+            "\n" +
+            "Так что не стесняйся, спрашивай обо всём, что тебе интересно!";
+        util.sendMessageToUser(chatId, text, List.of("Зарегистрировать в системе\uD83D\uDC7E"),
+            List.of("Зарегистрировать"), 1);
 
     }
 
@@ -93,8 +122,8 @@ public class UserCommandsHandler implements BasicHandlers {
     public void handleGameCommand(Long chatId) {
         GameGenre[] gameGenres = GameGenre.values();
         List<String> buttons = Arrays.stream(gameGenres)
-                .map(Enum::toString)
-                .collect(Collectors.toList());
+            .map(Enum::toString)
+            .collect(Collectors.toList());
         buttons.add("ALL");
         util.sendMessageToUser(chatId, "Выберите жанр", buttons, buttons.size() / 2);
     }
@@ -106,9 +135,13 @@ public class UserCommandsHandler implements BasicHandlers {
         gameByGameId.ifPresent(gameDto -> {
             util.showAllDescription(stringBuilder, gameDto, tempCreatorId);
             if (gameDto.getGif() != null && !gameDto.getGif().isEmpty()) {
-                util.sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(), List.of("Оставить заяву для: " + gameDto.getName(), "Показать друзей для игры: " + gameDto.getName()), 1);
+                util.sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(),
+                    List.of("Оставить заяву для: " + gameDto.getName(),
+                        "Показать друзей для игры: " + gameDto.getName()), 1);
             } else {
-                util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву", "Показать друзей"), List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
+                util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(),
+                    List.of("Оставить заяву", "Показать друзей"),
+                    List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
             }
 
         });
@@ -116,45 +149,48 @@ public class UserCommandsHandler implements BasicHandlers {
 
     public void buySubscription(Long chatId) {
         String msg = "\uD83D\uDCE2 Подписки на нашем боте! \uD83C\uDF89\n" +
-                "\n" +
-                "✨ Премиум 5zł — доступ к эксклюзивным функциям и контенту, а также приоритетная поддержка. Откройте новые возможности для вашего аккаунта! \uD83D\uDC8E\n" +
-                "\n" +
-                "\uD83D\uDC51 Администратор 10zł — полный контроль над системой, управление пользователями и настройками. Эта подписка идеальна для тех, кто хочет иметь полный доступ и возможности управления. \uD83D\uDD27\n" +
-                "\n" +
-                "Выбирайте подписку, которая подходит именно вам, и начните пользоваться всеми преимуществами уже сегодня! \uD83D\uDE80";
+            "\n" +
+            "✨ Премиум 5zł — доступ к эксклюзивным функциям и контенту, а также приоритетная поддержка. Откройте новые возможности для вашего аккаунта! \uD83D\uDC8E\n"
+            +
+            "\n" +
+            "\uD83D\uDC51 Администратор 10zł — полный контроль над системой, управление пользователями и настройками. Эта подписка идеальна для тех, кто хочет иметь полный доступ и возможности управления. \uD83D\uDD27\n"
+            +
+            "\n" +
+            "Выбирайте подписку, которая подходит именно вам, и начните пользоваться всеми преимуществами уже сегодня! \uD83D\uDE80";
         util.sendMessageToUser(chatId, msg, List.of("Купить: Премиум✨", "Купить: Админ\uD83D\uDC51"),
-                List.of("request_buy_premium", "request_buy_admin"), 2);
+            List.of("request_buy_premium", "request_buy_admin"), 2);
     }
 
     public void allQuests(Long chatId) {
         List<Quest> questList = questService.readAll().stream()
-                .filter(q -> !q.isDeprecated() && util.checkListForNulls(q))
-                .toList();
+            .filter(q -> !q.isDeprecated() && util.checkListForNulls(q))
+            .toList();
         if (questList.isEmpty()) {
             util.sendMessageToUser(chatId, "Здесь пока нет квестов");
             return;
         }
         questList.forEach(existQuest -> {
-            util.outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест", "Отменить квест"), List.of("Принять квест " + existQuest.getId(), "Отменить квест " + existQuest.getId()));
+            util.outputQuestWithCustomBtn(chatId, existQuest, List.of("Принять квест", "Отменить квест"),
+                List.of("Принять квест " + existQuest.getId(), "Отменить квест " + existQuest.getId()));
         });
     }
 
     public void findForGames(Long chatId) {
 
         List<Quest> questList = questService.readAll().stream()
-                .filter(util::checkListForNulls)
-                .filter(q -> !q.isDeprecated())
-                .toList();
+            .filter(util::checkListForNulls)
+            .filter(q -> !q.isDeprecated())
+            .toList();
         List<Game> gameList = questList.stream()
-                .map(Quest::getGame)
-                .toList();
+            .map(Quest::getGame)
+            .toList();
         List<String> uniqueGameNames = gameList.stream()
-                .map(Game::getName)
-                .distinct()
-                .toList();
+            .map(Game::getName)
+            .distinct()
+            .toList();
         List<String> callBack = questList.stream()
-                .map(tempQuest -> String.join("_", tempQuest.getGame().getName(), "quest", tempQuest.getId().toString()))
-                .toList();
+            .map(tempQuest -> String.join("_", tempQuest.getGame().getName(), "quest", tempQuest.getId().toString()))
+            .toList();
 
         if (uniqueGameNames.isEmpty()) {
             util.sendMessageToUser(chatId, "Здесь пока нет квестов");
@@ -175,8 +211,8 @@ public class UserCommandsHandler implements BasicHandlers {
         StringBuilder stringBuilder = new StringBuilder();
         gameDtos.forEach(gameDto -> {
             stringBuilder.append(gameDto.getName())
-                    .append(" ( /game").append(gameDto.getId()).append(" )")
-                    .append("\n");
+                .append(" ( /game").append(gameDto.getId()).append(" )")
+                .append("\n");
         });
         util.sendMessageToUser(chatId, stringBuilder.toString());
     }
@@ -187,29 +223,32 @@ public class UserCommandsHandler implements BasicHandlers {
         Game game = userByChatId.getGame();
         StringBuilder information = new StringBuilder();
         information.append("👤 <b>Профиль пользователя</b>\n\n")
-                .append("📛 <b>Имя:</b> ").append(userByChatId.getNickname()).append("\n")
-                .append("💼 <b>Подписка:</b> ").append(userByChatId.getRole()).append("\n\n");
+            .append("📛 <b>Имя:</b> ").append(userByChatId.getNickname()).append("\n")
+            .append("💼 <b>Подписка:</b> ").append(userByChatId.getRole()).append("\n\n");
 
         if (game != null) {
             information.append("🎮 <b>Игра, которую вы хотите сыграть с кем-то:</b> \n")
-                    .append(game.getName()).append(" [Запросить игру](/game").append(game.getId()).append(")\n\n");
+                .append(game.getName()).append(" [Запросить игру](/game").append(game.getId()).append(")\n\n");
         }
 
         information.append("📅 <b>Дата регистрации:</b> ").append(userByChatId.getDateOfRegisterAcc()).append("\n")
-                .append("⏳ <b>Ваш аккаунт существует:</b> ")
-                .append(Period.between(userByChatId.getDateOfRegisterAcc(), LocalDate.now()).getDays()).append(" дней\n\n")
-                .append("📊 <b>Статистика профиля:</b> \n")
-                .append("    • Ваша подписка предоставляет доступ к специальным функциям, таким как эксклюзивные игры и повышенные привилегии.\n")
-                .append("    • Регулярно участвуйте в играх с другими пользователями, чтобы зарабатывать бонусы и достижения.\n")
-                .append("    • Не забывайте обновлять свой профиль и следить за активностью в своем аккаунте!\n\n")
-                .append("<b>Принятый квест:</b>\n")
-                .append(quest.getGame().getName())
-                .append("(/quest").append(quest.getId()).append(" )")
-                .append("\n\n")
-                .append("💬 <b>Свяжитесь с поддержкой</b>, если у вас возникли вопросы: /help");
+            .append("⏳ <b>Ваш аккаунт существует:</b> ")
+            .append(Period.between(userByChatId.getDateOfRegisterAcc(), LocalDate.now()).getDays()).append(" дней\n\n")
+            .append("📊 <b>Статистика профиля:</b> \n")
+            .append(
+                "    • Ваша подписка предоставляет доступ к специальным функциям, таким как эксклюзивные игры и повышенные привилегии.\n")
+            .append(
+                "    • Регулярно участвуйте в играх с другими пользователями, чтобы зарабатывать бонусы и достижения.\n")
+            .append("    • Не забывайте обновлять свой профиль и следить за активностью в своем аккаунте!\n\n")
+            .append("<b>Принятый квест:</b>\n")
+            .append(quest.getGame().getName())
+            .append("(/quest").append(quest.getId()).append(" )")
+            .append("\n\n")
+            .append("💬 <b>Свяжитесь с поддержкой</b>, если у вас возникли вопросы: /help");
 
         util.sendMessageToUser(chatId, information.toString());
     }
+
     public void readGames(Long chatId, String genre, Integer msgId) {
         util.deleteMsg(chatId, msgId);
         List<GameDto> gameByGenre;
@@ -220,7 +259,8 @@ public class UserCommandsHandler implements BasicHandlers {
             gameByGenre = gameService.getGameByGenre(GameGenre.valueOf(genre));
         }
         if (gameByGenre.isEmpty()) {
-            util.sendMessageToUser(chatId, "\uD83C\uDF1F Извините за неудобства, но игр с таким жанром пока что нет. \uD83C\uDF1F");
+            util.sendMessageToUser(chatId,
+                "\uD83C\uDF1F Извините за неудобства, но игр с таким жанром пока что нет. \uD83C\uDF1F");
         }
         StringBuilder stringBuilder = new StringBuilder();
         //TODO
@@ -229,7 +269,9 @@ public class UserCommandsHandler implements BasicHandlers {
             GameDto gameDto = gameByGenre.get(i);
             util.showShortDescription(stringBuilder, i, gameDto, tempCreatorGroup);
 
-            util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(), List.of("Оставить заяву", "Показать друзей"), List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
+            util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(),
+                List.of("Оставить заяву", "Показать друзей"),
+                List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
             stringBuilder.setLength(0);
         }
     }
@@ -241,8 +283,10 @@ public class UserCommandsHandler implements BasicHandlers {
         } else {
             SuportMassageDto supportMessage = supportMassageService.getMassageByChatId(chatId).orElse(null);
             if (supportMessage != null) {
-                util.sendMessageToUser(chatId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
-                        List.of("Редактировать сообщение", "Оставить"), 1);
+                util.sendMessageToUser(chatId,
+                    "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: "
+                        + supportMessage.getDate(),
+                    List.of("Редактировать сообщение", "Оставить"), 1);
 //                util.editMsg(chatId, msgId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
 //                        List.of("Редактировать сообщение", "Оставить"), 1);
             }
@@ -250,21 +294,22 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     private void menuForUser(Long chatId) {
-        List<String> commandsList = Arrays.stream(values()).toList().stream().filter(cmd -> !cmd.isCmdAdmin() && cmd.isNeedToShow()).map(Commands::getCmdName).toList();
+        List<String> commandsList = Arrays.stream(values()).toList().stream()
+            .filter(cmd -> !cmd.isCmdAdmin() && cmd.isNeedToShow()).map(Commands::getCmdName).toList();
         List<String> callback = util.removeSignAndEnglishLetter(commandsList);
         util.sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
-                        "\n" +
-                        "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
-                commandsList, callback , commandsList.size() / 2);
+                "\n" +
+                "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
+            commandsList, callback, commandsList.size() / 2);
 
     }
 
     public void register(Long chatId, CallbackQuery callbackQuery) {
         if (util.isUserExist(chatId)) {
             util.editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы уже зарегистрированы! ✅\n" +
-                    "\n" +
-                    "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
-                    "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
+                "\n" +
+                "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
+                "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
             return;
         }
         var queryFrom = callbackQuery.getFrom();
@@ -280,9 +325,9 @@ public class UserCommandsHandler implements BasicHandlers {
         user.setDateOfRegisterAcc(LocalDate.now());
         userService.save(userMapper.toDto(user));
         util.editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы успешно зарегистрированы! ✅\n" +
-                "\n" +
-                "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
-                "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
+            "\n" +
+            "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
+            "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
     }
 
     public void handleGameApplication(Long chatId, String data) {
@@ -297,8 +342,8 @@ public class UserCommandsHandler implements BasicHandlers {
         String gameName = data.replaceAll("show_friends_", "").trim();
         GameDto gameByName = gameService.getGameByName(gameName);
         List<UserDto> friends = userService.getUserByGameId(gameByName.getId()).stream()
-                .filter(user -> !user.getChatId().equals(chatId))
-                .toList();
+            .filter(user -> !user.getChatId().equals(chatId))
+            .toList();
         if (!friends.isEmpty()) {
             util.sendMessageToUser(chatId, "@" + friends.get(0).getNickname());
             System.out.println(friends);
@@ -308,8 +353,9 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     private void handleUserMessage(Long chatId, String message) {
+        UserDto user = new UserDto();
         try {
-            UserDto user = userService.getUserByChatId(chatId);
+            user = userService.getUserByChatId(chatId);
             if (user.getStatus().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name())) {
                 if (saveSuppMassageFromUser(chatId, message)) {
                     util.sendMessageToUser(chatId, "Сообщение отправлено");
@@ -323,7 +369,7 @@ public class UserCommandsHandler implements BasicHandlers {
                 userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
             }
         } catch (Exception e) {
-            System.out.println("Человек не ожидает на отправку сообщений");
+            System.out.println("Человек не ожидает на отправку сообщений " + user.getStatus());
         }
     }
 
@@ -337,7 +383,7 @@ public class UserCommandsHandler implements BasicHandlers {
         UserDto userByChatId = userService.getUserByChatId(chatId);
         if (supportMessage != null) {
             String message = "Пользователь с ником @" + userByChatId.getNickname() +
-                    " не одобрил помощь\n\n" + supportMessage.getMassage();
+                " не одобрил помощь\n\n" + supportMessage.getMassage();
             util.sendMessageToUser(1622241974L, message);
         }
     }
