@@ -65,7 +65,6 @@ public class MyBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
-            menuForUser(update.getMessage().getChatId());
             commandService.handleCommand(update.getMessage());
         }
 

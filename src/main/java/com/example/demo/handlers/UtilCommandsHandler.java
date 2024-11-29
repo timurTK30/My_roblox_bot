@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -150,6 +151,18 @@ public class UtilCommandsHandler {
         }
         try {
             botSender.execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void showAlert(String callBackId){
+        AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
+        answerCallbackQuery.setCallbackQueryId(callBackId);
+        answerCallbackQuery.setText("Заявка оставлена");
+        answerCallbackQuery.setShowAlert(true);
+        try {
+            botSender.execute(answerCallbackQuery);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }

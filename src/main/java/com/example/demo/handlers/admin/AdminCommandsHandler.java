@@ -62,7 +62,8 @@ public class AdminCommandsHandler implements BasicHandlers {
                 user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_GAME_QUEST.name())
         );
 
-        return isAdminCommand || hasAdminStatus;
+        //return isAdminCommand || hasAdminStatus;
+        return true;
     }
 
     //TODO проработать отправку сообщений (не команд)

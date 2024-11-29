@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 
 @Component
@@ -57,19 +58,20 @@ public class UserCommandsHandler implements BasicHandlers {
     private final UtilCommandsHandler util;
 
     @Override
-    public boolean canHandle(CommandData text) {
-        boolean isUserCommand = Arrays.stream(Commands.values())
-            .filter(command -> !command.isCmdAdmin() && !command.isQuest())
-            .anyMatch(command -> command.name().startsWith(text.getData()));
+    public boolean canHandle(CommandData commandDate) {
+//        boolean isUserCommand = Arrays.stream(Commands.values())
+//            .filter(command -> !command.isCmdAdmin() && !command.isQuest())
+//            .anyMatch(command -> command.name().startsWith(commandDate.getData()));
 
-        UserDto user = userService.getUserByChatId(text.getChatId());
+        UserDto user = userService.getUserByChatId(commandDate.getChatId());
 
         boolean hasUserStatus = user != null && (
             user.getStatus().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name()) ||
                 user.getStatus().equalsIgnoreCase(UserStatus.WANT_UPDATE_MSG.name())
         );
 
-        return isUserCommand || hasUserStatus;
+       //return isUserCommand || hasUserStatus;
+        return true;
     }
 
     @Override
@@ -304,19 +306,17 @@ public class UserCommandsHandler implements BasicHandlers {
 
     }
 
-    public void register(Long chatId, CallbackQuery callbackQuery) {
+    public void register(Long chatId, Integer msgId) {
         if (util.isUserExist(chatId)) {
-            util.editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы уже зарегистрированы! ✅\n" +
+            util.editMsg(chatId, msgId, "Вы уже зарегистрированы! ✅\n" +
                 "\n" +
                 "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
                 "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
             return;
         }
-        var queryFrom = callbackQuery.getFrom();
-        String nickname = !queryFrom.getUserName().isEmpty() ? queryFrom.getUserName() : queryFrom.getFirstName();
 
         User user = new User();
-        user.setNickname(nickname);
+        user.setNickname("test");
         user.setChatId(chatId);
         user.setRole(Role.USER);
         user.setStatus(UserStatus.DONT_SENT);
@@ -324,18 +324,20 @@ public class UserCommandsHandler implements BasicHandlers {
         user.setTempChatIdForReply(0L);
         user.setDateOfRegisterAcc(LocalDate.now());
         userService.save(userMapper.toDto(user));
-        util.editMsg(chatId, callbackQuery.getMessage().getMessageId(), "Вы успешно зарегистрированы! ✅\n" +
+        util.editMsg(chatId, msgId, "Вы успешно зарегистрированы! ✅\n" +
             "\n" +
             "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
             "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
     }
 
-    public void handleGameApplication(Long chatId, String data) {
+    public void handleGameApplication(Long chatId, String data, String callBackId) {
         String gameName = data.replaceAll("leave_request_", "").trim();
         GameDto gameDto = gameService.getGameByName(gameName);
         UserDto userDto = userService.getUserByChatId(chatId);
         userDto.setGame(gameMapper.toEntity(gameDto));
         userService.updateByChatId(userDto, chatId);
+
+        util.showAlert(callBackId);
     }
 
     public void showFriends(Long chatId, String data) {

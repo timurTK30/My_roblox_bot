@@ -33,9 +33,10 @@ public class UserCallbackHanlers implements BasicHandlers {
     public void handle(Long chatId, CommandData commandData) {
         String data = commandData.getData();
         Integer msgId = commandData.getMsgId();
+        String callBackId = commandData.getCallBackId();
         switch (data) {
             case "Зарегистрировать":
-                userCommandsHandler.wellcome(chatId);
+                userCommandsHandler.register(chatId, msgId);
                 break;
             case "ok_reply":
                 userCommandsHandler.handlePositiveFeedback(chatId);
@@ -87,7 +88,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                 break;
             default:
                 if (data.startsWith("leave_request_")) {
-                    userCommandsHandler.handleGameApplication(chatId, data);
+                    userCommandsHandler.handleGameApplication(chatId, data, callBackId);
                     break;
                 } else if (data.startsWith("show_friends_")) {
                     userCommandsHandler.showFriends(chatId, data);
