@@ -336,8 +336,11 @@ public class UserCommandsHandler implements BasicHandlers {
         UserDto userDto = userService.getUserByChatId(chatId);
         userDto.setGame(gameMapper.toEntity(gameDto));
         userService.updateByChatId(userDto, chatId);
-
-        util.showAlert(callBackId);
+        if(gameDto != null){
+            util.showAlert(callBackId, "Заявка оставлена");
+        } else {
+            util.showAlert(callBackId, "Заявка заменена с прошлой");
+        }
     }
 
     public void showFriends(Long chatId, String data) {

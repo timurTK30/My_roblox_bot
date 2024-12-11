@@ -156,10 +156,10 @@ public class UtilCommandsHandler {
         }
     }
 
-    public void showAlert(String callBackId){
+    public void showAlert(String callBackId, String text){
         AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
         answerCallbackQuery.setCallbackQueryId(callBackId);
-        answerCallbackQuery.setText("Заявка оставлена");
+        answerCallbackQuery.setText(text);
         answerCallbackQuery.setShowAlert(true);
         try {
             botSender.execute(answerCallbackQuery);
