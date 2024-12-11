@@ -107,4 +107,11 @@ public class UserServiceImpl implements UserService {
     public Boolean isUserAdmin(Long chatId) {
         return getUserByChatId(chatId).getRole().equalsIgnoreCase(Role.ADMIN.name());
     }
+
+    @Override
+    public void deleteGameRequestFromUser(Long chatId) {
+        UserDto userByChatId = getUserByChatId(chatId);
+        userByChatId.setGame(null);
+        save(userByChatId);
+    }
 }

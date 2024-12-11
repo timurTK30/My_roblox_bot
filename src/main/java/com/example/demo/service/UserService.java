@@ -19,5 +19,6 @@ public interface UserService {
     List<UserDto> getUserByGameId(Long gameId);
     UserDto updateRoleByChatId(Long chatId, String role);
     Boolean isUserAdmin(Long chatId);
+    void deleteGameRequestFromUser(Long chatId);
 
 }

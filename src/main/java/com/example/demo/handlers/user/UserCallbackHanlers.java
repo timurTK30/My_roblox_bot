@@ -25,7 +25,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                 "|SHOOTER|TYCOON|SURVIVAL|Написать админу|Помошь|Игры|Купить подписки" +
                 "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
                 "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
-                "|show_friends_.*)"
+                "|show_friends_.*|remove_gameRequest_.*)"
         );
     }
 
@@ -93,6 +93,8 @@ public class UserCallbackHanlers implements BasicHandlers {
                 } else if (data.startsWith("show_friends_")) {
                     userCommandsHandler.showFriends(chatId, data);
                     break;
+                } else if (data.startsWith("remove_gameRequest_")) {
+                    userCommandsHandler.removeGameRequest(chatId, callBackId);
                 } else {
                     log.warn("UserCallbackHanlers -> не найдена кнопка -> " + data);
                 }
