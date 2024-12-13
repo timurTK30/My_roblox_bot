@@ -12,7 +12,11 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "games")
+@Table(name = "games", indexes = {
+        @Index(name = "idx_game_name", columnList = "name"),
+        @Index(name = "idx_game_genre", columnList = "game_genre"),
+        @Index(name = "idx_game_creator", columnList = "creator_id")
+})
 public class Game {
 
     @Id

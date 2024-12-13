@@ -16,6 +16,7 @@ import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -109,25 +110,6 @@ public class UserCommandsHandler implements BasicHandlers {
                 .collect(Collectors.toList());
         buttons.add("ALL");
         util.sendMessageToUser(chatId, "Выберите жанр", buttons, buttons.size() / 2);
-    }
-
-    private void getGameById(Long chatId, Long gameId) {
-        StringBuilder stringBuilder = new StringBuilder();
-        String tempCreatorId = "пусто";
-        Optional<GameDto> gameByGameId = gameService.getGameByGameId(gameId);
-        gameByGameId.ifPresent(gameDto -> {
-            util.showAllDescription(stringBuilder, gameDto, tempCreatorId);
-            if (gameDto.getGif() != null && !gameDto.getGif().isEmpty()) {
-                util.sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(),
-                        List.of("Оставить заяву для: " + gameDto.getName(),
-                                "Показать друзей для игры: " + gameDto.getName()), 1);
-            } else {
-                util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(),
-                        List.of("Оставить заяву", "Показать друзей"),
-                        List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName()), 1);
-            }
-
-        });
     }
 
     public void buySubscription(Long chatId) {
@@ -230,6 +212,35 @@ public class UserCommandsHandler implements BasicHandlers {
                 .append("💬 <b>Свяжитесь с поддержкой</b>, если у вас возникли вопросы: /help");
 
         util.sendMessageToUser(chatId, information.toString());
+    }
+
+    private void getGameById(Long chatId, Long gameId) {
+        StringBuilder stringBuilder = new StringBuilder();
+        Optional<GameDto> gameByGameId = gameService.getGameByGameId(gameId);
+        gameByGameId.ifPresent(gameDto -> {
+            util.showAllDescription(stringBuilder, gameDto);
+            boolean hasGame = util.isUserHasSpecificGame(chatId, gameId);
+
+            List<String> buttons = hasGame
+                    ? List.of("Удалить заявку", "Показать друзей")
+                    : List.of("Оставить заявку", "Показать друзей");
+
+            List<String> callbackData = hasGame
+                    ? List.of("remove_gameRequest_" + gameDto.getName(), "show_friends_" + gameDto.getName())
+                    : List.of("leave_request_" + gameDto.getName(), "show_friends_" + gameDto.getName());
+
+            util.sendTypingStatus(chatId);
+            if (!ObjectUtils.isEmpty(gameDto.getGif())) {
+                util.sendGifToUser(chatId, gameDto.getGif(), stringBuilder.toString(),
+                        buttons,
+                        callbackData, 1);
+            } else {
+                util.sendPhotoToUser(chatId, gameDto.getPhoto(), stringBuilder.toString(),
+                        buttons,
+                        callbackData, 1);
+            }
+
+        });
     }
 
     public void readGames(Long chatId, String genre, Integer msgId) {

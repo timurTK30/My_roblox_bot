@@ -1,6 +1,7 @@
 package com.example.demo.handlers;
 
 import com.example.demo.config.BotSender;
+import com.example.demo.domain.Creator;
 import com.example.demo.domain.Quest;
 import com.example.demo.domain.Role;
 import com.example.demo.dto.GameDto;
@@ -12,23 +13,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -66,6 +65,12 @@ public class UtilCommandsHandler {
                 .map(command -> command.replaceAll("[^а-яА-ЯёЁ\\s]", "").trim()).toList();
     }
 
+    public boolean isUserHasSpecificGame(Long chatId, Long gameId) {
+        UserDto userByChatId = userService.getUserByChatId(chatId);
+        //return userByChatId.getGame() != null && userByChatId.getGame().getId().equals(gameId);
+        return Objects.nonNull(userByChatId.getGame()) && userByChatId.getGame().getId().equals(gameId);
+    }
+
     public void showShortDescription(StringBuilder stringBuilder, int i, GameDto gameDto, String tempCreatorGroup) {
         if (gameDto.getCreator() != null) {
             tempCreatorGroup = gameDto.getCreator().getNameOfGroup();
@@ -89,7 +94,6 @@ public class UtilCommandsHandler {
                 .append("<b>").append("\uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB Aктив: ").append("</b>")
                 .append(gameDto.getActive());
     }
-
 
 
     public void sendMessageToUser(Long chatId, String massage) {
@@ -137,7 +141,7 @@ public class UtilCommandsHandler {
         }
     }
 
-    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText,List<String> callbacks, int buttonRows) {
+    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, List<String> callbacks, int buttonRows) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
 
@@ -156,7 +160,7 @@ public class UtilCommandsHandler {
         }
     }
 
-    public void showAlert(String callBackId, String text){
+    public void showAlert(String callBackId, String text) {
         AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
         answerCallbackQuery.setCallbackQueryId(callBackId);
         answerCallbackQuery.setText(text);
@@ -168,11 +172,15 @@ public class UtilCommandsHandler {
         }
     }
 
-    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows){
+    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
         sendPhotoToUser(chatId, url, massage, buttonText, Collections.emptyList(), buttonRows);
     }
 
     public void sendGifToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
+        sendGifToUser(chatId, url, massage, buttonText, Collections.emptyList(), buttonRows);
+    }
+
+    public void sendGifToUser(Long chatId, String url, String massage, List<String> buttonText, List<String> callback, int buttonRows) {
         SendAnimation sendAnimation = new SendAnimation();
         sendAnimation.setChatId(chatId);
 
@@ -182,7 +190,7 @@ public class UtilCommandsHandler {
         sendAnimation.setParseMode("HTML");
 
         if (buttonText != null) {
-            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
+            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, callback, buttonRows);
             sendAnimation.setReplyMarkup(inlineKeyboardMarkup);
         }
 
@@ -284,40 +292,39 @@ public class UtilCommandsHandler {
         return massageByChatId.isPresent();
     }
 
-    public void showAllDescription(StringBuilder stringBuilder, GameDto gameDto, String tempCreatorGroup) {
-        if (gameDto.getCreator() != null) {
-            tempCreatorGroup = gameDto.getCreator().getNameOfGroup();
+    public void sendTypingStatus(Long chatId){
+        SendChatAction action = new SendChatAction();
+        action.setChatId(chatId);
+        action.setAction(ActionType.TYPING);
+        try {
+            botSender.execute(action);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
         }
+    }
 
-        stringBuilder.append(1)
-                .append(". ")
-                .append("<b>").append("\uD83C\uDF1F Название игры: ")
-                .append(gameDto.getName()).append("</b>")
-                .append("\n")
-                .append("\n")
-                .append("<b>").append("\uD83D\uDCD6 Описание:").append("</b>")
-                .append("\n")
-                .append(gameDto.getDescription())
-                .append("\n")
-                .append("\n")
-                .append("<b>").append("\uD83C\uDFAE Жанр: ").append("</b>")
-                .append(gameDto.getGameGenre())
-                .append("\n")
-                .append("\n")
-                .append("<b>").append("\uD83D\uDCB0 Цена: ").append("</b>")
-                .append(gameDto.getPrice())
-                .append("\n")
-                .append("\n")
-                .append("<b>").append("\uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB Aктив: ").append("</b>")
-                .append(gameDto.getActive())
-                .append("\n")
-                .append("\n")
-                .append("<b>").append("\uD83C\uDFE2 Разработчик: ").append("</b>")
-                .append(tempCreatorGroup)
-                .append("\n")
-                .append("\n")
-                .append("<b>").append("\uD83D\uDDD3 Дата создания:").append("</b>")
-                .append(gameDto.getCreateDate());
+    public void showAllDescription(StringBuilder stringBuilder, GameDto gameDto) {
+        String tempCreatorGroup = Optional.ofNullable(gameDto.getCreator())
+                .map(Creator::getNameOfGroup)
+                .orElse("Неизвестный разработчик");
+
+        Map<String, String> gameDetails = Map.of(
+                "\uD83C\uDF1F Название игры", gameDto.getName(),
+                "\uD83D\uDCD6 Описание", gameDto.getDescription(),
+                "\uD83C\uDFAE Жанр", gameDto.getGameGenre(),
+                "\uD83D\uDCB0 Цена", String.valueOf(gameDto.getPrice()),
+                "\uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB Aктив", String.valueOf(gameDto.getActive()),
+                "\uD83C\uDFE2 Разработчик", tempCreatorGroup,
+                "\uD83D\uDDD3 Дата создания", gameDto.getCreateDate().toString()
+        );
+
+        for (Map.Entry<String, String> entry : gameDetails.entrySet()) {
+            stringBuilder
+                    .append(1).append(". ")
+                    .append("<b>").append(entry.getKey()).append(": </b>")
+                    .append(entry.getValue())
+                    .append("\n\n");
+        }
     }
 
 }
