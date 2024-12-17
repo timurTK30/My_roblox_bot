@@ -29,6 +29,8 @@ public class CommandService {
             UserDto userByChatId = userService.getUserByChatId(chatId);
             Boolean isAdmin = userService.isUserAdmin(userByChatId.getChatId());
 
+            System.out.println(adminHandler.canHandle(commandData));
+            System.out.println(commandData.toString());
             if (isAdmin && adminHandler.canHandle(commandData)){
                 adminHandler.handle(chatId, commandData);
             } else if (userHandler.canHandle(commandData)) {

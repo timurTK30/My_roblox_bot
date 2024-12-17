@@ -29,6 +29,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.*;
 
+import static java.util.Collections.emptyList;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -57,7 +59,7 @@ public class UtilCommandsHandler {
     }
 
     public void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn) {
-        outputQuestWithCustomBtn(chatId, quest, btn, Collections.emptyList());
+        outputQuestWithCustomBtn(chatId, quest, btn, emptyList());
     }
 
     public List<String> removeSignAndEnglishLetter(List<String> commandsList) {
@@ -97,32 +99,11 @@ public class UtilCommandsHandler {
 
 
     public void sendMessageToUser(Long chatId, String massage) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText(massage);
-        sendMessage.enableHtml(true);
-        try {
-            botSender.execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+        sendMessageToUser(chatId, massage, emptyList(), emptyList(), 0);
     }
 
-    //TODO скомбинировать три метода по отправки сообщения
     public void sendMessageToUser(Long chatId, String massage, List<String> buttonText, int buttonRows) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText(massage);
-        sendMessage.enableHtml(true);
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, buttonRows);
-        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            botSender.execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+        sendMessageToUser(chatId, massage, buttonText, emptyList(), buttonRows);
     }
 
     public void sendMessageToUser(Long chatId, String massage, List<String> buttonText, List<String> callBackQuery, int buttonRows) {
@@ -131,8 +112,10 @@ public class UtilCommandsHandler {
         sendMessage.setText(massage);
         sendMessage.enableHtml(true);
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, callBackQuery, buttonRows);
-        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+        if (!buttonText.isEmpty()) {
+            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, callBackQuery, buttonRows);
+            sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+        }
 
         try {
             botSender.execute(sendMessage);
@@ -173,11 +156,11 @@ public class UtilCommandsHandler {
     }
 
     public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
-        sendPhotoToUser(chatId, url, massage, buttonText, Collections.emptyList(), buttonRows);
+        sendPhotoToUser(chatId, url, massage, buttonText, emptyList(), buttonRows);
     }
 
     public void sendGifToUser(Long chatId, String url, String massage, List<String> buttonText, int buttonRows) {
-        sendGifToUser(chatId, url, massage, buttonText, Collections.emptyList(), buttonRows);
+        sendGifToUser(chatId, url, massage, buttonText, emptyList(), buttonRows);
     }
 
     public void sendGifToUser(Long chatId, String url, String massage, List<String> buttonText, List<String> callback, int buttonRows) {
@@ -228,7 +211,7 @@ public class UtilCommandsHandler {
 
     private InlineKeyboardMarkup createCustomKeyboard(List<String> buttonText, int rows) {
 
-        return createCustomKeyboard(buttonText, Collections.emptyList(), rows);
+        return createCustomKeyboard(buttonText, emptyList(), rows);
     }
 
     private InlineKeyboardMarkup createCustomKeyboard(List<String> buttonText, List<String> callBackQuery, int rows) {
@@ -292,7 +275,7 @@ public class UtilCommandsHandler {
         return massageByChatId.isPresent();
     }
 
-    public void sendTypingStatus(Long chatId){
+    public void sendTypingStatus(Long chatId) {
         SendChatAction action = new SendChatAction();
         action.setChatId(chatId);
         action.setAction(ActionType.TYPING);
@@ -320,7 +303,6 @@ public class UtilCommandsHandler {
 
         for (Map.Entry<String, String> entry : gameDetails.entrySet()) {
             stringBuilder
-                    .append(1).append(". ")
                     .append("<b>").append(entry.getKey()).append(": </b>")
                     .append(entry.getValue())
                     .append("\n\n");

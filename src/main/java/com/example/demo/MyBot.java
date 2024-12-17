@@ -223,7 +223,6 @@ public class MyBot extends TelegramLongPollingBot {
                 menuForCreateQuest(chatId);
                 break;
             case "Создать квест":
-                //TODO переместить в метод
                 createQuest(chatId);
                 break;
             case "Удалить старие квесты":

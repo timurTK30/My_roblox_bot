@@ -1,17 +1,9 @@
 package com.example.demo.handlers.admin;
 
-import static com.example.demo.domain.Commands.READ_SUPP_MSG;
-import static com.example.demo.domain.Commands.RESTART;
-import static com.example.demo.domain.Commands.SET_ROLE;
-import static com.example.demo.domain.Commands.STATISTISC;
-import static com.example.demo.domain.Commands.values;
+import static com.example.demo.domain.AdminCommands.*;
 import static com.example.demo.domain.QuestCommands.EDIT_QUEST;
 
-import com.example.demo.domain.AdminStatus;
-import com.example.demo.domain.Commands;
-import com.example.demo.domain.Quest;
-import com.example.demo.domain.QuestCommands;
-import com.example.demo.domain.Role;
+import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
@@ -48,9 +40,8 @@ public class AdminCommandsHandler implements BasicHandlers {
 
     @Override
     public boolean canHandle(CommandData commandData) {
-        boolean isAdminCommand = Arrays.stream(Commands.values())
-            .filter(Commands::isCmdAdmin)
-            .anyMatch(command -> command.name().startsWith(commandData.getData()));
+        boolean isAdminCommand = Arrays.stream(AdminCommands.values())
+            .anyMatch(command -> command.getCmd().startsWith(commandData.getData()));
 
         UserDto user = userService.getUserByChatId(commandData.getChatId());
 
@@ -62,15 +53,13 @@ public class AdminCommandsHandler implements BasicHandlers {
                 user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_GAME_QUEST.name())
         );
 
-        //return isAdminCommand || hasAdminStatus;
-        return true;
+        return isAdminCommand || hasAdminStatus;
     }
 
-    //TODO проработать отправку сообщений (не команд)
     @Override
     public void handle(Long chatId, CommandData commandData) {
         String text = commandData.getData();
-        if (text.startsWith(STATISTISC.getCmd())) {
+        if (text.startsWith(STATISTICS.getCmd())) {
             statistics(chatId);
         } else if (text.startsWith(RESTART.getCmd())) {
             restart(chatId);
@@ -78,13 +67,15 @@ public class AdminCommandsHandler implements BasicHandlers {
             requestToChangeRole(chatId, text);
         } else if (text.startsWith(READ_SUPP_MSG.getCmd())) {
             readSuppMsg(chatId);
+        } else if (text.startsWith(MENU.getCmd())) {
+            menuForAdmin(chatId);
         } else {
             handleAdminMessage(chatId, text);
         }
     }
 
     public void menuForAdmin(Long chatId) {
-        List<String> commandsList = Arrays.stream(values()).toList().stream()
+        List<String> commandsList = Arrays.stream(Commands.values()).toList().stream()
             .filter(commands -> !commands.isQuest())
             .filter(Commands::isCmdAdmin)
             .map(Commands::getCmdName)
@@ -137,7 +128,7 @@ public class AdminCommandsHandler implements BasicHandlers {
     public void statistics(Long chatId) {
         List<UserDto> userDtos = userService.readAll();
         List<SuportMassageDto> massageDtos = supportMassageService.readAll();
-        Commands[] commands = values();
+        Commands[] commands = Commands.values();
         long amountOfSuppMsg = massageDtos.size();
         long amountOfUsers = userDtos.stream().filter(user -> !user.getRole().equalsIgnoreCase(Role.ADMIN.name()))
             .count();
@@ -227,7 +218,7 @@ public class AdminCommandsHandler implements BasicHandlers {
     }
 
     public void menuForCreateQuest(Long chatId) {
-        List<String> commandsList = Arrays.stream(values()).toList().stream()
+        List<String> commandsList = Arrays.stream(Commands.values()).toList().stream()
             .filter(Commands::isQuest)
             .map(Commands::getCmdName)
             .toList();
