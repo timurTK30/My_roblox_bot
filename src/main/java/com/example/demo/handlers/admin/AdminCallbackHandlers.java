@@ -22,6 +22,7 @@ public class AdminCallbackHandlers implements BasicHandlers {
     @Override
     public boolean canHandle(CommandData commandData) {
         String data = commandData.getData();
+
         return data.matches(
             "(^Прочитать сообщение от юзера|Перезагрузить бота|Статистика использования бота" +
                 "|Доступные квесты|Квест меню|Создать квест|Удалить старие квесты" +

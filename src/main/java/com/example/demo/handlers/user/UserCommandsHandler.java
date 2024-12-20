@@ -1,5 +1,6 @@
 package com.example.demo.handlers.user;
 
+import com.example.demo.config.BotSender;
 import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
@@ -17,6 +18,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -38,6 +47,7 @@ public class UserCommandsHandler implements BasicHandlers {
     private final UserMapper userMapper;
     private final SupportMassageService supportMassageService;
     private final UtilCommandsHandler util;
+    private final BotSender botSender;
 
     @Override
     public boolean canHandle(CommandData commandDate) {
@@ -78,6 +88,33 @@ public class UserCommandsHandler implements BasicHandlers {
             Long id = Long.valueOf(text.replaceAll("/quest", ""));
             Optional<Quest> questById = questService.getQuestById(id);
             util.outputQuestWithCustomBtn(chatId, questById.get(), List.of("Отменить квест"));
+        } else if (text.startsWith("/test")) {
+
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId);
+            message.setText("Click the button below to open the WebApp:");
+
+            WebAppInfo webAppInfo = new WebAppInfo();
+            webAppInfo.setUrl("https://osozznanie.github.io/wheel.github.io/");
+
+            KeyboardButton webAppButton = new KeyboardButton();
+            webAppButton.setText("Open WebApp");
+            webAppButton.setWebApp(webAppInfo);
+
+            KeyboardRow keyboardRow = new KeyboardRow();
+            keyboardRow.add(webAppButton);
+
+            ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+            keyboardMarkup.setResizeKeyboard(true);
+            keyboardMarkup.setKeyboard(List.of(keyboardRow));
+
+            message.setReplyMarkup(keyboardMarkup);
+
+            try {
+                botSender.execute(message);
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }
         } else {
             handleUserMessage(chatId, text);
         }
@@ -290,7 +327,7 @@ public class UserCommandsHandler implements BasicHandlers {
         }
     }
 
-    public void removeGameRequest(Long chatId, String callbackId){
+    public void removeGameRequest(Long chatId, String callbackId) {
         userService.deleteGameRequestFromUser(chatId);
         util.showAlert(callbackId, "Операция прошла успешно");
     }
@@ -350,7 +387,7 @@ public class UserCommandsHandler implements BasicHandlers {
     public void handleGameApplication(Long chatId, String data, String callBackId) {
         UserDto userDto = userService.getUserByChatId(chatId);
         Game game = userDto.getGame();
-        if (game != null){
+        if (game != null) {
             util.sendMessageToUser(chatId, "Заявка у вас уже есть, отмените сначала (/game" + game.getId() + ")");
             return;
         }

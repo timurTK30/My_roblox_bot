@@ -5,9 +5,9 @@ import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
-import com.example.demo.handlers.user.UserCommandsHandler;
 import com.example.demo.handlers.service.CallbackService;
 import com.example.demo.handlers.service.CommandService;
+import com.example.demo.handlers.user.UserCommandsHandler;
 import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.mapper.UserMapper;
@@ -16,6 +16,7 @@ import com.example.demo.service.GameService;
 import com.example.demo.service.QuestService;
 import com.example.demo.service.UserService;
 import com.example.demo.service.serviceImp.SupportMassageServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -64,6 +65,14 @@ public class MyBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+
+        if (update.getMessage().getWebAppData() != null) {
+            String webAppData = update.getMessage().getWebAppData().getData();
+            ObjectMapper objectMapper = new ObjectMapper();
+            System.out.println(webAppData);
+
+        }
+
         if (update.hasMessage()) {
             commandService.handleCommand(update.getMessage());
         }
@@ -463,7 +472,7 @@ public class MyBot extends TelegramLongPollingBot {
         sendMessageToUser(chatId, "<b>\uD83C\uDFAE Roblox Бот — Ваш гид в мире Roblox!</b>\n" +
                         "\n" +
                         "\uD83D\uDC4B Привет! Здесь вы можете найти всё, что нужно для успешной игры в Roblox. Выберите нужную команду:",
-                commandsList, callback , commandsList.size() / 2);
+                commandsList, callback, commandsList.size() / 2);
 
     }
 
@@ -671,7 +680,7 @@ public class MyBot extends TelegramLongPollingBot {
                 userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
             }
         } catch (Exception e) {
-        System.out.println("Человек не ожидает на отправку сообщени");
+            System.out.println("Человек не ожидает на отправку сообщени");
         }
     }
 
@@ -963,7 +972,7 @@ public class MyBot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText,List<String> callbacks, int buttonRows) {
+    public void sendPhotoToUser(Long chatId, String url, String massage, List<String> buttonText, List<String> callbacks, int buttonRows) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
 
