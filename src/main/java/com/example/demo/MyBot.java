@@ -11,11 +11,9 @@ import com.example.demo.handlers.user.UserCommandsHandler;
 import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.mapper.UserMapper;
-import com.example.demo.service.CreatorService;
-import com.example.demo.service.GameService;
-import com.example.demo.service.QuestService;
-import com.example.demo.service.UserService;
+import com.example.demo.service.*;
 import com.example.demo.service.serviceImp.SupportMassageServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +60,7 @@ public class MyBot extends TelegramLongPollingBot {
     private final UserCommandsHandler userCH;
     private final CallbackService callbackService;
     private final CommandService commandService;
+    private final PrizeService prizeService;
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -69,7 +68,16 @@ public class MyBot extends TelegramLongPollingBot {
         if (update.getMessage().getWebAppData() != null) {
             String webAppData = update.getMessage().getWebAppData().getData();
             ObjectMapper objectMapper = new ObjectMapper();
-            System.out.println(webAppData);
+            PrizeWebAppData prizeWebAppData = null ;
+
+            try {
+                prizeWebAppData = objectMapper.readValue(webAppData, PrizeWebAppData.class);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println(prizeWebAppData);
+            prizeService.save(prizeWebAppData, update.getMessage().getChatId());
+
 
         }
 
