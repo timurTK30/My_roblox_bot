@@ -17,7 +17,7 @@ public class Prize {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "chat_id")
+    @Column(name = "chat_id", unique = true)
     private Long chatId;
     @Column(name = "prize_name")
     private String prizeName;

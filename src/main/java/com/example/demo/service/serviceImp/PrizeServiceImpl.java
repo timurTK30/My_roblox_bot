@@ -5,11 +5,14 @@ import com.example.demo.domain.PrizeWebAppData;
 import com.example.demo.repository.PrizeRepository;
 import com.example.demo.service.PrizeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 public class PrizeServiceImpl implements PrizeService {
 
@@ -27,8 +30,12 @@ public class PrizeServiceImpl implements PrizeService {
         prize.setChatId(chatId);
         prize.setPrizeName(prizeWebAppData.getName());
         prize.setTime(LocalDateTime.now());
-        repository.save(prize);
-        System.out.println(prize);
-        return prize;
+
+        try {
+            return repository.save(prize);
+        } catch (Exception e){
+            log.info("!!!!Попытка сохронение дубликата😧😧😧. " + e.getMessage());
+        }
+        return null;
     }
 }

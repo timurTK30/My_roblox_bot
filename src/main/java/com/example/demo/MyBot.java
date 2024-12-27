@@ -7,14 +7,13 @@ import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
 import com.example.demo.handlers.service.CallbackService;
 import com.example.demo.handlers.service.CommandService;
+import com.example.demo.handlers.service.WebAppService;
 import com.example.demo.handlers.user.UserCommandsHandler;
 import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.SuportMassageMapper;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.*;
 import com.example.demo.service.serviceImp.SupportMassageServiceImpl;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -42,6 +41,7 @@ import java.util.stream.Collectors;
 import static com.example.demo.domain.Commands.*;
 import static com.example.demo.domain.QuestCommands.EDIT_QUEST;
 import static com.example.demo.domain.UserStatus.WANT_UPDATE_MSG;
+import static java.util.Objects.nonNull;
 
 @Component
 @Slf4j
@@ -61,31 +61,16 @@ public class MyBot extends TelegramLongPollingBot {
     private final CallbackService callbackService;
     private final CommandService commandService;
     private final PrizeService prizeService;
+    private final WebAppService webAppService;
 
     @Override
     public void onUpdateReceived(Update update) {
 
-        if (update.getMessage().getWebAppData() != null) {
-            String webAppData = update.getMessage().getWebAppData().getData();
-            ObjectMapper objectMapper = new ObjectMapper();
-            PrizeWebAppData prizeWebAppData = null ;
-
-            try {
-                prizeWebAppData = objectMapper.readValue(webAppData, PrizeWebAppData.class);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            System.out.println(prizeWebAppData);
-            prizeService.save(prizeWebAppData, update.getMessage().getChatId());
-
-
-        }
-
-        if (update.hasMessage()) {
+        if (nonNull(update.getMessage().getWebAppData())) {
+            webAppService.handleWebAppData(update);
+        } else if (update.hasMessage() && nonNull(update.getMessage())) {
             commandService.handleCommand(update.getMessage());
-        }
-
-        if (update.hasCallbackQuery()) {
+        } else if (update.hasCallbackQuery()) {
             callbackService.handleCallback(update.getCallbackQuery());
         }
     }
