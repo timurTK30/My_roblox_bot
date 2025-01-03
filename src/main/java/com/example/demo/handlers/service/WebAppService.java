@@ -40,13 +40,8 @@ public class WebAppService {
         } catch (JsonProcessingException e) {
             log.warn(e.getMessage());
         }
-        Prize savedPrize = prizeService.save(prizeWebAppData, chatId);
-        if (Objects.nonNull(savedPrize)){
-            utilCommandsHandler.sendMessageToUser(chatId, "Поздравляем! \uD83C\uDF89 \n" +
-                    "Вы выиграли " + prizeWebAppData.getName() + " \uD83C\uDFC6\n" +
-                    "Проверьте свой личный кабинет, чтобы узнать детали и забрать награду. \n" +
-                    "Спасибо за участие! \uD83D\uDE0A");
-        }
+        String msg = prizeService.save(prizeWebAppData, chatId);
+        utilCommandsHandler.sendMessageToUser(chatId, msg);
 
     }
 }

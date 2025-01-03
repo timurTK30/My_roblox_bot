@@ -25,17 +25,27 @@ public class PrizeServiceImpl implements PrizeService {
 
 
     @Override
-    public Prize save(PrizeWebAppData prizeWebAppData, Long chatId) {
+    public String save(PrizeWebAppData prizeWebAppData, Long chatId) {
         Prize prize = new Prize();
         prize.setChatId(chatId);
         prize.setPrizeName(prizeWebAppData.getName());
         prize.setTime(LocalDateTime.now());
 
         try {
-            return repository.save(prize);
+            repository.save(prize);
+            return "Поздравляем! \uD83C\uDF89 \n" +
+                    "Вы выиграли " + prizeWebAppData.getName() + " \uD83C\uDFC6\n" +
+                    "Проверьте свой личный кабинет, чтобы узнать детали и забрать награду. \n" +
+                    "Спасибо за участие! \uD83D\uDE0A";
         } catch (Exception e){
             log.info("!!!!Попытка сохронение дубликата😧😧😧. " + e.getMessage());
         }
-        return null;
+        return "Ошибка: Вы уже получили приз! ❌\n" +
+                "К сожалению, мы не можем выдать новый приз, так как у вас уже есть активный приз в личном кабинете.\n" +
+                "\n" +
+                "\uD83C\uDF81 Проверьте свой текущий приз и наслаждайтесь!\n" +
+                "Если у вас есть вопросы, свяжитесь с нашей поддержкой.\n" +
+                "\n" +
+                "Спасибо за понимание и участие! \uD83D\uDE0A";
     }
 }

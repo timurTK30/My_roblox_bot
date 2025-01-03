@@ -370,6 +370,7 @@ public class UserCommandsHandler implements BasicHandlers {
         }
 
         User user = new User();
+        //TODO
         user.setNickname("test");
         user.setChatId(chatId);
         user.setRole(Role.USER);

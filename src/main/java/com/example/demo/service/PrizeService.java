@@ -5,6 +5,6 @@ import com.example.demo.domain.PrizeWebAppData;
 
 public interface PrizeService {
 
-    Prize save(PrizeWebAppData prizeWebAppData, Long chatId);
+    String save(PrizeWebAppData prizeWebAppData, Long chatId);
 
 }
