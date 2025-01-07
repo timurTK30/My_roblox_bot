@@ -9,10 +9,7 @@ import com.example.demo.handlers.BasicHandlers;
 import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.mapper.GameMapper;
 import com.example.demo.mapper.UserMapper;
-import com.example.demo.service.GameService;
-import com.example.demo.service.QuestService;
-import com.example.demo.service.SupportMassageService;
-import com.example.demo.service.UserService;
+import com.example.demo.service.*;
 import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +45,7 @@ public class UserCommandsHandler implements BasicHandlers {
     private final SupportMassageService supportMassageService;
     private final UtilCommandsHandler util;
     private final BotSender botSender;
+    private final WalletService walletService;
 
     @Override
     public boolean canHandle(CommandData commandDate) {
@@ -379,6 +377,7 @@ public class UserCommandsHandler implements BasicHandlers {
         user.setTempChatIdForReply(0L);
         user.setDateOfRegisterAcc(LocalDate.now());
         userService.save(userMapper.toDto(user));
+        walletService.save(Wallet.builder().user(user).build());
         util.editMsg(chatId, msgId, "Вы успешно зарегистрированы! ✅\n" +
                 "\n" +
                 "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +

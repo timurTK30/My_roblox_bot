@@ -25,12 +25,12 @@ public class MyBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
 
-        if (nonNull(update.getMessage().getWebAppData())) {
-            webAppService.handleWebAppData(update);
+        if (update.hasCallbackQuery()) {
+            callbackService.handleCallback(update.getCallbackQuery());
         } else if (update.hasMessage() && nonNull(update.getMessage())) {
             commandService.handleCommand(update.getMessage());
-        } else if (update.hasCallbackQuery()) {
-            callbackService.handleCallback(update.getCallbackQuery());
+        } else if (nonNull(update.getMessage().getWebAppData())) {
+            webAppService.handleWebAppData(update);
         }
     }
 

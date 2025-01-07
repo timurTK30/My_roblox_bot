@@ -2,6 +2,7 @@ package com.example.demo.handlers;
 
 import com.example.demo.config.BotSender;
 import com.example.demo.domain.Creator;
+import com.example.demo.domain.PrizeWebAppData;
 import com.example.demo.domain.Quest;
 import com.example.demo.domain.Role;
 import com.example.demo.dto.GameDto;
@@ -60,6 +61,10 @@ public class UtilCommandsHandler {
 
     public void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn) {
         outputQuestWithCustomBtn(chatId, quest, btn, emptyList());
+    }
+
+    public boolean checkIfPrizeCoin(PrizeWebAppData prizeWebAppData){
+        return prizeWebAppData.getName().contains("Coin");
     }
 
     public List<String> removeSignAndEnglishLetter(List<String> commandsList) {

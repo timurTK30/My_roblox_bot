@@ -26,11 +26,14 @@ public class CommandService {
         String text = message.getText();
         CommandData commandData = new CommandData(text, message.getMessageId(), chatId);
         try {
+            //TODO 😱обработать команду старт, если человек еще не зареган!😱
+            if (text.equalsIgnoreCase("/start")){
+                userHandler.register(chatId, commandData.getMsgId());
+                return;
+            }
             UserDto userByChatId = userService.getUserByChatId(chatId);
             Boolean isAdmin = userService.isUserAdmin(userByChatId.getChatId());
 
-            System.out.println(adminHandler.canHandle(commandData));
-            System.out.println(commandData.toString());
             if (isAdmin && adminHandler.canHandle(commandData)){
                 adminHandler.handle(chatId, commandData);
             } else if (userHandler.canHandle(commandData)) {

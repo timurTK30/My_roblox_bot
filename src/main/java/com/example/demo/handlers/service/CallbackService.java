@@ -21,6 +21,11 @@ public class CallbackService {
         Long chatId = callback.getMessage().getChatId();
         CommandData commandData = new CommandData(data, callback.getMessage().getMessageId(), chatId, callback.getId());
         try {
+            //TODO 😱обработать команду старт, если человек еще не зареган!😱
+            if (data.startsWith("Заре")){
+                userCallback.handle(chatId, commandData);
+                return;
+            }
             Boolean isAdmin = userService.isUserAdmin(chatId);
             if (isAdmin){
 

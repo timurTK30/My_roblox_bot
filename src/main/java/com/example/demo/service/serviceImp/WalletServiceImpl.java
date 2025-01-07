@@ -1,19 +1,27 @@
 package com.example.demo.service.serviceImp;
 
 import com.example.demo.domain.Wallet;
+import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.WalletRepository;
+import com.example.demo.service.UserService;
 import com.example.demo.service.WalletService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-public class WalletServiceImpl implements WalletService{
+@Service
+@Slf4j
+public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository repository;
-    private final WalletService service;
+    private final UserService userService;
+    private final UserMapper userMapper;
 
-    public WalletServiceImpl(WalletRepository repository, WalletService service) {
+    public WalletServiceImpl(WalletRepository repository, UserService userService, UserMapper userMapper) {
         this.repository = repository;
-        this.service = service;
+        this.userService = userService;
+        this.userMapper = userMapper;
     }
 
 
@@ -23,13 +31,25 @@ public class WalletServiceImpl implements WalletService{
     }
 
     @Override
-    public Wallet updateByChatId(Wallet wallet, Long chatId) {=
-        return null;
+    public Wallet updateByChatId(Double amountOfCoin, Long chatId) {
+        Optional<Wallet> walletByChatId = getWalletByChatId(chatId);
+        if (walletByChatId.isEmpty()) {
+            log.warn("Wallet updateByChatId, <---!!! там ошибка");
+            return null;
+        }
+        Wallet pulledWallet = walletByChatId.get();
+        pulledWallet.setBalance(pulledWallet.getBalance() + amountOfCoin);
+
+        return save(pulledWallet);
     }
 
     @Override
     public Optional<Wallet> getWalletByChatId(Long chatId) {
-        Optional<Wallet> walletByChatId = repository.getWalletByChatId(chatId);
+        Optional<Wallet> walletByChatId = repository.getWalletByUser(userMapper.toEntity(userService.getUserByChatId(chatId)));
+        if (walletByChatId.isEmpty()){
+            log.warn("getWalletByChatId, <---!!! там ошибка");
+            return Optional.empty();
+        }
         return walletByChatId;
     }
 }
