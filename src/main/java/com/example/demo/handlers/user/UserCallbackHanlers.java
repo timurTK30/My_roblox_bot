@@ -31,11 +31,13 @@ public class UserCallbackHanlers implements BasicHandlers {
 
     @Override
     public void handle(Long chatId, CommandData commandData) {
+        System.out.println("вы попали  handle");
         String data = commandData.getData();
         Integer msgId = commandData.getMsgId();
         String callBackId = commandData.getCallBackId();
         switch (data) {
             case "Зарегистрировать":
+                System.out.println("Зарегистрировать");
                 userCommandsHandler.register(chatId, msgId);
                 break;
             case "ok_reply":

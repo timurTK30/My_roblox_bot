@@ -5,9 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Cascade;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import static org.hibernate.annotations.CascadeType.*;
 
 @Data
 @NoArgsConstructor
@@ -20,7 +23,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long  id;
-    @Column(name = "chat_id")
+    @Column(name = "chat_id", unique = true)
     private Long chatId;
     @Column(name = "nickname")
     private String nickname;
@@ -37,10 +40,10 @@ public class User {
     private LocalDate dateOfRegisterAcc;
     @Column(name = "temp_chat_id_for_reply")
     private Long tempChatIdForReply;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "game_id")
     private Game game;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "executive_quest")
     private Quest executiveQuest;
 

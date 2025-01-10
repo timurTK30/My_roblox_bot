@@ -2,7 +2,6 @@ package com.example.demo.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 import java.util.List;
@@ -39,9 +38,9 @@ public class Game {
     private String photo;
     @Column(name = "gif")
     private String gif;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private Creator creator;
-    @OneToMany(mappedBy = "game")
+    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL)
     @ToString.Exclude
     private List<User> user;
 

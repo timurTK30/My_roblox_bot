@@ -17,9 +17,14 @@ public class Wallet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "chat_id", unique = true)
     private User user;
     @Column(name = "balance")
-    private Double balance = 0.0;
+    private Double balance;
+
+    public Wallet(User user) {
+        this.user = user;
+        this.balance = 0.0;
+    }
 }

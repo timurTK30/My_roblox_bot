@@ -28,7 +28,7 @@ public class CommandService {
         try {
             //TODO 😱обработать команду старт, если человек еще не зареган!😱
             if (text.equalsIgnoreCase("/start")){
-                userHandler.register(chatId, commandData.getMsgId());
+                userHandler.wellcome(chatId);
                 return;
             }
             UserDto userByChatId = userService.getUserByChatId(chatId);

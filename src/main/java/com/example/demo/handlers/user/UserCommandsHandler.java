@@ -14,11 +14,10 @@ import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
@@ -26,7 +25,10 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.example.demo.domain.Commands.*;
@@ -358,7 +360,9 @@ public class UserCommandsHandler implements BasicHandlers {
 
     }
 
+    @Transactional
     public void register(Long chatId, Integer msgId) {
+        System.out.println(util.isUserExist(chatId));
         if (util.isUserExist(chatId)) {
             util.editMsg(chatId, msgId, "Вы уже зарегистрированы! ✅\n" +
                     "\n" +
@@ -376,8 +380,8 @@ public class UserCommandsHandler implements BasicHandlers {
         user.setAStatus(AdminStatus.DONT_WRITE);
         user.setTempChatIdForReply(0L);
         user.setDateOfRegisterAcc(LocalDate.now());
-        userService.save(userMapper.toDto(user));
-        walletService.save(Wallet.builder().user(user).build());
+        //userService.save(userMapper.toDto(user));
+        walletService.save(new Wallet(user));
         util.editMsg(chatId, msgId, "Вы успешно зарегистрированы! ✅\n" +
                 "\n" +
                 "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +

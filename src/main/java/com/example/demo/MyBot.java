@@ -27,7 +27,7 @@ public class MyBot extends TelegramLongPollingBot {
 
         if (update.hasCallbackQuery()) {
             callbackService.handleCallback(update.getCallbackQuery());
-        } else if (update.hasMessage() && nonNull(update.getMessage())) {
+        } else if (update.hasMessage() && nonNull(update.getMessage().getText())) {
             commandService.handleCommand(update.getMessage());
         } else if (nonNull(update.getMessage().getWebAppData())) {
             webAppService.handleWebAppData(update);

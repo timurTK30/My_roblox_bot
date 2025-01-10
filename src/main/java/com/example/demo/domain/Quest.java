@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Cascade;
+
+import static org.hibernate.annotations.CascadeType.ALL;
 
 @Data
 @NoArgsConstructor
@@ -17,14 +20,14 @@ public class Quest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "game")
     private Game game;
     @Column(name = "description")
     private String description;
     @Column(name = "reward")
     private String reward;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "creator_of_quest")
     private User creatorOfQuest;
     @Column(name = "is_deprecated")
