@@ -1,9 +1,9 @@
 package com.example.demo.handlers.service;
 
 import com.example.demo.dto.UserDto;
+import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.handlers.admin.AdminCommandsHandler;
 import com.example.demo.handlers.user.UserCommandsHandler;
-import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.service.UserService;
 import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
@@ -21,27 +21,23 @@ public class CommandService {
     private final UserCommandsHandler userHandler;
     private final UtilCommandsHandler utilHandler;
 
-    public void handleCommand(Message message){
+    public void handleCommand(Message message) {
         Long chatId = message.getChatId();
         String text = message.getText();
-        CommandData commandData = new CommandData(text, message.getMessageId(), chatId);
+        String userName = message.getFrom().getUserName();
+        CommandData commandData = new CommandData(text, message.getMessageId(), chatId, userName);
         try {
-            //TODO 😱обработать команду старт, если человек еще не зареган!😱
-            if (text.equalsIgnoreCase("/start")){
-                userHandler.wellcome(chatId);
-                return;
-            }
-            UserDto userByChatId = userService.getUserByChatId(chatId);
-            Boolean isAdmin = userService.isUserAdmin(userByChatId.getChatId());
 
-            if (isAdmin && adminHandler.canHandle(commandData)){
+            Boolean isAdmin = userService.isUserAdmin(chatId);
+
+            if (isAdmin && adminHandler.canHandle(commandData)) {
                 adminHandler.handle(chatId, commandData);
             } else if (userHandler.canHandle(commandData)) {
                 userHandler.handle(chatId, commandData);
             } else {
                 utilHandler.sendMessageToUser(chatId, "Неизвестная команда. Используйте /help для списка команд.");
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("неопозноная команда: {}", text, e);
         }
     }

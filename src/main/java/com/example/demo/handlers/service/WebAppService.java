@@ -41,7 +41,8 @@ public class WebAppService {
         }
         if (utilCommandsHandler.checkIfPrizeCoin(prizeWebAppData)) {
             Double amountOfCoin = Double.valueOf(prizeWebAppData.getName().replace("Coin", "").trim());
-            walletService.updateByChatId(amountOfCoin, chatId);
+            String msgCoin = walletService.updateByChatId(amountOfCoin, chatId);
+            utilCommandsHandler.sendMessageToUser(chatId, msgCoin);
             return;
         }
         String msg = prizeService.save(prizeWebAppData, chatId);

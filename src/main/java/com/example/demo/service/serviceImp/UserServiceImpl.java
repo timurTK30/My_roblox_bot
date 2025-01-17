@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -66,7 +67,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserByChatId(Long chatId) {
         Optional<User> userByChatId = userRepository.getUserByChatId(chatId);
-        return userByChatId.map(user -> userMapper.toDto(user)).orElse(null);
+        return userByChatId.map(userMapper::toDto).orElse(null);
     }
 
     @Override
@@ -105,7 +106,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean isUserAdmin(Long chatId) {
-        return getUserByChatId(chatId).getRole().equalsIgnoreCase(Role.ADMIN.name());
+        UserDto userByChatId = getUserByChatId(chatId);
+        if(Objects.nonNull(userByChatId)){
+            return userByChatId.getRole().equalsIgnoreCase(Role.ADMIN.name());
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean isUserAdmin(UserDto userDto) {
+        if(Objects.nonNull(userDto)){
+            return userDto.getRole().equalsIgnoreCase(Role.ADMIN.name());
+        }
+        return false;
     }
 
     @Override

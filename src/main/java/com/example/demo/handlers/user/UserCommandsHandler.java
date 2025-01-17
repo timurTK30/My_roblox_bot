@@ -293,8 +293,16 @@ public class UserCommandsHandler implements BasicHandlers {
             return;
         }
 
+        //if(userService.getUserByChatId(chatId).getGame() != null){
         // Получаем ID игры, которые уже есть у пользователя
-        Long userGameId = userService.getUserByChatId(chatId).getGame().getId();
+        //Long userGameId = userService.getUserByChatId(chatId).getGame().getId();
+        //}
+
+//        Optional<Long> optionalUserGameId = Optional.ofNullable(userService.getUserByChatId(chatId).getGame())
+//                .map(game -> game.getId());
+
+        Game game = userService.getUserByChatId(chatId).getGame();
+        Long userGameId = (game != null) ? game.getId() : null;
 
         String tempCreatorGroup = "пусто";
 
@@ -302,7 +310,7 @@ public class UserCommandsHandler implements BasicHandlers {
             GameDto gameDto = gameByGenre.get(i);
 
             // Проверка, есть ли у пользователя эта игра
-            boolean hasGame = userGameId.equals(gameDto.getId());
+            boolean hasGame = (userGameId != null) && userGameId.equals(gameDto.getId());
 
             StringBuilder stringBuilder = new StringBuilder();
             util.showShortDescription(stringBuilder, i, gameDto, tempCreatorGroup);
@@ -342,7 +350,7 @@ public class UserCommandsHandler implements BasicHandlers {
                 util.sendMessageToUser(chatId,
                         "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: "
                                 + supportMessage.getDate(),
-                        List.of("Редактировать сообщение", "Оставить"), 1);
+                        List.of("Редактировать сообщение", "Оставить"), List.of("edit_msg", "leave_msg"), 1);
 //                util.editMsg(chatId, msgId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
 //                        List.of("Редактировать сообщение", "Оставить"), 1);
             }
@@ -361,7 +369,7 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     @Transactional
-    public void register(Long chatId, Integer msgId) {
+    public void register(Long chatId, Integer msgId, String userName) {
         System.out.println(util.isUserExist(chatId));
         if (util.isUserExist(chatId)) {
             util.editMsg(chatId, msgId, "Вы уже зарегистрированы! ✅\n" +
@@ -372,20 +380,25 @@ public class UserCommandsHandler implements BasicHandlers {
         }
 
         User user = new User();
-        //TODO
-        user.setNickname("test");
-        user.setChatId(chatId);
-        user.setRole(Role.USER);
-        user.setStatus(UserStatus.DONT_SENT);
-        user.setAStatus(AdminStatus.DONT_WRITE);
-        user.setTempChatIdForReply(0L);
-        user.setDateOfRegisterAcc(LocalDate.now());
-        //userService.save(userMapper.toDto(user));
-        walletService.save(new Wallet(user));
-        util.editMsg(chatId, msgId, "Вы успешно зарегистрированы! ✅\n" +
-                "\n" +
-                "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
-                "Чтобы увидеть доступные игры, используйте команду /games \uD83C\uDFAE");
+        try {
+            user.setNickname(userName);
+            user.setChatId(chatId);
+            user.setRole(Role.USER);
+            user.setStatus(UserStatus.DONT_SENT);
+            user.setAStatus(AdminStatus.DONT_WRITE);
+            user.setTempChatIdForReply(0L);
+            user.setDateOfRegisterAcc(LocalDate.now());
+            walletService.save(new Wallet(user));
+            util.editMsg(chatId, msgId, "Вы успешно зарегистрированы! ✅\n" +
+                    "\n" +
+                    "Если вам нужна помощь, напишите /help \uD83C\uDD98\n" +
+                    "Чтобы увидеть доступные игры, используйте команду /s \uD83C\uDFAE");
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            util.sendMessageToUser(chatId, "⚠\uFE0F Упс! Произошла ошибка во время регистрации. \n" +
+                    "Пожалуйста, попробуйте снова позже. Мы работаем над её устранением! \uD83D\uDE4F");
+        }
+
     }
 
     public void handleGameApplication(Long chatId, String data, String callBackId) {
@@ -476,7 +489,7 @@ public class UserCommandsHandler implements BasicHandlers {
         }
     }
 
-    private void handleEditSuppMsg(Long chatId) {
+    public void handleEditSuppMsg(Long chatId) {
         userService.updateStatusByChatId(chatId, "WANT_UPDATE_MSG");
         util.sendMessageToUser(chatId, "Напишите сообщение");
     }

@@ -1,7 +1,7 @@
 package com.example.demo.handlers.service;
 
-import com.example.demo.handlers.user.UserCallbackHanlers;
 import com.example.demo.handlers.UtilCommandsHandler;
+import com.example.demo.handlers.user.UserCallbackHanlers;
 import com.example.demo.service.UserService;
 import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
@@ -19,23 +19,19 @@ public class CallbackService {
     private final UserService userService;
     private final UtilCommandsHandler utilHandler;
 
-    public void handleCallback(CallbackQuery callback){
+    public void handleCallback(CallbackQuery callback) {
         String data = callback.getData();
         Long chatId = callback.getMessage().getChatId();
-        CommandData commandData = new CommandData(data, callback.getMessage().getMessageId(), chatId, callback.getId());
+        String userName = callback.getFrom().getUserName();
+        CommandData commandData = new CommandData(data, callback.getMessage().getMessageId(), chatId, callback.getId(), userName);
         try {
-            //TODO 😱обработать команду старт, если человек еще не зареган!😱
-            if (data.startsWith("Зарегистрировать")){
-                userCallback.handle(chatId, commandData);
-                return;
-            }
             Boolean isAdmin = userService.isUserAdmin(chatId);
-            if (isAdmin){
+            if (isAdmin) {
 
             } else if (userCallback.canHandle(commandData)) {
                 userCallback.handle(chatId, commandData);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
             throw new RuntimeException("handleCallback- там ошибка, " + commandData.toString());
         }

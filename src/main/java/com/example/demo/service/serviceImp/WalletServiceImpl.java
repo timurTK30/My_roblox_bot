@@ -31,7 +31,7 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public Wallet updateByChatId(Double amountOfCoin, Long chatId) {
+    public String updateByChatId(Double amountOfCoin, Long chatId) {
         Optional<Wallet> walletByChatId = getWalletByChatId(chatId);
         if (walletByChatId.isEmpty()) {
             log.warn("Wallet updateByChatId, <---!!! там ошибка");
@@ -39,8 +39,9 @@ public class WalletServiceImpl implements WalletService {
         }
         Wallet pulledWallet = walletByChatId.get();
         pulledWallet.setBalance(pulledWallet.getBalance() + amountOfCoin);
+        save(pulledWallet);
 
-        return save(pulledWallet);
+        return "\uD83C\uDF89 Поздравляем! Вы выиграли "+ amountOfCoin +" монет! \uD83D\uDCB0 Мы уже зачислили их на ваш кошелёк. Продолжайте играть и выигрывайте ещё больше! \uD83C\uDF40";
     }
 
     @Override

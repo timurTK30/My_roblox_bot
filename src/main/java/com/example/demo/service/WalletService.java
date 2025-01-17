@@ -7,6 +7,6 @@ import java.util.Optional;
 public interface WalletService {
 
     Wallet save(Wallet wallet);
-    Wallet updateByChatId(Double amountOfCoin, Long chatId);
+    String updateByChatId(Double amountOfCoin, Long chatId);
     Optional<Wallet> getWalletByChatId(Long chatId);
 }

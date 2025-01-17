@@ -25,20 +25,20 @@ public class UserCallbackHanlers implements BasicHandlers {
                 "|SHOOTER|TYCOON|SURVIVAL|Написать админу|Помошь|Игры|Купить подписки" +
                 "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
                 "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
-                "|show_friends_.*|remove_gameRequest_.*)"
+                "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg)"
         );
     }
 
     @Override
     public void handle(Long chatId, CommandData commandData) {
-        System.out.println("вы попали  handle");
         String data = commandData.getData();
         Integer msgId = commandData.getMsgId();
         String callBackId = commandData.getCallBackId();
+        String userName = commandData.getUserName();
+        System.out.println(commandData);
         switch (data) {
             case "Зарегистрировать":
-                System.out.println("Зарегистрировать");
-                userCommandsHandler.register(chatId, msgId);
+                userCommandsHandler.register(chatId, msgId, userName);
                 break;
             case "ok_reply":
                 userCommandsHandler.handlePositiveFeedback(chatId);
@@ -87,6 +87,14 @@ public class UserCallbackHanlers implements BasicHandlers {
             case "request_buy_admin":
             case "request_buy_premium":
                 util.requestToBuySub(data, chatId);
+                break;
+            case "edit_msg":
+                userCommandsHandler.handleEditSuppMsg(chatId);
+                break;
+            case "leave_msg":
+                util.sendMessageToUser(chatId, "✨ Спасибо за ваше терпение! \n" +
+                        "Наши администраторы делают всё возможное, чтобы ответить вам как можно скорее. Ваша поддержка и понимание для нас очень важны! \uD83D\uDE0A \n" +
+                        "Пожалуйста, оставайтесь с нами — мы скоро вернёмся с ответом! \uD83D\uDE4C");
                 break;
             default:
                 if (data.startsWith("leave_request_")) {
