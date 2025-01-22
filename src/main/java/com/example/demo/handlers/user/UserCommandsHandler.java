@@ -341,18 +341,18 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     public void handleAdminMessage(Long chatId, Integer msgId) {
+
         if (!util.isSuppMsgExistByUserChatId(chatId)) {
             userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
             util.editMsg(chatId, msgId, "Введите сообщение");
         } else {
             SuportMassageDto supportMessage = supportMassageService.getMassageByChatId(chatId).orElse(null);
             if (supportMessage != null) {
+                util.deleteMsg(chatId, msgId);
                 util.sendMessageToUser(chatId,
                         "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: "
                                 + supportMessage.getDate(),
                         List.of("Редактировать сообщение", "Оставить"), List.of("edit_msg", "leave_msg"), 1);
-//                util.editMsg(chatId, msgId, "У вас уже есть сообщение: " + supportMessage.getMassage() + "\nдата отправки: " + supportMessage.getDate(),
-//                        List.of("Редактировать сообщение", "Оставить"), 1);
             }
         }
     }
@@ -489,9 +489,9 @@ public class UserCommandsHandler implements BasicHandlers {
         }
     }
 
-    public void handleEditSuppMsg(Long chatId) {
+    public void handleEditSuppMsg(Long chatId, Integer msgId) {
         userService.updateStatusByChatId(chatId, "WANT_UPDATE_MSG");
-        util.sendMessageToUser(chatId, "Напишите сообщение");
+        util.editMsg(chatId, msgId,"Напишите сообщение");
     }
 
 }

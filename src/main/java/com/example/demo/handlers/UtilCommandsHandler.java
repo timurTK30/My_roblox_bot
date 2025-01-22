@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -197,6 +198,19 @@ public class UtilCommandsHandler {
 
         try {
             botSender.execute(editMessageText);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void editKeyboard(Long chatId, Integer msgId, List<String> buttons, int rows) {
+        EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
+        editMessageReplyMarkup.setChatId(chatId);
+        editMessageReplyMarkup.setMessageId(msgId);
+        editMessageReplyMarkup.setReplyMarkup(createCustomKeyboard(buttons, rows));
+
+        try {
+            botSender.execute(editMessageReplyMarkup);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }

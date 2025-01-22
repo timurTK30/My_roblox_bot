@@ -35,7 +35,6 @@ public class UserCallbackHanlers implements BasicHandlers {
         Integer msgId = commandData.getMsgId();
         String callBackId = commandData.getCallBackId();
         String userName = commandData.getUserName();
-        System.out.println(commandData);
         switch (data) {
             case "Зарегистрировать":
                 userCommandsHandler.register(chatId, msgId, userName);
@@ -89,10 +88,10 @@ public class UserCallbackHanlers implements BasicHandlers {
                 util.requestToBuySub(data, chatId);
                 break;
             case "edit_msg":
-                userCommandsHandler.handleEditSuppMsg(chatId);
+                userCommandsHandler.handleEditSuppMsg(chatId, msgId);
                 break;
             case "leave_msg":
-                util.sendMessageToUser(chatId, "✨ Спасибо за ваше терпение! \n" +
+                util.editMsg(chatId, msgId,"✨ Спасибо за ваше терпение! \n" +
                         "Наши администраторы делают всё возможное, чтобы ответить вам как можно скорее. Ваша поддержка и понимание для нас очень важны! \uD83D\uDE0A \n" +
                         "Пожалуйста, оставайтесь с нами — мы скоро вернёмся с ответом! \uD83D\uDE4C");
                 break;
