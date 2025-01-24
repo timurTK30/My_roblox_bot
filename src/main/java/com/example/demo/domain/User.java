@@ -18,6 +18,7 @@ import static org.hibernate.annotations.CascadeType.*;
 @Builder
 @Entity
 @Table
+@Inheritance(strategy = InheritanceType.JOINED)
 public class User {
 
     @Id
@@ -33,13 +34,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 255)
     private UserStatus status;
-    @Enumerated(EnumType.STRING)
-    @Column(name = "admin_status")
-    private AdminStatus aStatus;
     @Column(name = "date_of_register_acc")
     private LocalDate dateOfRegisterAcc;
-    @Column(name = "temp_chat_id_for_reply")
-    private Long tempChatIdForReply;
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "game_id")
     private Game game;

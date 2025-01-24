@@ -115,6 +115,8 @@ public class UserCommandsHandler implements BasicHandlers {
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
+        } else if (text.startsWith("/reg")) {
+            util.adminRegister(chatId, commandData.getUserName());
         } else {
             handleUserMessage(chatId, text);
         }
@@ -385,8 +387,6 @@ public class UserCommandsHandler implements BasicHandlers {
             user.setChatId(chatId);
             user.setRole(Role.USER);
             user.setStatus(UserStatus.DONT_SENT);
-            user.setAStatus(AdminStatus.DONT_WRITE);
-            user.setTempChatIdForReply(0L);
             user.setDateOfRegisterAcc(LocalDate.now());
             walletService.save(new Wallet(user));
             util.editMsg(chatId, msgId, "Вы успешно зарегистрированы! ✅\n" +

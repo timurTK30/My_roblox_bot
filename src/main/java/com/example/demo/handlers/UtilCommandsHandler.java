@@ -1,13 +1,11 @@
 package com.example.demo.handlers;
 
 import com.example.demo.config.BotSender;
-import com.example.demo.domain.Creator;
-import com.example.demo.domain.PrizeWebAppData;
-import com.example.demo.domain.Quest;
-import com.example.demo.domain.Role;
+import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
+import com.example.demo.service.AdminUserService;
 import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +27,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
@@ -41,6 +40,18 @@ public class UtilCommandsHandler {
     private final BotSender botSender;
     private final UserService userService;
     private final SupportMassageService supportMassageService;
+    private final AdminUserService adminUserService;
+
+    public void adminRegister(Long chatId, String userName){
+        AdminUser adminUser = new AdminUser();
+        adminUser.setNickname(userName);
+        adminUser.setAStatus(AdminStatus.DONT_WRITE);
+        adminUser.setTempChatIdForReply(0L);
+        adminUser.setRole(Role.ADMIN);
+        adminUser.setChatId(chatId);
+        adminUser.setDateOfRegisterAcc(LocalDate.now());
+        adminUserService.save(adminUser);
+    }
 
     public void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn, List<String> callBack) {
         String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
