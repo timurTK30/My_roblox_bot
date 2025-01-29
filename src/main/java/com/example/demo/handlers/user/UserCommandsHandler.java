@@ -372,7 +372,6 @@ public class UserCommandsHandler implements BasicHandlers {
 
     @Transactional
     public void register(Long chatId, Integer msgId, String userName) {
-        System.out.println(util.isUserExist(chatId));
         if (util.isUserExist(chatId)) {
             util.editMsg(chatId, msgId, "Вы уже зарегистрированы! ✅\n" +
                     "\n" +

@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @Table(name = "admin_user")
+@PrimaryKeyJoinColumn(name = "user_id")
 public class AdminUser extends User{
 
     @Column(name = "temp_chat_id_for_reply")
@@ -19,4 +20,12 @@ public class AdminUser extends User{
     @Enumerated(EnumType.STRING)
     @Column(name = "admin_status")
     private AdminStatus aStatus;
+
+    @Override
+    public String toString() {
+        return "AdminUser{" +
+                "tempChatIdForReply=" + tempChatIdForReply +
+                ", aStatus=" + aStatus +
+                "} " + super.toString();
+    }
 }

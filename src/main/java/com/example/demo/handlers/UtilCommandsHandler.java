@@ -50,6 +50,7 @@ public class UtilCommandsHandler {
         adminUser.setRole(Role.ADMIN);
         adminUser.setChatId(chatId);
         adminUser.setDateOfRegisterAcc(LocalDate.now());
+        adminUser.setStatus(UserStatus.DONT_SENT);
         adminUserService.save(adminUser);
     }
 

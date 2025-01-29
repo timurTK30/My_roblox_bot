@@ -50,8 +50,6 @@ public class UserServiceImpl implements UserService {
         userByChatId.setId(userDto.getId());
         userByChatId.setStatus(userDto.getStatus());
         userByChatId.setChatId(userDto.getChatId());
-        userByChatId.setAStatus(userDto.getAStatus());
-        userByChatId.setTempChatIdForReply(userDto.getTempChatIdForReply());
         userByChatId.setRole(userDto.getRole());
         userByChatId.setExecutiveQuest(userDto.getExecutiveQuest());
         userRepository.save(userMapper.toEntity(userByChatId));
@@ -85,8 +83,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateAdminStatusByChatId(Long chatId, AdminStatus adminStatus, Long tempChatId) {
         UserDto userByChatId = getUserByChatId(chatId);
-        userByChatId.setAStatus(adminStatus.name());
-        userByChatId.setTempChatIdForReply(tempChatId);
+        //TODO не забить удалть
         userRepository.save(userMapper.toEntity(userByChatId));
         return userByChatId;
     }

@@ -1,8 +1,5 @@
 package com.example.demo.handlers.admin;
 
-import static com.example.demo.domain.AdminCommands.*;
-import static com.example.demo.domain.QuestCommands.EDIT_QUEST;
-
 import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
@@ -17,12 +14,16 @@ import com.example.demo.service.QuestService;
 import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.CommandData;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static com.example.demo.domain.AdminCommands.*;
+import static com.example.demo.domain.QuestCommands.EDIT_QUEST;
 
 @Component
 @Slf4j
@@ -41,7 +42,7 @@ public class AdminCommandsHandler implements BasicHandlers {
     @Override
     public boolean canHandle(CommandData commandData) {
         boolean isAdminCommand = Arrays.stream(AdminCommands.values())
-            .anyMatch(command -> command.getCmd().startsWith(commandData.getData()));
+                .anyMatch(command -> command.getCmd().startsWith(commandData.getData()));
 
         UserDto user = userService.getUserByChatId(commandData.getChatId());
 
@@ -76,53 +77,53 @@ public class AdminCommandsHandler implements BasicHandlers {
 
     public void menuForAdmin(Long chatId) {
         List<String> commandsList = Arrays.stream(Commands.values()).toList().stream()
-            .filter(commands -> !commands.isQuest())
-            .filter(Commands::isCmdAdmin)
-            .map(Commands::getCmdName)
-            .toList();
+                .filter(commands -> !commands.isQuest())
+                .filter(Commands::isCmdAdmin)
+                .map(Commands::getCmdName)
+                .toList();
         List<String> callback = util.removeSignAndEnglishLetter(commandsList);
         util.sendMessageToUser(chatId,
-            "\uD83D\uDC4B Привет, Администратор! Здесь ты можешь управлять игровым процессом и создавать задания для учеников. Выбирай команду и погружайся в обучение:\n"
-                +
-                "\n" +
-                "⚙\uFE0F <b>Управление ботом </b>\n" +
-                "\n" +
-                "\uD83D\uDD04 Перезапустить бота (/restart) \n" +
-                "\uD83D\uDEE0 Настроить команды\n" +
-                "\uD83D\uDCCA Статистика использования бота (/statistics)\n" +
-                "\n" +
-                "\uD83C\uDFAE <b>Игровые Задания</b>\n" +
-                "\n" +
-                "\uD83C\uDFAF Создать новое задание\n" +
-                "✏\uFE0F Редактировать существующие задания\n" +
-                "\uD83C\uDFC6 Посмотреть лучших учеников\n" +
-                "\n" +
-                "\uD83D\uDCDA <b>Квесты</b>\n" +
-                "\n" +
-                "\uD83D\uDCA1 Добавить обучающий квест\n" +
-                "❓ Создать викторину для проверки знаний\n" +
-                "\n" +
-                "\uD83C\uDFC5 <b>Прогресс и Награды</b>\n" +
-                "\n" +
-                "\uD83C\uDF81 Назначить награду за выполненные задания\n" +
-                "\uD83D\uDCCA Проверить прогресс учеников\n" +
-                "\n" +
-                "\uD83D\uDCCA <b>Отчеты</b>\n" +
-                "\n" +
-                "\uD83D\uDD0E Посмотреть успехи и оценки учеников\n" +
-                "\uD83D\uDCDD Сформировать отчет по заданиям\n" +
-                "\n" +
-                "\uD83D\uDCE2 <b>Уведомления</b>\n" +
-                "\n" +
-                "✉\uFE0F Отправить сообщение всем пользователям(/notifyAllUsers)\n" +
-                "\uD83D\uDD14 Настроить уведомления\n" +
-                "\n" +
-                "\uD83D\uDCBC <b>Другое</b>\n" +
-                "\n" +
-                "\uD83D\uDCC5 Запланировать обновления\n" +
-                "\uD83D\uDCBE Сделать резервную копию базы данных\n" +
-                "\uD83D\uDCD6 Посмотреть историю обновлений бота",
-            commandsList, callback, commandsList.size() / 2);
+                "\uD83D\uDC4B Привет, Администратор! Здесь ты можешь управлять игровым процессом и создавать задания для учеников. Выбирай команду и погружайся в обучение:\n"
+                        +
+                        "\n" +
+                        "⚙\uFE0F <b>Управление ботом </b>\n" +
+                        "\n" +
+                        "\uD83D\uDD04 Перезапустить бота (/restart) \n" +
+                        "\uD83D\uDEE0 Настроить команды\n" +
+                        "\uD83D\uDCCA Статистика использования бота (/statistics)\n" +
+                        "\n" +
+                        "\uD83C\uDFAE <b>Игровые Задания</b>\n" +
+                        "\n" +
+                        "\uD83C\uDFAF Создать новое задание\n" +
+                        "✏\uFE0F Редактировать существующие задания\n" +
+                        "\uD83C\uDFC6 Посмотреть лучших учеников\n" +
+                        "\n" +
+                        "\uD83D\uDCDA <b>Квесты</b>\n" +
+                        "\n" +
+                        "\uD83D\uDCA1 Добавить обучающий квест\n" +
+                        "❓ Создать викторину для проверки знаний\n" +
+                        "\n" +
+                        "\uD83C\uDFC5 <b>Прогресс и Награды</b>\n" +
+                        "\n" +
+                        "\uD83C\uDF81 Назначить награду за выполненные задания\n" +
+                        "\uD83D\uDCCA Проверить прогресс учеников\n" +
+                        "\n" +
+                        "\uD83D\uDCCA <b>Отчеты</b>\n" +
+                        "\n" +
+                        "\uD83D\uDD0E Посмотреть успехи и оценки учеников\n" +
+                        "\uD83D\uDCDD Сформировать отчет по заданиям\n" +
+                        "\n" +
+                        "\uD83D\uDCE2 <b>Уведомления</b>\n" +
+                        "\n" +
+                        "✉\uFE0F Отправить сообщение всем пользователям(/notifyAllUsers)\n" +
+                        "\uD83D\uDD14 Настроить уведомления\n" +
+                        "\n" +
+                        "\uD83D\uDCBC <b>Другое</b>\n" +
+                        "\n" +
+                        "\uD83D\uDCC5 Запланировать обновления\n" +
+                        "\uD83D\uDCBE Сделать резервную копию базы данных\n" +
+                        "\uD83D\uDCD6 Посмотреть историю обновлений бота",
+                commandsList, callback, commandsList.size() / 2);
     }
 
     public void statistics(Long chatId) {
@@ -131,23 +132,23 @@ public class AdminCommandsHandler implements BasicHandlers {
         Commands[] commands = Commands.values();
         long amountOfSuppMsg = massageDtos.size();
         long amountOfUsers = userDtos.stream().filter(user -> !user.getRole().equalsIgnoreCase(Role.ADMIN.name()))
-            .count();
+                .count();
         long amountOfAdmins = userDtos.stream().filter(user -> user.getRole().equalsIgnoreCase(Role.ADMIN.name()))
-            .count();
+                .count();
         long amountOfCommands = commands.length;
 
         util.sendMessageToUser(chatId, "Привет, Админ! Вот последние данные о активности вашего бота:\n" +
-            "\n" +
-            "1. <b>Всего пользователей: </b> " + amountOfUsers + " \uD83D\uDCC8\n" +
-            "2. <b>Всего администраторов: </b> " + amountOfAdmins
-            + "\uD83D\uDC69\u200D\uD83D\uDCBC\uD83D\uDC68\u200D\uD83D\uDCBC\n" +
-            "3. <b>Отправлено сообщений в поддержку: </b> " + amountOfSuppMsg + " \uD83D\uDCAC\n" +
-            "4. <b>Всего команд: </b> " + amountOfCommands + "\uD83D\uDEE0");
+                "\n" +
+                "1. <b>Всего пользователей: </b> " + amountOfUsers + " \uD83D\uDCC8\n" +
+                "2. <b>Всего администраторов: </b> " + amountOfAdmins
+                + "\uD83D\uDC69\u200D\uD83D\uDCBC\uD83D\uDC68\u200D\uD83D\uDCBC\n" +
+                "3. <b>Отправлено сообщений в поддержку: </b> " + amountOfSuppMsg + " \uD83D\uDCAC\n" +
+                "4. <b>Всего команд: </b> " + amountOfCommands + "\uD83D\uDEE0");
     }
 
     public void restart(Long chatId) {
         util.sendPhotoToUser(chatId, "C:\\project_java\\My_roblox_bot_new\\src\\main\\resources\\img\\fatalError.jpg",
-            "Программа остоновлена", List.of("Bye bye"), 1);
+                "Программа остоновлена", List.of("Bye bye"), 1);
         System.exit(0);
     }
 
@@ -155,17 +156,17 @@ public class AdminCommandsHandler implements BasicHandlers {
     public void readSuppMsg(Long chatId) {
         List<SuportMassageDto> massageDtos = supportMassageService.readAll();
         List<String> buttonsSuppMsgId = massageDtos.stream().
-            map(suppMsg -> suppMsg.getId().toString()).toList();
+                map(suppMsg -> suppMsg.getId().toString()).toList();
         List<String> callback = massageDtos.stream()
-            .map(msg -> String.join("_", "user", msg.getChatId().toString()))
-            .toList();
+                .map(msg -> String.join("_", "user", msg.getChatId().toString()))
+                .toList();
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < massageDtos.size(); i++) {
             stringBuilder.append(buttonsSuppMsgId.get(i))
-                .append(". ")
-                .append(massageDtos.get(i).getChatId())
-                .append(" ")
-                .append(massageDtos.get(i).getMassage()).append("\n");
+                    .append(". ")
+                    .append(massageDtos.get(i).getChatId())
+                    .append(" ")
+                    .append(massageDtos.get(i).getMassage()).append("\n");
         }
         util.sendMessageToUser(chatId, stringBuilder.toString(), buttonsSuppMsgId, callback, massageDtos.size());
     }
@@ -202,10 +203,10 @@ public class AdminCommandsHandler implements BasicHandlers {
     private void requestToChangeRole(Long chatId, String text) {
         Long chatIdUserForChange = Long.valueOf(text.replaceAll("\\D+", ""));
         util.sendMessageToUser(chatId, "Хотите поменять роль?",
-            List.of(Role.ADMIN.name(), Role.PREMIUM_USER.name(), Role.USER.name()),
-            List.of("change_role_admin_" + chatIdUserForChange,
-                "change_role_premium_" + chatIdUserForChange,
-                "change_role_user_" + chatIdUserForChange), 2);
+                List.of(Role.ADMIN.name(), Role.PREMIUM_USER.name(), Role.USER.name()),
+                List.of("change_role_admin_" + chatIdUserForChange,
+                        "change_role_premium_" + chatIdUserForChange,
+                        "change_role_user_" + chatIdUserForChange), 2);
     }
 
     public void updateRole(Long chatId, String data) {
@@ -219,12 +220,12 @@ public class AdminCommandsHandler implements BasicHandlers {
 
     public void menuForCreateQuest(Long chatId) {
         List<String> commandsList = Arrays.stream(Commands.values()).toList().stream()
-            .filter(Commands::isQuest)
-            .map(Commands::getCmdName)
-            .toList();
+                .filter(Commands::isQuest)
+                .map(Commands::getCmdName)
+                .toList();
         List<String> callback = util.removeSignAndEnglishLetter(commandsList);
         util.sendMessageToUser(chatId, "В этом спецельном меню ты сможешь создавать и настраивать квесты", commandsList,
-            callback, commandsList.size() / 2);
+                callback, commandsList.size() / 2);
     }
 
     public void readAllQuestsForAdmin(Long chatId) {
@@ -267,23 +268,23 @@ public class AdminCommandsHandler implements BasicHandlers {
         String status = quest.isDeprecated() ? "❌ Неактуальный" : "✅ Актуальный";
         String gameName = quest.getGame() != null ? quest.getGame().getName() : "нет игры";
         String format = String.format(
-            "🎮 <b>Квест для игры:</b> %s \n\n" +
-                "📝 <b>Описание:\n</b>%s\n\n" +
-                "🏆 <b>Награда:</b>\n%s\n\n" +
-                "👤 <b>Создатель квеста:</b>\n%s\n\n" +
-                "📅 <b>Состояние:</b>\n%s",
-            gameName,
-            quest.getDescription(),
-            quest.getReward(),
-            quest.getCreatorOfQuest().getNickname(),
-            status);
+                "🎮 <b>Квест для игры:</b> %s \n\n" +
+                        "📝 <b>Описание:\n</b>%s\n\n" +
+                        "🏆 <b>Награда:</b>\n%s\n\n" +
+                        "👤 <b>Создатель квеста:</b>\n%s\n\n" +
+                        "📅 <b>Состояние:</b>\n%s",
+                gameName,
+                quest.getDescription(),
+                quest.getReward(),
+                quest.getCreatorOfQuest().getNickname(),
+                status);
 
         List<String> commandsList = Arrays.stream(QuestCommands.values()).toList().stream()
-            .filter(QuestCommands::isCreateNewQuest)
-            .map(QuestCommands::getCmdName)
-            .toList();
+                .filter(QuestCommands::isCreateNewQuest)
+                .map(QuestCommands::getCmdName)
+                .toList();
         List<String> callbacks = util.removeSignAndEnglishLetter(commandsList).stream()
-            .map(callback -> callback.concat("_" + quest.getId())).toList();
+                .map(callback -> callback.concat("_" + quest.getId())).toList();
         util.sendMessageToUser(chatId, format, commandsList, callbacks, commandsList.size());
     }
 

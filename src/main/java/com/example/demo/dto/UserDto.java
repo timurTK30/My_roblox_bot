@@ -14,11 +14,11 @@ public class UserDto {
     private Long chatId;
     private String role;
     private String status;
-    private String aStatus;
     private LocalDate dateOfRegisterAcc;
-    private Long tempChatIdForReply;
     private Game game;
     private Quest executiveQuest;
+    private String aStatus;
+    private Long tempChatIdForReply;
 
     @Override
     public String toString() {
@@ -28,9 +28,6 @@ public class UserDto {
                 ", chatId=" + chatId +
                 ", role='" + role + '\'' +
                 ", status='" + status + '\'' +
-                ", aStatus='" + aStatus + '\'' +
-                ", dateOfRegisterAcc=" + dateOfRegisterAcc +
-                ", tempChatIdForReply=" + tempChatIdForReply +
-                '}';
+                ", dateOfRegisterAcc=" + dateOfRegisterAcc;
     }
 }

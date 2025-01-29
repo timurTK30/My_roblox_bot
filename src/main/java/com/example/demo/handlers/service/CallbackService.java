@@ -1,6 +1,8 @@
 package com.example.demo.handlers.service;
 
 import com.example.demo.handlers.UtilCommandsHandler;
+import com.example.demo.handlers.admin.AdminCallbackHandlers;
+import com.example.demo.handlers.admin.AdminCommandsHandler;
 import com.example.demo.handlers.user.UserCallbackHanlers;
 import com.example.demo.service.UserService;
 import com.example.demo.util.CommandData;
@@ -18,6 +20,7 @@ public class CallbackService {
     private final UserCallbackHanlers userCallback;
     private final UserService userService;
     private final UtilCommandsHandler utilHandler;
+    private final AdminCallbackHandlers adminCallbackHandler;
 
     public void handleCallback(CallbackQuery callback) {
         String data = callback.getData();
@@ -26,8 +29,8 @@ public class CallbackService {
         CommandData commandData = new CommandData(data, callback.getMessage().getMessageId(), chatId, callback.getId(), userName);
         try {
             Boolean isAdmin = userService.isUserAdmin(chatId);
-            if (isAdmin) {
-
+            if (isAdmin && adminCallbackHandler.canHandle(commandData)) {
+                adminCallbackHandler.handle(chatId, commandData);
             } else if (userCallback.canHandle(commandData)) {
                 userCallback.handle(chatId, commandData);
             }

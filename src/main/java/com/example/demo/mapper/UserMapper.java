@@ -1,11 +1,10 @@
 package com.example.demo.mapper;
 
-import com.example.demo.domain.AdminStatus;
+import com.example.demo.domain.AdminUser;
 import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import com.example.demo.domain.UserStatus;
 import com.example.demo.dto.UserDto;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,7 +17,7 @@ public class UserMapper {
         user.setNickname(dto.getNickname());
         if (dto.getRole() == null) {
             user.setRole(Role.USER);
-        }else {
+        } else {
             user.setRole(Role.valueOf(dto.getRole()));
         }
         user.setStatus(UserStatus.valueOf(dto.getStatus()));
@@ -30,6 +29,12 @@ public class UserMapper {
 
     public UserDto toDto(User user) {
         UserDto userDto = new UserDto();
+        if (user instanceof AdminUser) {
+            AdminUser adminUser = (AdminUser) user;
+            userDto.setAStatus(adminUser.getAStatus().name());
+            userDto.setTempChatIdForReply(adminUser.getTempChatIdForReply());
+        }
+
         userDto.setId(user.getId());
         userDto.setNickname(user.getNickname());
         userDto.setChatId(user.getChatId());
