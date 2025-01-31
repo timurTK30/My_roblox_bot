@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.domain.AdminStatus;
 import com.example.demo.domain.AdminUser;
 
 import java.util.List;
@@ -8,7 +9,7 @@ public interface AdminUserService {
 
     AdminUser save(AdminUser adminUser);
     List<AdminUser> readAll();
-//    AdminUser updateByChatId(AdminUser adminUser);
+    AdminUser updateByChatId(Long chatId, AdminStatus status, Long tempChatId);
     void deleteByChatId(Long chatId);
     AdminUser getAdminUserByChatId(Long chatId);
 

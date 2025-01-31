@@ -1,5 +1,6 @@
 package com.example.demo.service.serviceImp;
 
+import com.example.demo.domain.AdminStatus;
 import com.example.demo.domain.AdminUser;
 import com.example.demo.repository.AdminUserRepository;
 import com.example.demo.service.AdminUserService;
@@ -26,10 +27,13 @@ public class AdminUserServiceImpl implements AdminUserService {
         return repository.findAll();
     }
 
-//    @Override
-//    public AdminUser updateByChatId(AdminUser adminUser) {
-//        return save(adminUser);
-//    }
+    @Override
+    public AdminUser updateByChatId(Long chatId, AdminStatus status, Long tempChatId) {
+        AdminUser adminUser = getAdminUserByChatId(chatId);
+        adminUser.setTempChatIdForReply(tempChatId);
+        adminUser.setAStatus(status);
+        return save(adminUser);
+    }
 
     @Override
     public void deleteByChatId(Long chatId) {

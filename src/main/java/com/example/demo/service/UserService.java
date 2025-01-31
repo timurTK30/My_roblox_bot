@@ -11,13 +11,12 @@ public interface UserService {
 
     UserDto save(UserDto userDto);
     List<UserDto> readAll();
-    UserDto updateByChatId(UserDto userDto, Long chatId);
+    User updateByChatId(UserDto userDto, Long chatId);
     void deleteByName(UserDto userDto);
     UserDto getUserByChatId(Long chatId);
-    UserDto updateStatusByChatId(Long chatId, String status);
-    UserDto updateAdminStatusByChatId(Long chatId, AdminStatus adminStatus, Long tempChatId);
+    User updateStatusByChatId(Long chatId, String status);
     List<UserDto> getUserByGameId(Long gameId);
-    UserDto updateRoleByChatId(Long chatId, String role);
+    User updateRoleByChatId(Long chatId, String role);
     Boolean isUserAdmin(Long chatId);
     Boolean isUserAdmin(UserDto userDto);
     void deleteGameRequestFromUser(Long chatId);

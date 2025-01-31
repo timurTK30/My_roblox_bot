@@ -29,7 +29,7 @@ public class Quest {
     private String reward;
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "creator_of_quest")
-    private User creatorOfQuest;
+    private AdminUser creatorOfQuest;
     @Column(name = "is_deprecated")
     private boolean isDeprecated;
 }
