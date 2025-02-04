@@ -48,4 +48,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
         return adminUserByChatId.get();
     }
+
+    @Override
+    public AdminUser updateTempQuestId(Long chatId, Long questId) {
+        AdminUser adminUserByChatId = getAdminUserByChatId(chatId);
+        adminUserByChatId.setTempQuestId(questId);
+        return save(adminUserByChatId);
+    }
 }

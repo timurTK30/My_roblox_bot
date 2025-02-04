@@ -6,6 +6,7 @@ import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
 import com.example.demo.service.AdminUserService;
+import com.example.demo.service.GameService;
 import com.example.demo.service.SupportMassageService;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class UtilCommandsHandler {
     private final UserService userService;
     private final SupportMassageService supportMassageService;
     private final AdminUserService adminUserService;
+    private final GameService gameService;
 
     public void adminRegister(Long chatId, String userName){
         AdminUser adminUser = new AdminUser();
@@ -315,6 +317,17 @@ public class UtilCommandsHandler {
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void allGames(Long chatId) {
+        List<GameDto> gameDtos = gameService.readAll();
+        StringBuilder stringBuilder = new StringBuilder();
+        gameDtos.forEach(gameDto -> {
+            stringBuilder.append(gameDto.getName())
+                    .append(" ( /game").append(gameDto.getId()).append(" )")
+                    .append("\n");
+        });
+        sendMessageToUser(chatId, stringBuilder.toString());
     }
 
     public void showAllDescription(StringBuilder stringBuilder, GameDto gameDto) {

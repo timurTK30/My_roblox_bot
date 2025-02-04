@@ -39,6 +39,7 @@ public class AdminCommandsHandler implements BasicHandlers {
     private final UserMapper userMapper;
     private final QuestService questService;
     private final AdminUserService adminService;
+    private final EntityManager entityManager;
 
     @Override
     public boolean canHandle(CommandData commandData) {
@@ -178,7 +179,9 @@ public class AdminCommandsHandler implements BasicHandlers {
         util.sendMessageToUser(chatId, "Напишите сообщение (" + chatIdWaitingUser + ")");
     }
 
-    public void requestToAddRewardForQuest(Long chatId) {
+    public void requestToAddRewardForQuest(Long chatId, String data) {
+        Long questId = Long.valueOf(data.replaceAll("Добавить описание для квеста_", ""));
+        adminService.updateTempQuestId(chatId, questId);
         util.sendMessageToUser(chatId, "Введите награду: ");
         adminService.updateByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
     }
@@ -194,6 +197,7 @@ public class AdminCommandsHandler implements BasicHandlers {
         existQuest.setDeprecated(data.endsWith("❌"));
 
         questService.updateById(existQuest.getId(), existQuest);
+        util.sendMessageToUser(chatId, "\uD83D\uDD04 Квест успешно обновлен! \uD83C\uDF89");
     }
 
     public void requestToAddGameForQuest(Long chatId) {
@@ -243,9 +247,6 @@ public class AdminCommandsHandler implements BasicHandlers {
         });
 
     }
-
-    //TODO мы автоматом поймем
-    private final EntityManager entityManager;
 
     @Transactional
     public void createQuest(Long chatId) {
@@ -331,6 +332,7 @@ public class AdminCommandsHandler implements BasicHandlers {
                 quest.setDescription(message);
                 questService.updateById(getLastQuest().getId(), quest);
                 adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                util.sendMessageToUser(chatId, "\uD83D\uDCDD Описание квеста обновлено! \uD83C\uDF89");
 
             } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_REWARD_QUEST.name())) {
                 Optional<Quest> questById = questService.getQuestById(getLastQuest().getId());
@@ -338,6 +340,7 @@ public class AdminCommandsHandler implements BasicHandlers {
                 quest.setReward(message);
                 questService.updateById(getLastQuest().getId(), quest);
                 adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                util.sendMessageToUser(chatId, "✨ Награда успешно добавлена к квесту! \uD83C\uDF81");
             } else if (user.getAStatus().equalsIgnoreCase(AdminStatus.CHANGE_GAME_QUEST.name())) {
                 Optional<Quest> questById = questService.getQuestById(getLastQuest().getId());
                 Quest quest = questById.get();
@@ -350,6 +353,7 @@ public class AdminCommandsHandler implements BasicHandlers {
                 quest.setGame(gameMapper.toEntity(gameByName));
                 questService.updateById(quest.getId(), quest);
                 adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                util.sendMessageToUser(chatId, "\uD83C\uDF89 Игра успешно добавлена к квесту! \uD83D\uDE80");
             }
         } catch (Exception e) {
             System.out.println("Человек не ожидает на отправку сообщений");

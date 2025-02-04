@@ -1,16 +1,13 @@
 package com.example.demo.handlers.admin;
 
-import static com.example.demo.domain.QuestCommands.ADD_DECRIPCION_FOR_QUEST;
-import static com.example.demo.domain.QuestCommands.ADD_GAME_FOR_QUEST;
-import static com.example.demo.domain.QuestCommands.ADD_REWARD_FOR_QUEST;
-import static com.example.demo.domain.QuestCommands.EDIT_QUEST;
-
 import com.example.demo.domain.Quest;
 import com.example.demo.handlers.BasicHandlers;
 import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import static com.example.demo.domain.QuestCommands.*;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +21,11 @@ public class AdminCallbackHandlers implements BasicHandlers {
         String data = commandData.getData();
 
         return data.matches(
-            "(^Прочитать сообщение от юзера|Перезагрузить бота|Статистика использования бота" +
-                "|Доступные квесты|Квест меню|Создать квест|Удалить старие квесты" +
-                "|Прочитать доступные игры|User.*|Отправить сообщение|Редоктировать.*" +
-                "Добавить награду для квеста.*|Добавить описание для квеста.*" +
-                "|Добавить игру для квеста.*| *.Изменить на.*)"
+                "(^Прочитать сообщение от юзера|Перезагрузить бота|Статистика использования бота" +
+                        "|Доступные квесты|Квест меню|Создать квест|Удалить старие квесты" +
+                        "|Прочитать доступные игры|User.*|Отправить сообщение|.*Редоктировать.*" +
+                        "|Добавить награду для квеста.*|Добавить описание для квеста.*" +
+                        "|Добавить игру для квеста.*|.*Изменить на.*)"
         );
     }
 
@@ -58,6 +55,9 @@ public class AdminCallbackHandlers implements BasicHandlers {
             case "Удалить старие квесты":
                 adminCommandsHandler.deleteDeprecatedQuest(chatId);
                 break;
+            case "Прочитать доступные игры":
+                util.allGames(chatId);
+                break;
             case "Отправить сообщение":
                 adminCommandsHandler.requestToNotifyAllUsers(chatId);
                 break;
@@ -67,11 +67,11 @@ public class AdminCallbackHandlers implements BasicHandlers {
             default:
                 if (data.startsWith("user")) {
                     adminCommandsHandler.handleUserReplyRequest(chatId, data);
-                } else if (data.startsWith(EDIT_QUEST.getCmdName())) {
+                } else if (data.contains(EDIT_QUEST.getCmdName())) {
                     Quest existQuest = adminCommandsHandler.getQuestByIdFromCallback(chatId, data);
                     adminCommandsHandler.outputQuestForAdmin(chatId, existQuest);
                 } else if (data.startsWith(ADD_REWARD_FOR_QUEST.getCmdName())) {
-                    adminCommandsHandler.requestToAddRewardForQuest(chatId);
+                    adminCommandsHandler.requestToAddRewardForQuest(chatId, data);
                 } else if (data.startsWith(ADD_DECRIPCION_FOR_QUEST.getCmdName())) {
                     adminCommandsHandler.requestToAddDescriptionForQuest(chatId);
                 } else if (data.startsWith(ADD_GAME_FOR_QUEST.getCmdName())) {

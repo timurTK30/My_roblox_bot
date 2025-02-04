@@ -69,7 +69,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                 userCommandsHandler.getProfile(chatId);
                 break;
             case "Прочитать доступные игры":
-                userCommandsHandler.allGames(chatId);
+                util.allGames(chatId);
                 break;
             case "Квесты":
                 util.sendMessageToUser(chatId, "Какая будет категория?", List.of("Все квесты", "Поиск по играх"), 2);

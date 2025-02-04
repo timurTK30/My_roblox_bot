@@ -210,17 +210,6 @@ public class UserCommandsHandler implements BasicHandlers {
         util.sendMessageToUser(chatId, "Квест был отменен");
     }
 
-    public void allGames(Long chatId) {
-        List<GameDto> gameDtos = gameService.readAll();
-        StringBuilder stringBuilder = new StringBuilder();
-        gameDtos.forEach(gameDto -> {
-            stringBuilder.append(gameDto.getName())
-                    .append(" ( /game").append(gameDto.getId()).append(" )")
-                    .append("\n");
-        });
-        util.sendMessageToUser(chatId, stringBuilder.toString());
-    }
-
     public void getProfile(Long chatId) {
         UserDto userByChatId = userService.getUserByChatId(chatId);
         Quest quest = userByChatId.getExecutiveQuest();

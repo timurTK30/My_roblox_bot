@@ -20,6 +20,8 @@ public class AdminUser extends User{
     @Enumerated(EnumType.STRING)
     @Column(name = "admin_status")
     private AdminStatus aStatus;
+    @Column(name = "temp_quest_id")
+    private Long tempQuestId;
 
     @Override
     public String toString() {

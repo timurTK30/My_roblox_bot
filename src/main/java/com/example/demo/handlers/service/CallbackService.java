@@ -28,6 +28,8 @@ public class CallbackService {
         String userName = callback.getFrom().getUserName();
         CommandData commandData = new CommandData(data, callback.getMessage().getMessageId(), chatId, callback.getId(), userName);
         try {
+            System.out.println(adminCallbackHandler.canHandle(commandData));
+            System.out.println(commandData);
             Boolean isAdmin = userService.isUserAdmin(chatId);
             if (isAdmin && adminCallbackHandler.canHandle(commandData)) {
                 adminCallbackHandler.handle(chatId, commandData);
