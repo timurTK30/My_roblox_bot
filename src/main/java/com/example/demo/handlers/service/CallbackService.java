@@ -38,7 +38,7 @@ public class CallbackService {
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new RuntimeException("handleCallback- там ошибка, " + commandData.toString());
+            throw new RuntimeException("тут ошибка " + e.getMessage());
         }
     }
 }

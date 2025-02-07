@@ -25,7 +25,7 @@ public class AdminCallbackHandlers implements BasicHandlers {
                         "|Доступные квесты|Квест меню|Создать квест|Удалить старие квесты" +
                         "|Прочитать доступные игры|User.*|Отправить сообщение|.*Редоктировать.*" +
                         "|Добавить награду для квеста.*|Добавить описание для квеста.*" +
-                        "|Добавить игру для квеста.*|.*Изменить на.*)"
+                        "|Добавить игру для квеста.*|.*Изменить на.*|change_role_.*)"
         );
     }
 
@@ -73,9 +73,9 @@ public class AdminCallbackHandlers implements BasicHandlers {
                 } else if (data.startsWith(ADD_REWARD_FOR_QUEST.getCmdName())) {
                     adminCommandsHandler.requestToAddRewardForQuest(chatId, data);
                 } else if (data.startsWith(ADD_DECRIPCION_FOR_QUEST.getCmdName())) {
-                    adminCommandsHandler.requestToAddDescriptionForQuest(chatId);
+                    adminCommandsHandler.requestToAddDescriptionForQuest(chatId, data);
                 } else if (data.startsWith(ADD_GAME_FOR_QUEST.getCmdName())) {
-                    adminCommandsHandler.requestToAddGameForQuest(chatId);
+                    adminCommandsHandler.requestToAddGameForQuest(chatId, data);
                 } else if (data.contains("Изменить на")) {
                     adminCommandsHandler.changeQuestStatus(chatId, data);
                 } else if (data.contains("change_role_")) {
