@@ -79,7 +79,7 @@ public class AdminCallbackHandlers implements BasicHandlers {
                 } else if (data.contains("Изменить на")) {
                     adminCommandsHandler.changeQuestStatus(chatId, data);
                 } else if (data.contains("change_role_")) {
-                    adminCommandsHandler.updateRole(chatId, data);
+                    adminCommandsHandler.updateRole(chatId, data, msgId);
                 }
         }
     }

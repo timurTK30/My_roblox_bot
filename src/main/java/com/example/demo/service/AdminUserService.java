@@ -13,5 +13,6 @@ public interface AdminUserService {
     void deleteByChatId(Long chatId);
     AdminUser getAdminUserByChatId(Long chatId);
     AdminUser updateTempQuestId(Long chatId, Long questId);
+    AdminUser updateUserToAdminByChatId(Long chatId);
 
 }

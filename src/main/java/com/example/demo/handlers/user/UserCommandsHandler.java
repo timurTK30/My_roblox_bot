@@ -55,11 +55,11 @@ public class UserCommandsHandler implements BasicHandlers {
 //            .filter(command -> !command.isCmdAdmin() && !command.isQuest())
 //            .anyMatch(command -> command.name().startsWith(commandDate.getData()));
 
-        UserDto user = userService.getUserByChatId(commandDate.getChatId());
+        User user = userService.getUserByChatId(commandDate.getChatId());
 
         boolean hasUserStatus = user != null && (
-                user.getStatus().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name()) ||
-                        user.getStatus().equalsIgnoreCase(UserStatus.WANT_UPDATE_MSG.name())
+                user.getStatus().name().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name()) ||
+                        user.getStatus().name().equalsIgnoreCase(UserStatus.WANT_UPDATE_MSG.name())
         );
 
         //return isUserCommand || hasUserStatus;
@@ -204,14 +204,14 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     public void cancelQuest(Long chatId) {
-        UserDto userForDeleteQuest = userService.getUserByChatId(chatId);
+        User userForDeleteQuest = userService.getUserByChatId(chatId);
         userForDeleteQuest.setExecutiveQuest(null);
-        userService.updateByChatId(userForDeleteQuest, chatId);
+        userService.updateByChatId(userMapper.toDto(userForDeleteQuest), chatId);
         util.sendMessageToUser(chatId, "Квест был отменен");
     }
 
     public void getProfile(Long chatId) {
-        UserDto userByChatId = userService.getUserByChatId(chatId);
+        User userByChatId = userService.getUserByChatId(chatId);
         Quest quest = userByChatId.getExecutiveQuest();
         Game game = userByChatId.getGame();
         StringBuilder information = new StringBuilder();
@@ -390,8 +390,8 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     public void handleGameApplication(Long chatId, String data, String callBackId) {
-        UserDto userDto = userService.getUserByChatId(chatId);
-        Game game = userDto.getGame();
+        User user = userService.getUserByChatId(chatId);
+        Game game = user.getGame();
         if (game != null) {
             util.sendMessageToUser(chatId, "Заявка у вас уже есть, отмените сначала (/game" + game.getId() + ")");
             return;
@@ -400,8 +400,8 @@ public class UserCommandsHandler implements BasicHandlers {
         String gameName = data.replaceAll("leave_request_", "").trim();
         GameDto gameDto = gameService.getGameByName(gameName);
 
-        userDto.setGame(gameMapper.toEntity(gameDto));
-        userService.updateByChatId(userDto, chatId);
+        user.setGame(gameMapper.toEntity(gameDto));
+        userService.updateByChatId(userMapper.toDto(user), chatId);
         util.showAlert(callBackId, "Заявка отправлена");
     }
 
@@ -420,17 +420,17 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     private void handleUserMessage(Long chatId, String message) {
-        UserDto user = new UserDto();
+        User user = new User();
         try {
             user = userService.getUserByChatId(chatId);
-            if (user.getStatus().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name())) {
+            if (user.getStatus().name().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name())) {
                 if (saveSuppMassageFromUser(chatId, message)) {
                     util.sendMessageToUser(chatId, "Сообщение отправлено");
                     userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
                 } else {
                     util.sendMessageToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки");
                 }
-            } else if (user.getStatus().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
+            } else if (user.getStatus().name().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
                 saveSuppMassageFromUser(chatId, message);
                 util.sendMessageToUser(chatId, "Ваше сообщение обновлено");
                 userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
@@ -447,7 +447,7 @@ public class UserCommandsHandler implements BasicHandlers {
 
     public void handleNegativeFeedback(Long chatId) {
         SuportMassageDto supportMessage = supportMassageService.getMassageByChatId(chatId).orElse(null);
-        UserDto userByChatId = userService.getUserByChatId(chatId);
+        User userByChatId = userService.getUserByChatId(chatId);
         if (supportMessage != null) {
             String message = "Пользователь с ником @" + userByChatId.getNickname() +
                     " не одобрил помощь\n\n" + supportMessage.getMassage();

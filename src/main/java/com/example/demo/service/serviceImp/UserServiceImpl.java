@@ -67,9 +67,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto getUserByChatId(Long chatId) {
+    public User getUserByChatId(Long chatId) {
         Optional<User> userByChatId = userRepository.getUserByChatId(chatId);
-        return userByChatId.map(userMapper::toDto).orElse(null);
+        return userByChatId.orElse(null);
     }
 
     @Override
@@ -102,9 +102,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean isUserAdmin(Long chatId) {
-        UserDto userByChatId = getUserByChatId(chatId);
+        User userByChatId = getUserByChatId(chatId);
         if(Objects.nonNull(userByChatId)){
-            return userByChatId.getRole().equalsIgnoreCase(Role.ADMIN.name());
+            return userByChatId.getRole().name().equalsIgnoreCase(Role.ADMIN.name());
         }
         return false;
     }
@@ -119,8 +119,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteGameRequestFromUser(Long chatId) {
-        UserDto userByChatId = getUserByChatId(chatId);
+        User userByChatId = getUserByChatId(chatId);
         userByChatId.setGame(null);
-        save(userByChatId);
+        userRepository.save(userByChatId);
     }
 }

@@ -2,8 +2,12 @@ package com.example.demo.service.serviceImp;
 
 import com.example.demo.domain.AdminStatus;
 import com.example.demo.domain.AdminUser;
+import com.example.demo.domain.Role;
+import com.example.demo.domain.User;
+import com.example.demo.dto.UserDto;
 import com.example.demo.repository.AdminUserRepository;
 import com.example.demo.service.AdminUserService;
+import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +19,7 @@ import java.util.Optional;
 public class AdminUserServiceImpl implements AdminUserService {
 
     private final AdminUserRepository repository;
+    private final UserService userService;
 
 
     @Override
@@ -54,5 +59,14 @@ public class AdminUserServiceImpl implements AdminUserService {
         AdminUser adminUserByChatId = getAdminUserByChatId(chatId);
         adminUserByChatId.setTempQuestId(questId);
         return save(adminUserByChatId);
+    }
+
+    @Override
+    public AdminUser updateUserToAdminByChatId(Long chatId) {
+        User user = userService.updateRoleByChatId(chatId, Role.ADMIN.name());
+        AdminUser adminUser = new AdminUser();
+        adminUser.setId(user.getId());
+        adminUser.setAStatus(AdminStatus.DONT_WRITE);
+        return repository.save(adminUser);
     }
 }

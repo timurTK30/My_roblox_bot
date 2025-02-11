@@ -88,7 +88,7 @@ public class UtilCommandsHandler {
     }
 
     public boolean isUserHasSpecificGame(Long chatId, Long gameId) {
-        UserDto userByChatId = userService.getUserByChatId(chatId);
+        User userByChatId = userService.getUserByChatId(chatId);
         //return userByChatId.getGame() != null && userByChatId.getGame().getId().equals(gameId);
         return Objects.nonNull(userByChatId.getGame()) && userByChatId.getGame().getId().equals(gameId);
     }
@@ -278,13 +278,13 @@ public class UtilCommandsHandler {
     }
 
     public boolean isUserExist(Long chatId) {
-        UserDto userByChatId = userService.getUserByChatId(chatId);
+        User userByChatId = userService.getUserByChatId(chatId);
         return userByChatId != null;
     }
 
     public boolean isUserAdmin(Long chatId) {
-        UserDto userByChatId = userService.getUserByChatId(chatId);
-        return userByChatId.getRole().equalsIgnoreCase(Role.ADMIN.name());
+        User userByChatId = userService.getUserByChatId(chatId);
+        return userByChatId.getRole().name().equalsIgnoreCase(Role.ADMIN.name());
     }
 
     public boolean checkListForNulls(Quest quest) {
@@ -295,7 +295,7 @@ public class UtilCommandsHandler {
 
     public void requestToBuySub(String data, Long chatId) {
         String sub = data.replaceAll("request_buy_", "");
-        UserDto userByChatId = userService.getUserByChatId(chatId);
+        User userByChatId = userService.getUserByChatId(chatId);
         sendMessageToUser(1622241974L, "Имя: " + userByChatId.getNickname() + "\n" +
                 "Подписка: " + userByChatId.getRole() + "\n" +
                 "Хочет купить: " + sub + "\n" +

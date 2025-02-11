@@ -46,7 +46,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     public Optional<Wallet> getWalletByChatId(Long chatId) {
-        Optional<Wallet> walletByChatId = repository.getWalletByUser(userMapper.toEntity(userService.getUserByChatId(chatId)));
+        Optional<Wallet> walletByChatId = repository.getWalletByUser(userService.getUserByChatId(chatId));
         if (walletByChatId.isEmpty()){
             log.warn("getWalletByChatId, <---!!! там ошибка");
             return Optional.empty();

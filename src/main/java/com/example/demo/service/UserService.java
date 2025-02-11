@@ -13,7 +13,7 @@ public interface UserService {
     List<UserDto> readAll();
     User updateByChatId(UserDto userDto, Long chatId);
     void deleteByName(UserDto userDto);
-    UserDto getUserByChatId(Long chatId);
+    User getUserByChatId(Long chatId);
     User updateStatusByChatId(Long chatId, String status);
     List<UserDto> getUserByGameId(Long gameId);
     User updateRoleByChatId(Long chatId, String role);
