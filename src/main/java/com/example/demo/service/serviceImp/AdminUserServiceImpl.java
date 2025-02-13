@@ -1,14 +1,13 @@
 package com.example.demo.service.serviceImp;
 
-import com.example.demo.domain.AdminStatus;
-import com.example.demo.domain.AdminUser;
-import com.example.demo.domain.Role;
-import com.example.demo.domain.User;
+import com.example.demo.domain.*;
 import com.example.demo.dto.UserDto;
 import com.example.demo.repository.AdminUserRepository;
 import com.example.demo.service.AdminUserService;
 import com.example.demo.service.UserService;
+import com.example.demo.service.WalletService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +19,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private final AdminUserRepository repository;
     private final UserService userService;
+    private final WalletService walletService;
 
 
     @Override
@@ -63,10 +63,18 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public AdminUser updateUserToAdminByChatId(Long chatId) {
-        User user = userService.updateRoleByChatId(chatId, Role.ADMIN.name());
+       // User user = userService.updateRoleByChatId(chatId, Role.ADMIN.name());
+        User user = userService.getUserByChatId(chatId);
+        user.setRole(Role.ADMIN);
+        userService.deleteById(user.getId());
         AdminUser adminUser = new AdminUser();
-        adminUser.setId(user.getId());
+        BeanUtils.copyProperties(user, adminUser);
         adminUser.setAStatus(AdminStatus.DONT_WRITE);
-        return repository.save(adminUser);
+        AdminUser adminSave = repository.save(adminUser);
+        Wallet wallet = new Wallet();
+        wallet.setUser(adminSave);
+        wallet.setBalance(200.0);
+        walletService.save(wallet);
+        return adminSave;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.demo.service.serviceImp;
 
+import com.example.demo.domain.User;
 import com.example.demo.domain.Wallet;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.WalletRepository;
@@ -15,13 +16,9 @@ import java.util.Optional;
 public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository repository;
-    private final UserService userService;
-    private final UserMapper userMapper;
 
-    public WalletServiceImpl(WalletRepository repository, UserService userService, UserMapper userMapper) {
+    public WalletServiceImpl(WalletRepository repository) {
         this.repository = repository;
-        this.userService = userService;
-        this.userMapper = userMapper;
     }
 
 
@@ -31,8 +28,8 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public String updateByChatId(Double amountOfCoin, Long chatId) {
-        Optional<Wallet> walletByChatId = getWalletByChatId(chatId);
+    public String updateByUser(Double amountOfCoin, User user) {
+        Optional<Wallet> walletByChatId = getWalletByUser(user);
         if (walletByChatId.isEmpty()) {
             log.warn("Wallet updateByChatId, <---!!! там ошибка");
             return null;
@@ -45,12 +42,18 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public Optional<Wallet> getWalletByChatId(Long chatId) {
-        Optional<Wallet> walletByChatId = repository.getWalletByUser(userService.getUserByChatId(chatId));
+    public Optional<Wallet> getWalletByUser(User user) {
+        Optional<Wallet> walletByChatId = repository.getWalletByUser(user);
         if (walletByChatId.isEmpty()){
             log.warn("getWalletByChatId, <---!!! там ошибка");
             return Optional.empty();
         }
         return walletByChatId;
+    }
+
+    @Override
+    public void deleteByUser(User user) {
+        Optional<Wallet> walletByChatId = getWalletByUser(user);
+        walletByChatId.ifPresent(repository::delete);
     }
 }

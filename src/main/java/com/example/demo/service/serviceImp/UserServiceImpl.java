@@ -6,6 +6,7 @@ import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.AdminUserRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
+import com.example.demo.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,12 +20,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final AdminUserRepository adminUserRepository;
+    private final WalletService walletService;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, AdminUserRepository adminUserRepository) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, AdminUserRepository adminUserRepository, WalletService walletService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.adminUserRepository = adminUserRepository;
+        this.walletService = walletService;
     }
 
     @Override
@@ -52,6 +55,7 @@ public class UserServiceImpl implements UserService {
         userByChatId.setRole(Role.valueOf(userDto.getRole()));
         userByChatId.setExecutiveQuest(userDto.getExecutiveQuest());
         if (userByChatId instanceof AdminUser adminUser){
+            adminUser.setId(userByChatId.getId());
             adminUser.setTempChatIdForReply(userDto.getTempChatIdForReply());
             adminUser.setAStatus(AdminStatus.valueOf(userDto.getAStatus()));
             return adminUserRepository.save(adminUser);
@@ -61,9 +65,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteByName(UserDto userDto) {
-        User user = userMapper.toEntity(userDto);
-        userRepository.delete(user);
+    public void deleteById(Long id) {
+        walletService.deleteByUser(userRepository.getReferenceById(id));
+        userRepository.deleteById(id);
     }
 
     @Override

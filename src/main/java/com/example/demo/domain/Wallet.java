@@ -18,7 +18,9 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "chat_id", unique = true)
+    @JoinColumn(name = "chat_id", unique = true,
+            foreignKey = @ForeignKey(name = "FK_wallets_user",
+                    value = ConstraintMode.CONSTRAINT))
     private User user;
     @Column(name = "balance")
     private Double balance;

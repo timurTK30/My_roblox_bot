@@ -5,10 +5,7 @@ import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
 import com.example.demo.dto.UserDto;
-import com.example.demo.service.AdminUserService;
-import com.example.demo.service.GameService;
-import com.example.demo.service.SupportMassageService;
-import com.example.demo.service.UserService;
+import com.example.demo.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -43,6 +40,7 @@ public class UtilCommandsHandler {
     private final SupportMassageService supportMassageService;
     private final AdminUserService adminUserService;
     private final GameService gameService;
+    private final WalletService walletService;
 
     public void adminRegister(Long chatId, String userName){
         AdminUser adminUser = new AdminUser();
@@ -54,6 +52,11 @@ public class UtilCommandsHandler {
         adminUser.setDateOfRegisterAcc(LocalDate.now());
         adminUser.setStatus(UserStatus.DONT_SENT);
         adminUserService.save(adminUser);
+        //TODO
+        Wallet wallet = new Wallet();
+        wallet.setUser(adminUser);
+        wallet.setBalance(200.0);
+        walletService.save(wallet);
     }
 
     public void outputQuestWithCustomBtn(Long chatId, Quest quest, List<String> btn, List<String> callBack) {

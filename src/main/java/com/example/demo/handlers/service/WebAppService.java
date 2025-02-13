@@ -3,6 +3,7 @@ package com.example.demo.handlers.service;
 import com.example.demo.domain.PrizeWebAppData;
 import com.example.demo.handlers.UtilCommandsHandler;
 import com.example.demo.service.PrizeService;
+import com.example.demo.service.UserService;
 import com.example.demo.service.WalletService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,13 +20,15 @@ public class WebAppService {
     private final ObjectMapper objectMapper;
     private final UtilCommandsHandler utilCommandsHandler;
     private final WalletService walletService;
+    private final UserService userService;
 
     @Autowired
-    public WebAppService(PrizeService prizeService, ObjectMapper objectMapper, UtilCommandsHandler utilCommandsHandler, WalletService walletService) {
+    public WebAppService(PrizeService prizeService, ObjectMapper objectMapper, UtilCommandsHandler utilCommandsHandler, WalletService walletService, UserService userService) {
         this.prizeService = prizeService;
         this.objectMapper = objectMapper;
         this.utilCommandsHandler = utilCommandsHandler;
         this.walletService = walletService;
+        this.userService = userService;
     }
 
     public void handleWebAppData(Update update) {
@@ -41,7 +44,7 @@ public class WebAppService {
         }
         if (utilCommandsHandler.checkIfPrizeCoin(prizeWebAppData)) {
             Double amountOfCoin = Double.valueOf(prizeWebAppData.getName().replace("Coin", "").trim());
-            String msgCoin = walletService.updateByChatId(amountOfCoin, chatId);
+            String msgCoin = walletService.updateByUser(amountOfCoin, userService.getUserByChatId(chatId));
             utilCommandsHandler.sendMessageToUser(chatId, msgCoin);
             return;
         }
