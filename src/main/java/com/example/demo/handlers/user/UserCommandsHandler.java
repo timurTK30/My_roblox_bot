@@ -97,12 +97,20 @@ public class UserCommandsHandler implements BasicHandlers {
             WebAppInfo webAppInfo = new WebAppInfo();
             webAppInfo.setUrl("https://osozznanie.github.io/wheel.github.io/");
 
+            WebAppInfo webAppInfo2 = new WebAppInfo();
+            webAppInfo2.setUrl("http://127.0.0.1:5500/index.html");
+
             KeyboardButton webAppButton = new KeyboardButton();
             webAppButton.setText("Open WebApp");
             webAppButton.setWebApp(webAppInfo);
 
+            KeyboardButton webAppButton2 = new KeyboardButton();
+            webAppButton2.setText("Open WebApp2");
+            webAppButton2.setWebApp(webAppInfo2);
+
             KeyboardRow keyboardRow = new KeyboardRow();
             keyboardRow.add(webAppButton);
+            keyboardRow.add(webAppButton2);
 
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
             keyboardMarkup.setResizeKeyboard(true);

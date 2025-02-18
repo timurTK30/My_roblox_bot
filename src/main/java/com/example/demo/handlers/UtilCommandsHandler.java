@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
@@ -42,6 +43,7 @@ public class UtilCommandsHandler {
     private final GameService gameService;
     private final WalletService walletService;
 
+    @Transactional
     public void adminRegister(Long chatId, String userName){
         AdminUser adminUser = new AdminUser();
         adminUser.setNickname(userName);
@@ -51,11 +53,8 @@ public class UtilCommandsHandler {
         adminUser.setChatId(chatId);
         adminUser.setDateOfRegisterAcc(LocalDate.now());
         adminUser.setStatus(UserStatus.DONT_SENT);
-        adminUserService.save(adminUser);
-        //TODO
-        Wallet wallet = new Wallet();
-        wallet.setUser(adminUser);
-        wallet.setBalance(200.0);
+        AdminUser saved = adminUserService.save(adminUser);
+        Wallet wallet = new Wallet(saved);
         walletService.save(wallet);
     }
 
