@@ -17,7 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
@@ -88,7 +90,7 @@ public class UserCommandsHandler implements BasicHandlers {
             Long id = Long.valueOf(text.replaceAll("/quest", ""));
             Optional<Quest> questById = questService.getQuestById(id);
             util.outputQuestWithCustomBtn(chatId, questById.get(), List.of("Отменить квест"));
-        } else if (text.startsWith("/test")) {
+        } else if (text.equalsIgnoreCase("/test")) {
 
             SendMessage message = new SendMessage();
             message.setChatId(chatId);
@@ -97,20 +99,12 @@ public class UserCommandsHandler implements BasicHandlers {
             WebAppInfo webAppInfo = new WebAppInfo();
             webAppInfo.setUrl("https://osozznanie.github.io/wheel.github.io/");
 
-            WebAppInfo webAppInfo2 = new WebAppInfo();
-            webAppInfo2.setUrl("http://127.0.0.1:5500/index.html");
-
             KeyboardButton webAppButton = new KeyboardButton();
             webAppButton.setText("Open WebApp");
             webAppButton.setWebApp(webAppInfo);
 
-            KeyboardButton webAppButton2 = new KeyboardButton();
-            webAppButton2.setText("Open WebApp2");
-            webAppButton2.setWebApp(webAppInfo2);
-
             KeyboardRow keyboardRow = new KeyboardRow();
             keyboardRow.add(webAppButton);
-            keyboardRow.add(webAppButton2);
 
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
             keyboardMarkup.setResizeKeyboard(true);
@@ -123,7 +117,31 @@ public class UserCommandsHandler implements BasicHandlers {
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
-        } else if (text.startsWith("/reg")) {
+        } else if (text.equalsIgnoreCase("/test2")) {
+
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId);
+            message.setText("123 Click the button below to open the WebApp:");
+
+            WebAppInfo webAppInfo2 = new WebAppInfo();
+            webAppInfo2.setUrl("https://127.0.0.1:8081");
+
+            InlineKeyboardButton webAppButton2 = new InlineKeyboardButton();
+            webAppButton2.setText("Open WebApp2");
+            webAppButton2.setWebApp(webAppInfo2);
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            inlineKeyboardMarkup.setKeyboard(List.of(List.of(webAppButton2)));
+
+            message.setReplyMarkup(inlineKeyboardMarkup);
+
+            try {
+                botSender.execute(message);
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else if (text.startsWith("/reg")) {
             util.adminRegister(chatId, commandData.getUserName());
         } else {
             handleUserMessage(chatId, text);

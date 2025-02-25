@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.domain.CoinGameResult;
 import com.example.demo.domain.User;
 import com.example.demo.domain.Wallet;
 import com.example.demo.service.UserService;
@@ -33,5 +34,19 @@ public class WalletController {
         Map<String, Object> response = new HashMap<>();
         response.put("balance", walletByUser.get().getBalance());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> updateBalance(@RequestBody CoinGameResult coinGameResult){
+        Long chatId = coinGameResult.getChatId();
+        User userByChatId = userService.getUserByChatId(chatId);
+
+        Wallet wallet = null;
+        try {
+            wallet = walletService.updateByUser(coinGameResult, userByChatId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity.ok(wallet);
     }
 }
