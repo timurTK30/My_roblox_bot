@@ -64,20 +64,8 @@ public class WalletServiceImpl implements WalletService {
         }
 
         Wallet wallet = walletByUser.get();
-        double amountOfRate = gameResult.getAmountOfRate();
-        double balance = gameResult.getBalance();
-
-        if (gameResult.isWon()) {
-            wallet.setBalance(balance + amountOfRate);
-        } else {
-            wallet.setBalance(balance - amountOfRate);
-        }
-
-//        if (wallet.getBalance() == gameResult.getBalance()) {
-//            save(wallet);
-//        } else {
-//            throw new RuntimeException("Баланс нашего кошелька != пришетшему балансу. " + wallet.getBalance() + " != " + gameResult.getBalance());
-//        }
+        wallet.setBalance(gameResult.getBalance());
+        save(wallet);
         return wallet;
     }
 

@@ -90,56 +90,33 @@ public class UserCommandsHandler implements BasicHandlers {
             Long id = Long.valueOf(text.replaceAll("/quest", ""));
             Optional<Quest> questById = questService.getQuestById(id);
             util.outputQuestWithCustomBtn(chatId, questById.get(), List.of("Отменить квест"));
-        } else if (text.equalsIgnoreCase("/test")) {
+        } else if (text.equalsIgnoreCase("/TKgames")
+                || text.equalsIgnoreCase("/TKsGames")
+                || text.equalsIgnoreCase("/TK'sGames")) {
+            util.sendMessageToUser(chatId, "\uD83C\uDFAE Добро пожаловать в мир игр! \uD83C\uDFAE\n" +
+                    "\n" +
+                    "Привет, искатель приключений! \uD83C\uDF1F\n" +
+                    "У нас есть несколько классных игр, в которые ты можешь сыграть прямо сейчас! \uD83D\uDE0E\n" +
+                    "\n" +
+                    "1\uFE0F⃣ \uD83C\uDFB0 Spin - Почувствуй азарт! Вращай барабаны и проверь свою удачу! \uD83C\uDF40 Кто знает, может сегодня твой день для больших выигрышей! \uD83C\uDFC6\n" +
+                    "Для игры используй команду: /spin\n" +
+                    "\n" +
+                    "2\uFE0F⃣ \uD83E\uDE99 Coin Flip - Подкинь монетку и узнай, что тебе выпадет! Орел или решка? \uD83E\uDD14\n" +
+                    "Для игры просто напиши команду: /coinFlip\n" +
+                    "\n" +
+                    "Не теряй время, попробуй обе игры и выигрывай! \uD83C\uDF89\n" +
+                    "\uD83D\uDC49 Подсказка: Напиши команду и погружайся в игру! Удачи!");
 
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId);
-            message.setText("Click the button below to open the WebApp:");
-
-            WebAppInfo webAppInfo = new WebAppInfo();
-            webAppInfo.setUrl("https://osozznanie.github.io/wheel.github.io/");
-
-            KeyboardButton webAppButton = new KeyboardButton();
-            webAppButton.setText("Open WebApp");
-            webAppButton.setWebApp(webAppInfo);
-
-            KeyboardRow keyboardRow = new KeyboardRow();
-            keyboardRow.add(webAppButton);
-
-            ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-            keyboardMarkup.setResizeKeyboard(true);
-            keyboardMarkup.setKeyboard(List.of(keyboardRow));
-
-            message.setReplyMarkup(keyboardMarkup);
-
-            try {
-                botSender.execute(message);
-            } catch (TelegramApiException e) {
-                throw new RuntimeException(e);
-            }
-        } else if (text.equalsIgnoreCase("/test2")) {
-
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId);
-            message.setText("123 Click the button below to open the WebApp:");
-
-            WebAppInfo webAppInfo2 = new WebAppInfo();
-            webAppInfo2.setUrl("https://127.0.0.1:8081");
-
-            InlineKeyboardButton webAppButton2 = new InlineKeyboardButton();
-            webAppButton2.setText("Open WebApp2");
-            webAppButton2.setWebApp(webAppInfo2);
-
-            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-            inlineKeyboardMarkup.setKeyboard(List.of(List.of(webAppButton2)));
-
-            message.setReplyMarkup(inlineKeyboardMarkup);
-
-            try {
-                botSender.execute(message);
-            } catch (TelegramApiException e) {
-                throw new RuntimeException(e);
-            }
+        } else if (text.equalsIgnoreCase("/spin")) {
+            util.sendWebAppReplyKeyboard(chatId,
+                    "Рулетка",
+                    "https://osozznanie.github.io/wheel.github.io/",
+                    "Крутить!");
+        } else if (text.equalsIgnoreCase("/coinFlip")) {
+            util.sendWebAppInlineKeyboard(chatId,
+                    "Нажимите, чтобы подкинуть монетку",
+                    "https://127.0.0.1:8080",
+                    "Подкинуть");
         }
         else if (text.startsWith("/reg")) {
             util.adminRegister(chatId, commandData.getUserName());

@@ -1,5 +1,6 @@
 package com.example.demo.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +36,7 @@ public class User {
     @Column(name = "status", length = 255)
     private UserStatus status;
     @Column(name = "date_of_register_acc")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dateOfRegisterAcc;
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "game_id")

@@ -47,6 +47,6 @@ public class WalletController {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return ResponseEntity.ok(wallet);
+        return ResponseEntity.ok(wallet.getBalance());
     }
 }

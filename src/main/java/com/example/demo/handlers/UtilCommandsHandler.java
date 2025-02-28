@@ -22,7 +22,11 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageRe
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
@@ -87,6 +91,60 @@ public class UtilCommandsHandler {
     public List<String> removeSignAndEnglishLetter(List<String> commandsList) {
         return commandsList.stream()
                 .map(command -> command.replaceAll("[^а-яА-ЯёЁ\\s]", "").trim()).toList();
+    }
+
+    public void sendWebAppReplyKeyboard(Long chatId, String massageText, String url, String buttonText){
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(massageText);
+
+        WebAppInfo webAppInfo = new WebAppInfo();
+        webAppInfo.setUrl(url);
+
+        KeyboardButton webAppButton = new KeyboardButton();
+        webAppButton.setText(buttonText);
+        webAppButton.setWebApp(webAppInfo);
+
+        KeyboardRow keyboardRow = new KeyboardRow();
+        keyboardRow.add(webAppButton);
+
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        keyboardMarkup.setResizeKeyboard(true);
+        keyboardMarkup.setKeyboard(List.of(keyboardRow));
+
+        message.setReplyMarkup(keyboardMarkup);
+
+        try {
+            botSender.execute(message);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendWebAppInlineKeyboard(Long chatId, String massageText, String url, String buttonText){
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(massageText);
+
+        WebAppInfo webAppInfo2 = new WebAppInfo();
+        webAppInfo2.setUrl(url);
+
+        InlineKeyboardButton webAppButton2 = new InlineKeyboardButton();
+        webAppButton2.setText(buttonText);
+        webAppButton2.setWebApp(webAppInfo2);
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        inlineKeyboardMarkup.setKeyboard(List.of(List.of(webAppButton2)));
+
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        try {
+            botSender.execute(message);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean isUserHasSpecificGame(Long chatId, Long gameId) {
