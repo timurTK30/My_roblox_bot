@@ -50,6 +50,7 @@ public class UserCommandsHandler implements BasicHandlers {
     private final UtilCommandsHandler util;
     private final BotSender botSender;
     private final WalletService walletService;
+    private final UserStatusService userStatusService;
 
     @Override
     public boolean canHandle(CommandData commandDate) {
@@ -337,7 +338,9 @@ public class UserCommandsHandler implements BasicHandlers {
     public void handleAdminMessage(Long chatId, Integer msgId) {
 
         if (!util.isSuppMsgExistByUserChatId(chatId)) {
-            userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
+            //userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
+            userStatusService.setUserStatus(chatId, UserStatus.WAIT_FOR_SENT);
+            System.out.println(userStatusService.getUserStatus(chatId));
             util.editMsg(chatId, msgId, "Введите сообщение");
         } else {
             SuportMassageDto supportMessage = supportMassageService.getMassageByChatId(chatId).orElse(null);
