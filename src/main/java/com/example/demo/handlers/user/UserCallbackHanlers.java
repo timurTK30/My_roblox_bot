@@ -54,7 +54,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                 userCommandsHandler.readGames(chatId, data, msgId);
                 break;
             case "Написать админу":
-                userCommandsHandler.handleAdminMessage(chatId, msgId);
+                userCommandsHandler.handleSupportMessage(chatId, msgId);
                 break;
             case "Помошь":
                 userCommandsHandler.help(chatId);

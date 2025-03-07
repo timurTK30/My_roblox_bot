@@ -27,7 +27,7 @@ public class CallbackService {
         Long chatId = callback.getMessage().getChatId();
         String userName = callback.getFrom().getUserName();
         CommandData commandData = new CommandData(data, callback.getMessage().getMessageId(), chatId, callback.getId(), userName);
-        try {
+        //try {
             System.out.println(adminCallbackHandler.canHandle(commandData));
             System.out.println(commandData);
             Boolean isAdmin = userService.isUserAdmin(chatId);
@@ -36,9 +36,9 @@ public class CallbackService {
             } else if (userCallback.canHandle(commandData)) {
                 userCallback.handle(chatId, commandData);
             }
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("тут ошибка " + e.getMessage());
-        }
+//        } catch (Exception e) {
+//            log.error(e.getMessage());
+//            throw new RuntimeException("тут ошибка " + e.getMessage());
+//        }
     }
 }

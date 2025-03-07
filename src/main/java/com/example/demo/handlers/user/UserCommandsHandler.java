@@ -16,14 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -335,12 +327,11 @@ public class UserCommandsHandler implements BasicHandlers {
         util.showAlert(callbackId, "Операция прошла успешно");
     }
 
-    public void handleAdminMessage(Long chatId, Integer msgId) {
+    public void handleSupportMessage(Long chatId, Integer msgId) {
 
         if (!util.isSuppMsgExistByUserChatId(chatId)) {
             //userService.updateStatusByChatId(chatId, "WAIT_FOR_SENT");
             userStatusService.setUserStatus(chatId, UserStatus.WAIT_FOR_SENT);
-            System.out.println(userStatusService.getUserStatus(chatId));
             util.editMsg(chatId, msgId, "Введите сообщение");
         } else {
             SuportMassageDto supportMessage = supportMassageService.getMassageByChatId(chatId).orElse(null);
@@ -426,29 +417,34 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     private void handleUserMessage(Long chatId, String message) {
-        User user = new User();
+        //User user = new User();
+        UserStatusData userStatusData = new UserStatusData();
         try {
-            user = userService.getUserByChatId(chatId);
-            if (user.getStatus().name().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name())) {
+//            user = userService.getUserByChatId(chatId);
+            userStatusData = userStatusService.getUserStatus(chatId);
+            if (userStatusData.getUserStatus().name().equalsIgnoreCase(UserStatus.WAIT_FOR_SENT.name())) {
                 if (saveSuppMassageFromUser(chatId, message)) {
                     util.sendMessageToUser(chatId, "Сообщение отправлено");
-                    userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
+                    userStatusService.setUserStatus(chatId, UserStatus.WAIT_FOR_REPLY);
+                    //userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
                 } else {
                     util.sendMessageToUser(chatId, "Ваше сообщение не отправлено. Извините за неполадки");
                 }
-            } else if (user.getStatus().name().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
+            } else if (userStatusData.getUserStatus().name().equalsIgnoreCase(WANT_UPDATE_MSG.name())) {
                 saveSuppMassageFromUser(chatId, message);
                 util.sendMessageToUser(chatId, "Ваше сообщение обновлено");
-                userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
+                userStatusService.setUserStatus(chatId, UserStatus.WAIT_FOR_REPLY);
+                //userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
             }
         } catch (Exception e) {
-            System.out.println("Человек не ожидает на отправку сообщений " + user.getStatus());
+            System.out.println("Человек не ожидает на отправку сообщений " + userStatusData);
         }
     }
 
     public void handlePositiveFeedback(Long chatId) {
         supportMassageService.deleteByChatId(chatId);
-        userService.updateStatusByChatId(chatId, "DONT_SENT");
+        userStatusService.setUserStatus(chatId, UserStatus.DONT_SENT);
+        //userService.updateStatusByChatId(chatId, "DONT_SENT");
     }
 
     public void handleNegativeFeedback(Long chatId) {
@@ -484,7 +480,8 @@ public class UserCommandsHandler implements BasicHandlers {
     }
 
     public void handleEditSuppMsg(Long chatId, Integer msgId) {
-        userService.updateStatusByChatId(chatId, "WANT_UPDATE_MSG");
+        userStatusService.setUserStatus(chatId, WANT_UPDATE_MSG);
+        //userService.updateStatusByChatId(chatId, "WANT_UPDATE_MSG");
         util.editMsg(chatId, msgId,"Напишите сообщение");
     }
 
