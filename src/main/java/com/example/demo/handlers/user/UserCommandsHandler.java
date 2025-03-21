@@ -43,6 +43,8 @@ public class UserCommandsHandler implements BasicHandlers {
     private final BotSender botSender;
     private final WalletService walletService;
     private final UserStatusService userStatusService;
+    private final TKBallService tkBallService;
+    private final TradeTKBallService tradeTKBallService;
 
     @Override
     public boolean canHandle(CommandData commandDate) {
@@ -110,9 +112,23 @@ public class UserCommandsHandler implements BasicHandlers {
                     "Нажимите, чтобы подкинуть монетку",
                     "https://127.0.0.1:8080",
                     "Подкинуть");
-        }
-        else if (text.startsWith("/reg")) {
+        } else if (text.equalsIgnoreCase("/plinko")) {
+            util.sendWebAppInlineKeyboard(chatId,
+                    "Нажимите, чтобы сыграть в плинко",
+                    "https://127.0.0.1:8075",
+                    "Играть");
+        } else if (text.startsWith("/reg")) {
             util.adminRegister(chatId, commandData.getUserName());
+        } else if (text.startsWith("/tradeBalls")) {
+            util.sendMessageToUser(chatId, "\uD83C\uDFB2 /tradeBall – крути обмен на полную! \uD83C\uDFB2  \n" +
+                    "\n" +
+                    "\uD83D\uDCB0 Хотишь больше tkBall? Покупай!  \n" +
+                    "\uD83D\uDCB8 Нужна валюта? Продавай!  \n" +
+                    "\n" +
+                    "\uD83D\uDD04 Быстро, честно, без лишних заморочек!  \n" +
+                    "⚡\uFE0F Твои tkBall – твои правила! \uD83D\uDE80", List.of("Купить 10"),
+                    List.of("buyTkBall10"), 1);
+
         } else {
             handleUserMessage(chatId, text);
         }
@@ -175,6 +191,20 @@ public class UserCommandsHandler implements BasicHandlers {
         });
     }
 
+    public void buyTkBalls(Long chatId, String callBack){
+        Long amountOfBalls = Long.valueOf(callBack.replaceAll("\\D", ""));
+        if (tradeTKBallService.buyTKBall(chatId, amountOfBalls)){
+            util.sendMessageToUser(chatId, "TK");
+        }
+    }
+
+    public void sellTKBalls(Long chatId, String callBack){
+        Long amountOfBalls = Long.valueOf(callBack.replaceAll("\\D", ""));
+        if (tradeTKBallService.sellTKBall(chatId, amountOfBalls)){
+            util.sendMessageToUser(chatId, "TK");
+        }
+    }
+
     public void findForGames(Long chatId) {
 
         List<Quest> questList = questService.readAll().stream()
@@ -205,6 +235,7 @@ public class UserCommandsHandler implements BasicHandlers {
         userService.updateByChatId(userMapper.toDto(userForDeleteQuest), chatId);
         util.sendMessageToUser(chatId, "Квест был отменен");
     }
+
 
     public void getProfile(Long chatId) {
         User userByChatId = userService.getUserByChatId(chatId);
@@ -373,6 +404,7 @@ public class UserCommandsHandler implements BasicHandlers {
             user.setRole(Role.USER);
             user.setStatus(UserStatus.DONT_SENT);
             user.setDateOfRegisterAcc(LocalDate.now());
+            tkBallService.save(new TKBall(user, 10L));
             walletService.save(new Wallet(user));
             util.editMsg(chatId, msgId, "Вы успешно зарегистрированы! ✅\n" +
                     "\n" +

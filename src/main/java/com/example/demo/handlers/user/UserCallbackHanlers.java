@@ -95,6 +95,9 @@ public class UserCallbackHanlers implements BasicHandlers {
                         "Наши администраторы делают всё возможное, чтобы ответить вам как можно скорее. Ваша поддержка и понимание для нас очень важны! \uD83D\uDE0A \n" +
                         "Пожалуйста, оставайтесь с нами — мы скоро вернёмся с ответом! \uD83D\uDE4C");
                 break;
+            case "buyTkBall10":
+
+                break;
             default:
                 if (data.startsWith("leave_request_")) {
                     userCommandsHandler.handleGameApplication(chatId, data, callBackId);
