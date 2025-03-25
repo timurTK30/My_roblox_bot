@@ -1,16 +1,18 @@
 package com.example.demo.service.serviceImp;
 
+import com.example.demo.domain.TKBall;
 import com.example.demo.domain.User;
 import com.example.demo.domain.Wallet;
 import com.example.demo.service.TKBallService;
 import com.example.demo.service.TradeTKBallService;
 import com.example.demo.service.UserService;
 import com.example.demo.service.WalletService;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Service
 @RequiredArgsConstructor
 public class TradeTKBallServiceImpl implements TradeTKBallService {
 
@@ -20,32 +22,31 @@ public class TradeTKBallServiceImpl implements TradeTKBallService {
     private final Long PRICE_FOR_ONE_TKBALL = 5L;
 
     @Override
-    public boolean buyTKBall(Long chatId, Long amountOfBalls) {
+    public TKBall buyTKBall(Long chatId, Long amountOfBalls) {
         Long balanceToWithdraw = amountOfBalls * PRICE_FOR_ONE_TKBALL;
         User userByChatId = userService.getUserByChatId(chatId);
         Optional<Wallet> walletByUser = walletService.getWalletByUser(userByChatId);
 
         if (walletByUser.isPresent() && walletByUser.get().getBalance() >= balanceToWithdraw) {
             walletService.updateByUser(-balanceToWithdraw.doubleValue(), userByChatId);
-            tkBallService.depositTKBall(chatId, amountOfBalls);
-            return true;
+            return tkBallService.depositTKBall(chatId, amountOfBalls);
         }
 
-        return false;
+        return null;
     }
 
     @Override
-    public boolean sellTKBall(Long chatId, Long amountOfBalls) {
+    public TKBall sellTKBall(Long chatId, Long amountOfBalls) {
         Long balanceToDeposit = amountOfBalls * PRICE_FOR_ONE_TKBALL;
         User userByChatId = userService.getUserByChatId(chatId);
         Optional<Wallet> walletByUser = walletService.getWalletByUser(userByChatId);
+        Optional<TKBall> tkBallByChatId = tkBallService.getTKBallByChatId(chatId);
 
-        if (walletByUser.isPresent() && walletByUser.get().getBalance() >= balanceToDeposit) {
+        if (walletByUser.isPresent() && tkBallByChatId.get().getAmountOfBalls() >= amountOfBalls) {
             walletService.updateByUser(balanceToDeposit.doubleValue(), userByChatId);
-            tkBallService.withdrawTKBall(chatId, amountOfBalls);
-            return true;
+            return tkBallService.withdrawTKBall(chatId, amountOfBalls);
         }
 
-        return false;
+        return null;
     }
 }

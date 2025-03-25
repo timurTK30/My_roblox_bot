@@ -121,13 +121,13 @@ public class UserCommandsHandler implements BasicHandlers {
             util.adminRegister(chatId, commandData.getUserName());
         } else if (text.startsWith("/tradeBalls")) {
             util.sendMessageToUser(chatId, "\uD83C\uDFB2 /tradeBall – крути обмен на полную! \uD83C\uDFB2  \n" +
-                    "\n" +
-                    "\uD83D\uDCB0 Хотишь больше tkBall? Покупай!  \n" +
-                    "\uD83D\uDCB8 Нужна валюта? Продавай!  \n" +
-                    "\n" +
-                    "\uD83D\uDD04 Быстро, честно, без лишних заморочек!  \n" +
-                    "⚡\uFE0F Твои tkBall – твои правила! \uD83D\uDE80", List.of("Купить 10"),
-                    List.of("buyTkBall10"), 1);
+                            "\n" +
+                            "\uD83D\uDCB0 Хотишь больше tkBall? Покупай!  \n" +
+                            "\uD83D\uDCB8 Нужна валюта? Продавай!  \n" +
+                            "\n" +
+                            "\uD83D\uDD04 Быстро, честно, без лишних заморочек!  \n" +
+                            "⚡\uFE0F Твои tkBall – твои правила! \uD83D\uDE80", List.of("Купить 10", "Продать 10"),
+                    List.of("buyTkBall10", "sellTkBall10"), 1);
 
         } else {
             handleUserMessage(chatId, text);
@@ -191,17 +191,54 @@ public class UserCommandsHandler implements BasicHandlers {
         });
     }
 
-    public void buyTkBalls(Long chatId, String callBack){
+    public void buyTkBalls(Long chatId, String callBack, Integer msgId) {
         Long amountOfBalls = Long.valueOf(callBack.replaceAll("\\D", ""));
-        if (tradeTKBallService.buyTKBall(chatId, amountOfBalls)){
-            util.sendMessageToUser(chatId, "TK");
+        TKBall tkBall = tradeTKBallService.buyTKBall(chatId, amountOfBalls);
+        Double balance = walletService.getWalletByUser(userService.getUserByChatId(chatId)).get().getBalance();
+        if (tkBall != null) {
+            util.editMsg(chatId, msgId,"✅ Покупка успешна!\n" +
+                    "Вы приобрели \uD83C\uDFB1 tkBalls.\n" +
+                    "\n" +
+                    "\uD83D\uDCB0 Баланс: " + balance + "\n" +
+                    "\uD83D\uDD35 Количество шариков: " + tkBall.getAmountOfBalls() + "\n" +
+                    "\n" +
+                    "Если нужно, могу подправить или добавить что-то еще! \uD83D\uDE0A");
+        } else {
+            Optional<TKBall> tkBallByChatId = tkBallService.getTKBallByChatId(chatId);
+            util.editMsg(chatId, msgId,"❌ Ошибка при покупке!\n" +
+                    "Недостаточно средств для приобретения \uD83C\uDFB1 tkBalls.\n" +
+                    "\n" +
+                    "\uD83D\uDCB0 Ваш баланс: " + balance + "\n" +
+                    "\uD83D\uDD35 Ваши tkBalls: " + tkBallByChatId.get().getAmountOfBalls() + "\n" +
+                    "\n" +
+                    "Попробуйте пополнить баланс и повторите попытку. \uD83D\uDE0A");
+            throw new RuntimeException("Проблема с покупкой тк балл. callBack = " + callBack);
         }
     }
 
-    public void sellTKBalls(Long chatId, String callBack){
+    public void sellTKBalls(Long chatId, String callBack, Integer msgId) {
         Long amountOfBalls = Long.valueOf(callBack.replaceAll("\\D", ""));
-        if (tradeTKBallService.sellTKBall(chatId, amountOfBalls)){
-            util.sendMessageToUser(chatId, "TK");
+        System.out.println(amountOfBalls);
+        TKBall tkBall = tradeTKBallService.sellTKBall(chatId, amountOfBalls);
+        Double balance = walletService.getWalletByUser(userService.getUserByChatId(chatId)).get().getBalance();
+        if (tkBall != null) {
+            util.editMsg(chatId, msgId, "✅ Продажа завершена!\n" +
+                    "Вы продали \uD83C\uDFB1 tkBalls.\n" +
+                    "\n" +
+                    "\uD83D\uDCB0 Баланс: " + balance + "\n" +
+                    "\uD83D\uDD35 Оставшееся количество шариков: " + tkBall.getAmountOfBalls() + "\n" +
+                    "\n" +
+                    "Если нужно что-то изменить, говори! \uD83D\uDE0A");
+        } else {
+            Optional<TKBall> tkBallByChatId = tkBallService.getTKBallByChatId(chatId);
+            util.editMsg(chatId, msgId, "❌ Ошибка при продаже!\n" +
+                    "Возможно, у вас недостаточно \uD83C\uDFB1 tkBalls для продажи.\n" +
+                    "\n" +
+                    "\uD83D\uDCB0 Ваш баланс: " + balance + "\n" +
+                    "\uD83D\uDD35 Ваши tkBalls: " + tkBallByChatId.get().getAmountOfBalls() + "\n" +
+                    "\n" +
+                    "Попробуйте еще раз или проверьте количество доступных tkBalls. \uD83D\uDE0A");
+            throw new RuntimeException("Проблема с продажей тк балл. callBack = " + callBack);
         }
     }
 
@@ -514,7 +551,7 @@ public class UserCommandsHandler implements BasicHandlers {
     public void handleEditSuppMsg(Long chatId, Integer msgId) {
         userStatusService.setUserStatus(chatId, WANT_UPDATE_MSG);
         //userService.updateStatusByChatId(chatId, "WANT_UPDATE_MSG");
-        util.editMsg(chatId, msgId,"Напишите сообщение");
+        util.editMsg(chatId, msgId, "Напишите сообщение");
     }
 
 }

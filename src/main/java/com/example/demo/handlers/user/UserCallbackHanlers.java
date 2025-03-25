@@ -25,7 +25,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                 "|SHOOTER|TYCOON|SURVIVAL|Написать админу|Помошь|Игры|Купить подписки" +
                 "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
                 "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
-                "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg)"
+                "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg|sellTkBall10|buyTkBall10)"
         );
     }
 
@@ -96,7 +96,12 @@ public class UserCallbackHanlers implements BasicHandlers {
                         "Пожалуйста, оставайтесь с нами — мы скоро вернёмся с ответом! \uD83D\uDE4C");
                 break;
             case "buyTkBall10":
-
+                util.sendTypingStatus(chatId);
+                userCommandsHandler.buyTkBalls(chatId, data, msgId);
+                break;
+            case "sellTkBall10":
+                util.sendTypingStatus(chatId);
+                userCommandsHandler.sellTKBalls(chatId, data, msgId);
                 break;
             default:
                 if (data.startsWith("leave_request_")) {
