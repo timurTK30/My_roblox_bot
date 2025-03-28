@@ -25,7 +25,8 @@ public class UserCallbackHanlers implements BasicHandlers {
                 "|SHOOTER|TYCOON|SURVIVAL|Написать админу|Помошь|Игры|Купить подписки" +
                 "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
                 "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
-                "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg|sellTkBall10|buyTkBall10)"
+                "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg|sellTkBall.*|buyTkBall.*|custom" +
+                    "|customBuyTKBall|customSellTKBall)"
         );
     }
 
@@ -95,13 +96,12 @@ public class UserCallbackHanlers implements BasicHandlers {
                         "Наши администраторы делают всё возможное, чтобы ответить вам как можно скорее. Ваша поддержка и понимание для нас очень важны! \uD83D\uDE0A \n" +
                         "Пожалуйста, оставайтесь с нами — мы скоро вернёмся с ответом! \uD83D\uDE4C");
                 break;
-            case "buyTkBall10":
-                util.sendTypingStatus(chatId);
-                userCommandsHandler.buyTkBalls(chatId, data, msgId);
+            case "custom":
+                util.sendMessageToUser(chatId, "Вибирите что вам нужно: ", List.of("Продать", "Купить"), List.of("customSellTKBall", "customBuyTKBall"), 1);
                 break;
-            case "sellTkBall10":
-                util.sendTypingStatus(chatId);
-                userCommandsHandler.sellTKBalls(chatId, data, msgId);
+            case "customBuyTKBall":
+            case "customSellTKBall":
+                userCommandsHandler.updateStatusCustomTrade(chatId, data);
                 break;
             default:
                 if (data.startsWith("leave_request_")) {
@@ -112,6 +112,14 @@ public class UserCallbackHanlers implements BasicHandlers {
                     break;
                 } else if (data.startsWith("remove_gameRequest_")) {
                     userCommandsHandler.removeGameRequest(chatId, callBackId);
+                } else if (data.startsWith("buyTkBall")) {
+                    util.sendTypingStatus(chatId);
+                    userCommandsHandler.buyTkBalls(chatId, data, msgId);
+                    break;
+                } else if (data.startsWith("sellTkBall")) {
+                    util.sendTypingStatus(chatId);
+                    userCommandsHandler.sellTKBalls(chatId, data, msgId);
+                    break;
                 } else {
                     log.warn("UserCallbackHanlers -> не найдена кнопка -> " + data);
                 }

@@ -126,8 +126,13 @@ public class UserCommandsHandler implements BasicHandlers {
                             "\uD83D\uDCB8 Нужна валюта? Продавай!  \n" +
                             "\n" +
                             "\uD83D\uDD04 Быстро, честно, без лишних заморочек!  \n" +
-                            "⚡\uFE0F Твои tkBall – твои правила! \uD83D\uDE80", List.of("Купить 10", "Продать 10"),
-                    List.of("buyTkBall10", "sellTkBall10"), 1);
+                            "⚡\uFE0F Твои tkBall – твои правила! \uD83D\uDE80",
+                    List.of("Купить 10", "Продать 10",
+                            "Купить 20", "Продать 20",
+                            "Купить 50", "Продать 50", "Свое число"),
+                    List.of("buyTkBall10", "sellTkBall10",
+                            "buyTkBall20", "sellTkBall20",
+                            "buyTkBall50", "sellTkBall50", "custom"), 4);
 
         } else {
             handleUserMessage(chatId, text);
@@ -273,6 +278,14 @@ public class UserCommandsHandler implements BasicHandlers {
         util.sendMessageToUser(chatId, "Квест был отменен");
     }
 
+    public void updateStatusCustomTrade(Long chatId, String data){
+        util.sendMessageToUser(chatId, "Ввидите количество:");
+        if(data.contains("Buy")){
+            userStatusService.setUserStatus(chatId, UserStatus.CUSTOM_BUY_TK_BALL);
+        } else {
+            userStatusService.setUserStatus(chatId, UserStatus.CUSTOM_SELL_TK_BALL);
+        }
+    }
 
     public void getProfile(Long chatId) {
         User userByChatId = userService.getUserByChatId(chatId);
@@ -504,6 +517,18 @@ public class UserCommandsHandler implements BasicHandlers {
                 util.sendMessageToUser(chatId, "Ваше сообщение обновлено");
                 userStatusService.setUserStatus(chatId, UserStatus.WAIT_FOR_REPLY);
                 //userService.updateStatusByChatId(chatId, UserStatus.WAIT_FOR_REPLY.name());
+            } else if (userStatusData.getUserStatus().name().equalsIgnoreCase(UserStatus.CUSTOM_BUY_TK_BALL.name())) {
+                Long amount = Long.parseLong(message.replaceAll("\\D",""));
+                TKBall tkBall = tradeTKBallService.buyTKBall(chatId, amount);
+                util.sendMessageToUser(chatId, "✅ Операция завершена.\n" +
+                        "\uD83D\uDCE5 Получено: " + amount + " TKballs\n" +
+                        "\uD83D\uDD39 Новый баланс: " + tkBall.getAmountOfBalls() + " TKballs");
+            } else if (userStatusData.getUserStatus().name().equalsIgnoreCase(UserStatus.CUSTOM_SELL_TK_BALL.name())) {
+                Long amount = Long.parseLong(message.replaceAll("\\D",""));
+                TKBall tkBall = tradeTKBallService.sellTKBall(chatId, amount);
+                util.sendMessageToUser(chatId, "\uD83C\uDF89 Отличные новости! Вы успешно продали " + amount + " TKballs.\n" +
+                        "\uD83D\uDCB5 Выведенная сумма: " + walletService.getWalletByUser(userService.getUserByChatId(chatId)).get().getBalance() + "\n" +
+                        "\uD83D\uDD04 Остаток на счету: " + tkBall.getAmountOfBalls() + " TKBalls");
             }
         } catch (Exception e) {
             System.out.println("Человек не ожидает на отправку сообщений " + userStatusData);
