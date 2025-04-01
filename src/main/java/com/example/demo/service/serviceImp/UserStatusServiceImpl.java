@@ -5,6 +5,8 @@ import com.example.demo.domain.UserStatusData;
 import com.example.demo.service.UserStatusService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +15,6 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 public class UserStatusServiceImpl implements UserStatusService {
 
     private static final Duration STATUS_TTl = Duration.ofMinutes(10);
@@ -21,6 +22,11 @@ public class UserStatusServiceImpl implements UserStatusService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
+    @Autowired
+    public UserStatusServiceImpl(@Qualifier("defaultRedisTemplate") RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public void setUserStatus(Long chatId, UserStatus userStatus) {

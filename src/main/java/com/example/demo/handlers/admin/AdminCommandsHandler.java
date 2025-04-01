@@ -39,6 +39,7 @@ public class AdminCommandsHandler implements BasicHandlers {
     private final QuestService questService;
     private final AdminUserService adminService;
     private final EntityManager entityManager;
+    private final AdminStatusService adminStatusService;
 
     @Override
     public boolean canHandle(CommandData commandData) {
@@ -176,7 +177,8 @@ public class AdminCommandsHandler implements BasicHandlers {
 
     public void handleUserReplyRequest(Long chatId, String data) {
         String chatIdWaitingUser = data.replaceAll("\\D", "");
-        adminService.updateByChatId(chatId, AdminStatus.WANT_REPLY, Long.valueOf(chatIdWaitingUser));
+        //adminService.updateByChatId(chatId, AdminStatus.WANT_REPLY, Long.valueOf(chatIdWaitingUser));
+        adminStatusService.setAdminStatus(chatId, AdminStatus.WANT_REPLY, Long.valueOf(chatIdWaitingUser));
         util.sendMessageToUser(chatId, "Напишите сообщение (" + chatIdWaitingUser + ")");
     }
 
@@ -184,14 +186,16 @@ public class AdminCommandsHandler implements BasicHandlers {
         Long questId = Long.valueOf(data.replaceAll("\\D", ""));
         adminService.updateTempQuestId(chatId, questId);
         util.sendMessageToUser(chatId, "Введите награду: ");
-        adminService.updateByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
+        //adminService.updateByChatId(chatId, AdminStatus.CHANGE_REWARD_QUEST, 0L);
+        adminStatusService.setAdminStatus(chatId, AdminStatus.CHANGE_REWARD_QUEST);
     }
 
     public void requestToAddDescriptionForQuest(Long chatId, String data) {
         Long questId = Long.valueOf(data.replaceAll("\\D", ""));
         adminService.updateTempQuestId(chatId, questId);
         util.sendMessageToUser(chatId, "Введите описание: ");
-        adminService.updateByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
+        //adminService.updateByChatId(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST, 0L);
+        adminStatusService.setAdminStatus(chatId, AdminStatus.CHANGE_DESCRIPTION_QUEST);
     }
 
     public void changeQuestStatus(Long chatId, String data) {
@@ -207,7 +211,8 @@ public class AdminCommandsHandler implements BasicHandlers {
         Long questId = Long.valueOf(data.replaceAll("\\D", ""));
         adminService.updateTempQuestId(chatId, questId);
         util.sendMessageToUser(chatId, "Введите название игры: ", List.of("Прочитать доступные игры"), 1);
-        adminService.updateByChatId(chatId, AdminStatus.CHANGE_GAME_QUEST, 0L);
+        //adminService.updateByChatId(chatId, AdminStatus.CHANGE_GAME_QUEST, 0L);
+        adminStatusService.setAdminStatus(chatId, AdminStatus.CHANGE_GAME_QUEST);
     }
 
     private void requestToChangeRole(Long chatId, String text) {
@@ -324,48 +329,54 @@ public class AdminCommandsHandler implements BasicHandlers {
 
     private void handleAdminMessage(Long chatId, String message) {
         try {
-            AdminUser admin = adminService.getAdminUserByChatId(chatId);
-            if (admin.getAStatus().name().equalsIgnoreCase(AdminStatus.NOTIFY_ALL_USERS.name())) {
+            AdminStatusData admin = adminStatusService.getAdminStatus(chatId);
+            if (admin.getAdminStatus().name().equalsIgnoreCase(AdminStatus.NOTIFY_ALL_USERS.name())) {
                 List<UserDto> userDtos = userService.readAll();
                 for (UserDto u : userDtos) {
                     util.sendMessageToUser(u.getChatId(), message);
                 }
-                adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
-            } else if (admin.getAStatus().name().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
-                util.sendMessageToUser(admin.getTempChatIdForReply(), message, List.of("😀", "😡"), 1);
-                adminService.updateByChatId(chatId, AdminStatus.SENT, 0L);
-            } else if (admin.getAStatus().name().equalsIgnoreCase(AdminStatus.CHANGE_DESCRIPTION_QUEST.name())) {
+                //adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                adminStatusService.setAdminStatus(chatId, AdminStatus.DONT_WRITE);
+            } else if (admin.getAdminStatus().name().equalsIgnoreCase(AdminStatus.WANT_REPLY.name())) {
+                util.sendMessageToUser(admin.getTempChatId(), message, List.of("😀", "😡"), 1);
+                //adminService.updateByChatId(chatId, AdminStatus.SENT, 0L);
+                adminStatusService.setAdminStatus(chatId, AdminStatus.SENT);
+            } else if (admin.getAdminStatus().name().equalsIgnoreCase(AdminStatus.CHANGE_DESCRIPTION_QUEST.name())) {
                 AdminUser adminUserByChatId = adminService.getAdminUserByChatId(chatId);
                 Optional<Quest> questById = questService.getQuestById(adminUserByChatId.getTempQuestId());
                 Quest quest = questById.get();
                 quest.setDescription(message);
                 questService.updateById(adminUserByChatId.getTempQuestId(), quest);
-                adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                //adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                adminStatusService.setAdminStatus(chatId, AdminStatus.DONT_WRITE);
                 util.sendMessageToUser(chatId, "\uD83D\uDCDD Описание квеста обновлено! \uD83C\uDF89");
                 adminService.updateTempQuestId(chatId, 0L);
 
-            } else if (admin.getAStatus().name().equalsIgnoreCase(AdminStatus.CHANGE_REWARD_QUEST.name())) {
+            } else if (admin.getAdminStatus().name().equalsIgnoreCase(AdminStatus.CHANGE_REWARD_QUEST.name())) {
                 AdminUser adminUserByChatId = adminService.getAdminUserByChatId(chatId);
                 Optional<Quest> questById = questService.getQuestById(adminUserByChatId.getTempQuestId());
                 Quest quest = questById.get();
                 quest.setReward(message);
                 questService.updateById(adminUserByChatId.getTempQuestId(), quest);
-                adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                //adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                adminStatusService.setAdminStatus(chatId, AdminStatus.DONT_WRITE);
                 adminService.updateTempQuestId(chatId, 0L);
                 util.sendMessageToUser(chatId, "✨ Награда успешно добавлена к квесту! \uD83C\uDF81");
-            } else if (admin.getAStatus().name().equalsIgnoreCase(AdminStatus.CHANGE_GAME_QUEST.name())) {
+            } else if (admin.getAdminStatus().name().equalsIgnoreCase(AdminStatus.CHANGE_GAME_QUEST.name())) {
                 AdminUser adminUserByChatId = adminService.getAdminUserByChatId(chatId);
                 Optional<Quest> questById = questService.getQuestById(adminUserByChatId.getTempQuestId());
                 Quest quest = questById.get();
                 GameDto gameByName = gameService.getGameByName(message);
                 if (gameByName == null) {
                     util.sendMessageToUser(chatId, "Данной игри которую вы вписали нету 🫤");
-                    adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                    //adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                    adminStatusService.setAdminStatus(chatId, AdminStatus.DONT_WRITE);
                     return;
                 }
                 quest.setGame(gameMapper.toEntity(gameByName));
                 questService.updateById(adminUserByChatId.getTempQuestId(), quest);
-                adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                //adminService.updateByChatId(chatId, AdminStatus.DONT_WRITE, 0L);
+                adminStatusService.setAdminStatus(chatId, AdminStatus.DONT_WRITE);
                 util.sendMessageToUser(chatId, "\uD83C\uDF89 Игра успешно добавлена к квесту! \uD83D\uDE80");
                 adminService.updateTempQuestId(chatId, 0L);
             }
@@ -376,6 +387,7 @@ public class AdminCommandsHandler implements BasicHandlers {
 
     public void requestToNotifyAllUsers(Long chatId) {
         util.sendMessageToUser(chatId, "Введите сообщение: ");
-        adminService.updateByChatId(chatId, AdminStatus.NOTIFY_ALL_USERS, 0L);
+        //adminService.updateByChatId(chatId, AdminStatus.NOTIFY_ALL_USERS, 0L);
+        adminStatusService.setAdminStatus(chatId, AdminStatus.NOTIFY_ALL_USERS);
     }
 }
