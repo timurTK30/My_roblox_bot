@@ -13,14 +13,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
-import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -32,6 +30,9 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
 
@@ -46,6 +47,7 @@ public class UtilCommandsHandler {
     private final AdminUserService adminUserService;
     private final GameService gameService;
     private final WalletService walletService;
+    private static final Integer BET_AMOUNT_TICKET = 2;
 
     @Transactional
     public void adminRegister(Long chatId, String userName){
@@ -91,6 +93,36 @@ public class UtilCommandsHandler {
     public List<String> removeSignAndEnglishLetter(List<String> commandsList) {
         return commandsList.stream()
                 .map(command -> command.replaceAll("[^а-яА-ЯёЁ\\s]", "").trim()).toList();
+    }
+
+    public void processMiniGameCube(Long chatId, String selectedBet){
+        SendDice sendDice = new SendDice();
+        sendDice.setChatId(chatId);
+        sendDice.setEmoji("\uD83C\uDFB2");
+        boolean isWin = false;
+        String gameResult = "Выпало число: ";
+        try {
+            Message execute = botSender.execute(sendDice);
+            Integer value = execute.getDice().getValue();
+            gameResult += value + "\n";
+
+            if(selectedBet.contains("even")){
+                isWin = value % 2 == 0;
+                gameResult += isWin ? "Число чётное — вы выиграли!" : "Число нечётное — вы проиграли.";
+            } else {
+                isWin = (value % 2 == 1);
+                gameResult += isWin ? "Число нечётное — вы выиграли!" : "Число чётное — вы проиграли.";
+            }
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+            String finalGameResult = gameResult;
+            scheduler.schedule(() -> {
+                sendMessageToUser(chatId, finalGameResult);
+            }, 3500, TimeUnit.MILLISECONDS);
+
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void sendWebAppReplyKeyboard(Long chatId, String massageText, String url, String buttonText){

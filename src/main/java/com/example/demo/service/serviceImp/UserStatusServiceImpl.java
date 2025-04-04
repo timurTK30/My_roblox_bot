@@ -23,7 +23,7 @@ public class UserStatusServiceImpl implements UserStatusService {
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public UserStatusServiceImpl(@Qualifier("defaultRedisTemplate") RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
+    public UserStatusServiceImpl(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
     }

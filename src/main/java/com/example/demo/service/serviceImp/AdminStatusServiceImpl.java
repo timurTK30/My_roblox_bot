@@ -2,7 +2,9 @@ package com.example.demo.service.serviceImp;
 
 import com.example.demo.domain.AdminStatus;
 import com.example.demo.domain.AdminStatusData;
+import com.example.demo.domain.UserStatusData;
 import com.example.demo.service.AdminStatusService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,17 +14,13 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 
 @Service
-
+@RequiredArgsConstructor
 public class AdminStatusServiceImpl implements AdminStatusService {
 
     private static final Duration STATUS_TTL = Duration.ofMinutes(5);
     private static final String STATUS_KEY_PREFIX = "admin_status:";
-    private final RedisTemplate<String, AdminStatusData> redisTemplate;
-
-    @Autowired
-    public AdminStatusServiceImpl(@Qualifier("adminStatusRedisTemplate") RedisTemplate<String, AdminStatusData> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
     public boolean setAdminStatus(Long chatId, AdminStatus status) {
@@ -41,10 +39,16 @@ public class AdminStatusServiceImpl implements AdminStatusService {
     @Override
     public AdminStatusData getAdminStatus(Long chatId) {
         String key = STATUS_KEY_PREFIX + chatId;
-        AdminStatusData adminStatusData = redisTemplate.opsForValue().get(key);
+        Object adminStatusData = redisTemplate.opsForValue().get(key);
         if(adminStatusData == null){
             return new AdminStatusData(chatId, AdminStatus.DONT_WRITE);
         }
-        return adminStatusData;
+        if (adminStatusData instanceof java.util.LinkedHashMap) {
+            return objectMapper.convertValue(adminStatusData, AdminStatusData.class);
+        } else if (adminStatusData instanceof UserStatusData) {
+            return (AdminStatusData) adminStatusData;
+        } else {
+            return null;
+        }
     }
 }
