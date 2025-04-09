@@ -2,6 +2,7 @@ package com.example.demo.handlers.user;
 
 import com.example.demo.handlers.BasicHandlers;
 import com.example.demo.handlers.UtilCommandsHandler;
+import com.example.demo.service.TKBallService;
 import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ public class UserCallbackHanlers implements BasicHandlers {
 
     private final UserCommandsHandler userCommandsHandler;
     private final UtilCommandsHandler util;
-
+    private final TKBallService tkBallService;
     @Override
     public boolean canHandle(CommandData commandData) {
         String callbackData = commandData.getData();
@@ -26,7 +27,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                 "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
                 "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
                 "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg|sellTkBall.*|buyTkBall.*|custom" +
-                    "|customBuyTKBall|customSellTKBall|miniGame_.*|cube_.*)"
+                    "|customBuyTKBall|customSellTKBall|miniGame_.*|cube_.*|/miniGames)"
         );
     }
 
@@ -105,7 +106,10 @@ public class UserCallbackHanlers implements BasicHandlers {
                 break;
             case "cube_even":
             case "cube_odd":
-                util.processMiniGameCube(chatId, data);
+                util.processMiniGameCube(chatId, data, msgId);
+                break;
+            case "/miniGames":
+                util.miniGamesMsg(chatId, msgId);
                 break;
             default:
                 if (data.startsWith("leave_request_")) {
@@ -125,7 +129,20 @@ public class UserCallbackHanlers implements BasicHandlers {
                     userCommandsHandler.sellTKBalls(chatId, data, msgId);
                     break;
                 } else if (data.startsWith("miniGame_")) {
+
+                    if (!tkBallService.isEnoughTickets(chatId, 2L)){
+                        util.sendMessageToUser(chatId, "\uD83C\uDFAB У вас недостаточно тикетов для участия в игре!\n" +
+                                "\n" +
+                                "Вы можете:\n" +
+                                "1\uFE0F⃣ Купить тикеты в нашем магазине (/tradeBalls)\n" +
+                                "2\uFE0F⃣ Заработать тикеты в других играх нашего бота\n" +
+                                "3\uFE0F⃣ Получить тикеты в качестве ежедневного приза\n" +
+                                "\n" +
+                                "Нажмите кнопку \"Купить тикеты\" или \"Ежедневный приз\" ниже, чтобы пополнить свой баланс!");
+                        return;
+                    }
                     if (data.contains("cube")){
+                        util.disableButton(chatId, msgId);
                         util.sendMessageToUser(chatId,"\uD83C\uDFB2 <b>Вы выбрали игру \"Кубик\"</b>! \uD83C\uDFB2\n" +
                                 "\n" +
                                 "Сделайте выбор:", List.of("\uD83D\uDD35 Чет", "\uD83D\uDD34 Нечет"),

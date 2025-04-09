@@ -15,4 +15,6 @@ public interface TKBallService {
     TKBall withdrawTKBall(Long chatId, Long amount);
     TKBall depositTKBall(Long chatId, Long amount);
     void deleteByChatId(Long chatId);
+    Long updateBalanceAfterMiniGame(Long chatId, Long amountOfBet, boolean isWin);
+    Boolean isEnoughTickets(Long chatId, Long amountOfBet);
 }

@@ -135,19 +135,7 @@ public class UserCommandsHandler implements BasicHandlers {
                             "buyTkBall50", "sellTkBall50", "custom"), 4);
 
         } else if (text.equalsIgnoreCase("/miniGames")) {
-            util.sendMessageToUser(chatId, "<b>Привет! \uD83C\uDF89 Готов испытать удачу?</b>\n" +
-                    "Ты можешь выиграть токены (Тк), играя в наши мини-игры!\n" +
-                    "\uD83D\uDCB0Цена игры 2Тк \n" +
-                    "\n" +
-                    "\uD83D\uDCB3 <b>Как играть?</b>\n" +
-                    "1\uFE0F⃣ Выбирай игру, нажав на кнопку.\n" +
-                    "2\uFE0F⃣ Бот случайным образом выберет результат.\n" +
-                    "3\uFE0F⃣ Если повезёт – ты получишь токены!\n" +
-                    "\n" +
-                    "\uD83C\uDF9F <b>Используй токены, чтобы получить призы!</b>\n" +
-                    "\n" +
-                    "\uD83D\uDE80 Начнем? Выбери игру ниже!", List.of("\uD83C\uDFB2", "\uD83C\uDFAF", "\uD83C\uDFC0", "\uD83C\uDFB0"),
-                    List.of("miniGame_cube", "miniGame_darts", "miniGame_basket", "miniGame_roulette"), 2);
+            util.miniGamesMsg(chatId, null);
         } else {
             handleUserMessage(chatId, text);
         }

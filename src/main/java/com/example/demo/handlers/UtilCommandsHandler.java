@@ -4,7 +4,6 @@ import com.example.demo.config.BotSender;
 import com.example.demo.domain.*;
 import com.example.demo.dto.GameDto;
 import com.example.demo.dto.SuportMassageDto;
-import com.example.demo.dto.UserDto;
 import com.example.demo.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,16 +40,17 @@ import static java.util.Collections.emptyList;
 @RequiredArgsConstructor
 public class UtilCommandsHandler {
 
+    private static final Integer BET_AMOUNT_TICKET = 2;
     private final BotSender botSender;
     private final UserService userService;
     private final SupportMassageService supportMassageService;
     private final AdminUserService adminUserService;
     private final GameService gameService;
     private final WalletService walletService;
-    private static final Integer BET_AMOUNT_TICKET = 2;
+    private final TKBallService tkBallService;
 
     @Transactional
-    public void adminRegister(Long chatId, String userName){
+    public void adminRegister(Long chatId, String userName) {
         AdminUser adminUser = new AdminUser();
         adminUser.setNickname(userName);
         adminUser.setAStatus(AdminStatus.DONT_WRITE);
@@ -86,7 +86,7 @@ public class UtilCommandsHandler {
         outputQuestWithCustomBtn(chatId, quest, btn, emptyList());
     }
 
-    public boolean checkIfPrizeCoin(PrizeWebAppData prizeWebAppData){
+    public boolean checkIfPrizeCoin(PrizeWebAppData prizeWebAppData) {
         return prizeWebAppData.getName().contains("Coin");
     }
 
@@ -95,7 +95,8 @@ public class UtilCommandsHandler {
                 .map(command -> command.replaceAll("[^а-яА-ЯёЁ\\s]", "").trim()).toList();
     }
 
-    public void processMiniGameCube(Long chatId, String selectedBet){
+    public void processMiniGameCube(Long chatId, String selectedBet, Integer msgId) {
+        deleteMsg(chatId, msgId);
         SendDice sendDice = new SendDice();
         sendDice.setChatId(chatId);
         sendDice.setEmoji("\uD83C\uDFB2");
@@ -106,26 +107,58 @@ public class UtilCommandsHandler {
             Integer value = execute.getDice().getValue();
             gameResult += value + "\n";
 
-            if(selectedBet.contains("even")){
+            if (selectedBet.contains("even")) {
                 isWin = value % 2 == 0;
                 gameResult += isWin ? "Число чётное — вы выиграли!" : "Число нечётное — вы проиграли.";
             } else {
                 isWin = (value % 2 == 1);
                 gameResult += isWin ? "Число нечётное — вы выиграли!" : "Число чётное — вы проиграли.";
             }
+            tkBallService.updateBalanceAfterMiniGame(chatId, 2L, isWin);
             ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
             String finalGameResult = gameResult;
             scheduler.schedule(() -> {
-                sendMessageToUser(chatId, finalGameResult);
+                sendMessageToUser(chatId, finalGameResult, List.of("Сыграть еще раз", "Вернуться в меню игр"), List.of("miniGame_cube", "/miniGames"), 1);
             }, 3500, TimeUnit.MILLISECONDS);
+
 
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void sendWebAppReplyKeyboard(Long chatId, String massageText, String url, String buttonText){
+    public void miniGamesMsg(Long chatId, Integer msgId) {
+        if (msgId != null){
+            disableButton(chatId, msgId);
+        }
+        if (!tkBallService.isEnoughTickets(chatId, 2L)){
+            sendMessageToUser(chatId, "\uD83C\uDFAB У вас недостаточно тикетов для участия в игре!\n" +
+                    "\n" +
+                    "Вы можете:\n" +
+                    "1\uFE0F⃣ Купить тикеты в нашем магазине (/tradeBalls)\n" +
+                    "2\uFE0F⃣ Заработать тикеты в других играх нашего бота\n" +
+                    "3\uFE0F⃣ Получить тикеты в качестве ежедневного приза\n" +
+                    "\n" +
+                    "Нажмите кнопку \"Купить тикеты\" или \"Ежедневный приз\" ниже, чтобы пополнить свой баланс!");
+            return;
+        }
+        sendMessageToUser(chatId, "<b>Привет! \uD83C\uDF89 Готов испытать удачу?</b>\n" +
+                        "Ты можешь выиграть токены (Тк), играя в наши мини-игры!\n" +
+                        "\uD83D\uDCB0Цена игры 2Тк \n" +
+                        "\n" +
+                        "\uD83D\uDCB3 <b>Как играть?</b>\n" +
+                        "1\uFE0F⃣ Выбирай игру, нажав на кнопку.\n" +
+                        "2\uFE0F⃣ Бот случайным образом выберет результат.\n" +
+                        "3\uFE0F⃣ Если повезёт – ты получишь токены!\n" +
+                        "\n" +
+                        "\uD83C\uDF9F <b>Используй токены, чтобы получить призы!</b>\n" +
+                        "\n" +
+                        "\uD83D\uDE80 Начнем? Выбери игру ниже!", List.of("\uD83C\uDFB2", "\uD83C\uDFAF", "\uD83C\uDFC0", "\uD83C\uDFB0"),
+                List.of("miniGame_cube", "miniGame_darts", "miniGame_basket", "miniGame_roulette"), 2);
+    }
+
+    public void sendWebAppReplyKeyboard(Long chatId, String massageText, String url, String buttonText) {
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
@@ -154,7 +187,24 @@ public class UtilCommandsHandler {
         }
     }
 
-    public void sendWebAppInlineKeyboard(Long chatId, String massageText, String url, String buttonText){
+    public void disableButton(Long chatId, Integer msgId) {
+        //editMsg(chatId, msgId, msg);
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        inlineKeyboardMarkup.setKeyboard(new ArrayList<>());
+
+        EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
+        editMessageReplyMarkup.setChatId(chatId);
+        editMessageReplyMarkup.setMessageId(msgId);
+        editMessageReplyMarkup.setReplyMarkup(inlineKeyboardMarkup);
+
+        try {
+            botSender.execute(editMessageReplyMarkup);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendWebAppInlineKeyboard(Long chatId, String massageText, String url, String buttonText) {
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId);

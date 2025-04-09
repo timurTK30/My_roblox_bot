@@ -65,4 +65,19 @@ public class TKBallServiceImpl implements TKBallService {
     public void deleteByChatId(Long chatId) {
         repository.deleteByUser(userService.getUserByChatId(chatId));
     }
+
+    @Override
+    public Long updateBalanceAfterMiniGame(Long chatId, Long amountOfBet, boolean isWin) {
+        if(isWin){
+            return depositTKBall(chatId, amountOfBet).getAmountOfBalls();
+        } else {
+            return withdrawTKBall(chatId, amountOfBet).getAmountOfBalls();
+        }
+    }
+
+    @Override
+    public Boolean isEnoughTickets(Long chatId, Long amountOfBet) {
+        Long amountOfBalls = getTKBallByChatId(chatId).get().getAmountOfBalls();
+        return amountOfBalls >= amountOfBet;
+    }
 }
