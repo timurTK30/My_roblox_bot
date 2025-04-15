@@ -27,7 +27,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                 "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
                 "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
                 "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg|sellTkBall.*|buyTkBall.*|custom" +
-                    "|customBuyTKBall|customSellTKBall|miniGame_.*|cube_.*|/miniGames)"
+                    "|customBuyTKBall|customSellTKBall|miniGame_.*|cube_.*|/miniGames|miniBasketBall_process)"
         );
     }
 
@@ -111,6 +111,9 @@ public class UserCallbackHanlers implements BasicHandlers {
             case "/miniGames":
                 util.miniGamesMsg(chatId, msgId);
                 break;
+            case "miniBasketBall_process":
+                util.processMiniGameBasketball(chatId, data, msgId);
+                break;
             default:
                 if (data.startsWith("leave_request_")) {
                     userCommandsHandler.handleGameApplication(chatId, data, callBackId);
@@ -147,6 +150,9 @@ public class UserCallbackHanlers implements BasicHandlers {
                                 "\n" +
                                 "Сделайте выбор:", List.of("\uD83D\uDD35 Чет", "\uD83D\uDD34 Нечет"),
                                 List.of("cube_even", "cube_odd"), 1);
+                    } else if (data.contains("basket")) {
+                        util.disableButton(chatId, msgId);
+                        util.sendMessageToUser(chatId, "<b>Вы выбрали игру Баскетбол:</b>\n", List.of("Кинуть"), List.of("miniBasketBall_process"), 1);
                     }
                 } else {
                     log.warn("UserCallbackHanlers -> не найдена кнопка -> " + data);

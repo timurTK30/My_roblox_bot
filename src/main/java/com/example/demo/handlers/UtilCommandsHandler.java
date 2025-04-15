@@ -128,6 +128,37 @@ public class UtilCommandsHandler {
         }
     }
 
+    public void processMiniGameBasketball(Long chatId, String selectetBet, Integer msgId){
+        deleteMsg(chatId, msgId);
+        SendDice sendDice = new SendDice();
+        sendDice.setChatId(chatId);
+        sendDice.setEmoji("\uD83C\uDFC0");
+        Boolean isWin = false;
+        String gameResult = "";
+
+        try {
+            Message execute = botSender.execute(sendDice);
+            Integer value = execute.getDice().getValue();
+            System.out.println(value);
+            if(value == 1 || value == 2 || value == 3){
+                gameResult = "Вы проиграли";
+            } else if (value == 4 || value == 5) {
+                isWin = true;
+                gameResult = "Вы виграли";
+            }
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+            String finalGameResult = gameResult;
+            scheduler.schedule(() -> {
+                sendMessageToUser(chatId, finalGameResult, List.of("Играть еще раз", "Вернуться в меню игр"), List.of("miniGame_basket", "/miniGames"), 1);
+            }, 3500, TimeUnit.MILLISECONDS);
+
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     public void miniGamesMsg(Long chatId, Integer msgId) {
         if (msgId != null){
             disableButton(chatId, msgId);
