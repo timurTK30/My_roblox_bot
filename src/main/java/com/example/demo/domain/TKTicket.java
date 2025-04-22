@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "TK_balls")
-public class TKBall {
+@Table(name = "TK_tickets")
+public class TKTicket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,12 +18,12 @@ public class TKBall {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_chatId", referencedColumnName = "chat_id")
     private User user;
-    @Column(name = "amount_of_balls")
-    private Long amountOfBalls;
+    @Column(name = "amount_of_tickets")
+    private Long amountOfTickets;
 
-    public TKBall(User user, Long amountOfBalls) {
+    public TKTicket(User user, Long amountOfTickets) {
         this.user = user;
-        this.amountOfBalls = amountOfBalls;
+        this.amountOfTickets = amountOfTickets;
     }
 }
 

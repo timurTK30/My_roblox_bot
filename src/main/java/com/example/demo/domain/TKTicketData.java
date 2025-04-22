@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TKBallData {
+public class TKTicketData {
 
-    private Long amountOfBalls;
+    private Long amountOfTicket;
     private Long userChatId;
 }

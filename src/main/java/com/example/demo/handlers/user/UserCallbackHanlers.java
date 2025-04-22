@@ -2,7 +2,7 @@ package com.example.demo.handlers.user;
 
 import com.example.demo.handlers.BasicHandlers;
 import com.example.demo.handlers.UtilCommandsHandler;
-import com.example.demo.service.TKBallService;
+import com.example.demo.service.TKTicketService;
 import com.example.demo.util.CommandData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,17 +17,18 @@ public class UserCallbackHanlers implements BasicHandlers {
 
     private final UserCommandsHandler userCommandsHandler;
     private final UtilCommandsHandler util;
-    private final TKBallService tkBallService;
+    private final TKTicketService tkTicketService;
+
     @Override
     public boolean canHandle(CommandData commandData) {
         String callbackData = commandData.getData();
         return callbackData.matches(
-            "(^Зарегистрировать|ok_reply|bad_reply|ALL|HORROR|ADVENTURE" +
-                "|SHOOTER|TYCOON|SURVIVAL|Написать админу|Помошь|Игры|Купить подписки" +
-                "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
-                "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
-                "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg|sellTkBall.*|buyTkBall.*|custom" +
-                    "|customBuyTKBall|customSellTKBall|miniGame_.*|cube_.*|/miniGames|miniBasketBall_process)"
+                "(^Зарегистрировать|ok_reply|bad_reply|ALL|HORROR|ADVENTURE" +
+                        "|SHOOTER|TYCOON|SURVIVAL|Написать админу|Помошь|Игры|Купить подписки" +
+                        "|Профиль|Прочитать доступные игры|Квесты|Все квесты|Поиск по играх" +
+                        "|Отменить квест|request_buy_admin|request_buy_premium|leave_request_.*" +
+                        "|show_friends_.*|remove_gameRequest_.*|edit_msg|leave_msg|sellTkBall.*|buyTkBall.*|custom" +
+                        "|customBuyTKBall|customSellTKBall|miniGame_.*|cube_.*|/miniGames|miniBasketBall_process|miniFootball_process|/menuForUser)"
         );
     }
 
@@ -40,6 +41,9 @@ public class UserCallbackHanlers implements BasicHandlers {
         switch (data) {
             case "Зарегистрировать":
                 userCommandsHandler.register(chatId, msgId, userName);
+                break;
+            case "/menuForUser":
+                userCommandsHandler.menuForUser(chatId);
                 break;
             case "ok_reply":
                 userCommandsHandler.handlePositiveFeedback(chatId);
@@ -93,7 +97,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                 userCommandsHandler.handleEditSuppMsg(chatId, msgId);
                 break;
             case "leave_msg":
-                util.editMsg(chatId, msgId,"✨ Спасибо за ваше терпение! \n" +
+                util.editMsg(chatId, msgId, "✨ Спасибо за ваше терпение! \n" +
                         "Наши администраторы делают всё возможное, чтобы ответить вам как можно скорее. Ваша поддержка и понимание для нас очень важны! \uD83D\uDE0A \n" +
                         "Пожалуйста, оставайтесь с нами — мы скоро вернёмся с ответом! \uD83D\uDE4C");
                 break;
@@ -104,15 +108,18 @@ public class UserCallbackHanlers implements BasicHandlers {
             case "customSellTKBall":
                 userCommandsHandler.updateStatusCustomTrade(chatId, data);
                 break;
+            case "/miniGames":
+                util.miniGamesMsg(chatId, msgId);
+                break;
             case "cube_even":
             case "cube_odd":
                 util.processMiniGameCube(chatId, data, msgId);
                 break;
-            case "/miniGames":
-                util.miniGamesMsg(chatId, msgId);
-                break;
             case "miniBasketBall_process":
-                util.processMiniGameBasketball(chatId, data, msgId);
+                util.processMiniGameBasketball(chatId, msgId);
+                break;
+            case "miniFootball_process":
+                util.processMiniGameFootball(chatId);
                 break;
             default:
                 if (data.startsWith("leave_request_")) {
@@ -133,7 +140,7 @@ public class UserCallbackHanlers implements BasicHandlers {
                     break;
                 } else if (data.startsWith("miniGame_")) {
 
-                    if (!tkBallService.isEnoughTickets(chatId, 2L)){
+                    if (!tkTicketService.isEnoughTickets(chatId, 2L)) {
                         util.sendMessageToUser(chatId, "\uD83C\uDFAB У вас недостаточно тикетов для участия в игре!\n" +
                                 "\n" +
                                 "Вы можете:\n" +
@@ -144,15 +151,27 @@ public class UserCallbackHanlers implements BasicHandlers {
                                 "Нажмите кнопку \"Купить тикеты\" или \"Ежедневный приз\" ниже, чтобы пополнить свой баланс!");
                         return;
                     }
-                    if (data.contains("cube")){
+                    if (data.contains("cube")) {
                         util.disableButton(chatId, msgId);
-                        util.sendMessageToUser(chatId,"\uD83C\uDFB2 <b>Вы выбрали игру \"Кубик\"</b>! \uD83C\uDFB2\n" +
-                                "\n" +
-                                "Сделайте выбор:", List.of("\uD83D\uDD35 Чет", "\uD83D\uDD34 Нечет"),
+                        util.sendMessageToUser(chatId, "\uD83C\uDFB2 <b>Вы выбрали игру \"Кубик\"</b>! \uD83C\uDFB2\n" +
+                                        "\n" +
+                                        "Сделайте выбор:", List.of("\uD83D\uDD35 Чет", "\uD83D\uDD34 Нечет"),
                                 List.of("cube_even", "cube_odd"), 1);
                     } else if (data.contains("basket")) {
                         util.disableButton(chatId, msgId);
-                        util.sendMessageToUser(chatId, "<b>Вы выбрали игру Баскетбол:</b>\n", List.of("Кинуть"), List.of("miniBasketBall_process"), 1);
+                        util.sendMessageToUser(chatId, "<b>🏀 Баскетбол - правила игры:</b>\n\n" +
+                                "Вы побеждаете если:\n" +
+                                "- Мяч покрутился по кольцу и попал (+2 тикета)\n" +
+                                "- Идеальное попадание (+3 тикета)\n\n" +
+                                "Вы проигрываете если:\n" +
+                                "- Промах (-1 тикет)\n" +
+                                "- Мяч попал в щит (-1 тикет)\n" +
+                                "- Мяч задел кольцо, но не попал (-2 тикета)\n\n" +
+                                "Бросаем мяч...", List.of("Кинуть", "Вернуться назад"), List.of("miniBasketBall_process", "/menuForUser"), 2);
+                    } else if (data.contains("roulette")) {
+                        util.processMiniGameRoulete(chatId, 5L);
+                    } else if (data.contains("football")) {
+                        util.sendMessageToUser(chatId, "Вы выбрали футбол", List.of("Кинуть", "Меню мини игр"), List.of("miniFootball_process", "/miniGames"), 1);
                     }
                 } else {
                     log.warn("UserCallbackHanlers -> не найдена кнопка -> " + data);

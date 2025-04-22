@@ -47,7 +47,32 @@ public class UtilCommandsHandler {
     private final AdminUserService adminUserService;
     private final GameService gameService;
     private final WalletService walletService;
-    private final TKBallService tkBallService;
+    private final TKTicketService tkTicketService;
+    private static final String[] SYMBOLS = {"🍒", "🍇", "🍋", "7️⃣"};
+    private static final String[] JACKPOT_MESSAGES = {
+            "🥳 Джекпот! Ты сорвал куш! Поздравляем!",
+            "�� Три семёрки! Удача на твоей стороне!",
+            "💰 Поздравляем! Ты выиграл главный приз!",
+            "🎉 Фантастика! Это большой выигрыш!",
+            "🤑 Ты везунчик! Забирай свой приз!"
+    };
+
+    private static final String[] LOSE_MESSAGES = {
+            "😢 Увы, в этот раз не повезло. Попробуй снова!",
+            "🎲 Неудача. Но не сдавайся, удача рядом!",
+            "😔 Почти получилось. Ещё один шанс?",
+            "🕳 Мимо. Но следующая попытка может быть удачной!",
+            "�� Не в этот раз. Попробуй ещё раз!"
+    };
+
+    private static final String[] ALMOST_WIN_MESSAGES = {
+            "😬 Две подряд! Почти победа! Ещё немного!",
+            "🔥 Так близко! Ещё одна, и был бы выигрыш!",
+            "😮 Почти получилось! Попробуй ещё раз!",
+            "🎯 Две из трёх! Удача рядом, не останавливайся!",
+            "�� Ты на верном пути! Ещё немного, и победа будет твоей!"
+    };
+
 
     @Transactional
     public void adminRegister(Long chatId, String userName) {
@@ -114,7 +139,7 @@ public class UtilCommandsHandler {
                 isWin = (value % 2 == 1);
                 gameResult += isWin ? "Число нечётное — вы выиграли!" : "Число чётное — вы проиграли.";
             }
-            tkBallService.updateBalanceAfterMiniGame(chatId, 2L, isWin);
+            tkTicketService.updateBalanceAfterMiniGame(chatId, 2L, isWin);
             ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
             String finalGameResult = gameResult;
@@ -128,24 +153,28 @@ public class UtilCommandsHandler {
         }
     }
 
-    public void processMiniGameBasketball(Long chatId, String selectetBet, Integer msgId){
+    public void processMiniGameBasketball(Long chatId, Integer msgId) {
         deleteMsg(chatId, msgId);
         SendDice sendDice = new SendDice();
         sendDice.setChatId(chatId);
         sendDice.setEmoji("\uD83C\uDFC0");
         Boolean isWin = false;
-        String gameResult = "";
+        String gameResult;
+        Long amountOfTicket = 0L;
 
         try {
             Message execute = botSender.execute(sendDice);
             Integer value = execute.getDice().getValue();
-            System.out.println(value);
-            if(value == 1 || value == 2 || value == 3){
-                gameResult = "Вы проиграли";
-            } else if (value == 4 || value == 5) {
-                isWin = true;
-                gameResult = "Вы виграли";
-            }
+            System.out.println(execute.getDice());
+
+            isWin = value > 3;
+            amountOfTicket = calculateTicketChangeByBasketBall(value);
+            gameResult = String.format("Вы %s %s%d",
+                    isWin ? "выиграли" : "проиграли",
+                    isWin ? "+" : "-",
+                    amountOfTicket);
+
+            tkTicketService.updateBalanceAfterMiniGame(chatId, amountOfTicket, isWin);
             ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
             String finalGameResult = gameResult;
@@ -159,11 +188,131 @@ public class UtilCommandsHandler {
 
     }
 
+    public void processMiniGameRoulete(Long chatId, Long userBet){
+        SendDice sendDice = new SendDice();
+        sendDice.setChatId(chatId);
+        sendDice.setEmoji("\uD83C\uDFB0");
+
+        try {
+            Message execute = botSender.execute(sendDice);
+            Integer value = execute.getDice().getValue();
+            Long amountOfWin = calculateWin(value, userBet);
+            String combo = getComboParts(value);
+
+            String msg;
+            if(value == 64){
+                msg = getRandomMessage(JACKPOT_MESSAGES);
+            } else if(amountOfWin > 0){
+                msg = getRandomMessage(ALMOST_WIN_MESSAGES);
+            } else {
+                msg = getRandomMessage(LOSE_MESSAGES);
+            }
+
+            boolean isWin = amountOfWin > userBet;
+            tkTicketService.updateBalanceAfterMiniGame(chatId, amountOfWin, isWin);
+
+            String finalMessage = String.format(
+                    "🎰 Слот-машина\n" +
+                            "Комбинация: %s\n\n" +
+                            "<b>%s</b>\n" +
+                            "Выигрыш: %d 💰",
+                    combo,
+                    msg,
+                    amountOfWin
+            );
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+            scheduler.schedule(() -> {
+                sendMessageToUser(chatId, finalMessage, List.of("Играть еще раз", "Вернуться в меню игр"), List.of("miniGame_roulette", "/miniGames"), 2);
+            }, 3000, TimeUnit.MILLISECONDS);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void processMiniGameFootball(Long chatId){
+        SendDice sendDice = new SendDice();
+        sendDice.setChatId(chatId);
+        sendDice.setEmoji("⚽");
+        boolean isWin;
+        String finalMsg;
+
+        try {
+            Message execute = botSender.execute(sendDice);
+            Integer value = execute.getDice().getValue();
+            if (value < 3 || value == 4){
+                isWin = false;
+                finalMsg = "Вы проиграли";
+            } else {
+                isWin = true;
+                finalMsg = "Вы выйграли!";
+            }
+
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+            tkTicketService.updateBalanceAfterMiniGame(chatId, 2L, isWin);
+            scheduler.schedule(() -> {
+                sendMessageToUser(chatId, finalMsg, List.of("Играть еще раз", "Меню мини игр"), List.of("miniFootball_process", "/miniGames"), 1);
+            }, 3500, TimeUnit.MILLISECONDS);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public Long calculateTicketChangeByBasketBall(int basketBallResult) {
+        return switch (basketBallResult) {
+            case 1, 4 -> 2L;
+            case 2, 3 -> 1L;
+            case 5 -> 3L;
+            default -> {
+                log.info("Что то пошло не так. В методе calculateTicketChangeByBasketBall сработал default");
+                yield 0L;
+            }
+        };
+    }
+
+    public Long calculateWin(int diceValue, Long userBet) {
+        // Три одинаковых (кроме 777)
+        if (diceValue == 1 || diceValue == 22 || diceValue == 43) {
+            return userBet * 7;
+        }
+        // Начинается с двух семерок (кроме 777)
+        else if (diceValue == 16 || diceValue == 32 || diceValue == 48) {
+            return userBet * 5;
+        }
+        // Джекпот (777)
+        else if (diceValue == 64) {
+            return userBet * 10;
+        }
+        // Нет выигрыша
+        else {
+            return userBet;
+        }
+    }
+
+    private String getRandomMessage(String[] msgs){
+        return msgs[new Random().nextInt(msgs.length)];
+    }
+
+    public String getComboParts(int diceValue) {
+        List<String> result = new ArrayList<>();
+        diceValue--;
+
+        for (int i = 0; i < 3; i++) {
+            result.add(SYMBOLS[diceValue % 4]);
+            diceValue /= 4;
+        }
+
+        return String.join(", ", result);
+    }
+
+
+
     public void miniGamesMsg(Long chatId, Integer msgId) {
-        if (msgId != null){
+        if (msgId != null) {
             disableButton(chatId, msgId);
         }
-        if (!tkBallService.isEnoughTickets(chatId, 2L)){
+        if (!tkTicketService.isEnoughTickets(chatId, 2L)) {
             sendMessageToUser(chatId, "\uD83C\uDFAB У вас недостаточно тикетов для участия в игре!\n" +
                     "\n" +
                     "Вы можете:\n" +
@@ -185,8 +334,8 @@ public class UtilCommandsHandler {
                         "\n" +
                         "\uD83C\uDF9F <b>Используй токены, чтобы получить призы!</b>\n" +
                         "\n" +
-                        "\uD83D\uDE80 Начнем? Выбери игру ниже!", List.of("\uD83C\uDFB2", "\uD83C\uDFAF", "\uD83C\uDFC0", "\uD83C\uDFB0"),
-                List.of("miniGame_cube", "miniGame_darts", "miniGame_basket", "miniGame_roulette"), 2);
+                        "\uD83D\uDE80 Начнем? Выбери игру ниже!", List.of("\uD83C\uDFB2", "\uD83C\uDFAF", "\uD83C\uDFC0", "\uD83C\uDFB0", "⚽"),
+                List.of("miniGame_cube", "miniGame_darts", "miniGame_basket", "miniGame_roulette", "miniGame_football"), 2);
     }
 
     public void sendWebAppReplyKeyboard(Long chatId, String massageText, String url, String buttonText) {
@@ -292,21 +441,25 @@ public class UtilCommandsHandler {
 
 
     public void sendMessageToUser(Long chatId, String massage) {
-        sendMessageToUser(chatId, massage, emptyList(), emptyList(), 0);
-    }
-
-    public void sendMessageToUser(Long chatId, String massage, List<String> buttonText, int buttonRows) {
-        sendMessageToUser(chatId, massage, buttonText, emptyList(), buttonRows);
+        sendMessageToUser(chatId, massage, emptyList(), emptyList(), 0,  1);
     }
 
     public void sendMessageToUser(Long chatId, String massage, List<String> buttonText, List<String> callBackQuery, int buttonRows) {
+        sendMessageToUser(chatId, massage, buttonText, callBackQuery, buttonRows, 1);
+    }
+
+    public void sendMessageToUser(Long chatId, String massage, List<String> buttonText, int buttonRows) {
+        sendMessageToUser(chatId, massage, buttonText, emptyList(), buttonRows, 1);
+    }
+
+    public void sendMessageToUser(Long chatId, String massage, List<String> buttonText, List<String> callBackQuery, int buttonRows, int page) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(massage);
         sendMessage.enableHtml(true);
 
         if (!buttonText.isEmpty()) {
-            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, callBackQuery, buttonRows);
+            InlineKeyboardMarkup inlineKeyboardMarkup = createCustomKeyboard(buttonText, callBackQuery, buttonRows, page);
             sendMessage.setReplyMarkup(inlineKeyboardMarkup);
         }
 
@@ -421,12 +574,18 @@ public class UtilCommandsHandler {
     }
 
     private InlineKeyboardMarkup createCustomKeyboard(List<String> buttonText, List<String> callBackQuery, int rows) {
+
+        return createCustomKeyboard(buttonText, callBackQuery, rows, 1);
+    }
+
+    private InlineKeyboardMarkup createCustomKeyboard(List<String> buttonText, List<String> callBackQuery, int rows, int page) {
         if (buttonText.size() == 1) {
             rows = 1;
         }
         if (callBackQuery.isEmpty()) {
             callBackQuery = buttonText;
         }
+        int totalPages = (int) Math.ceil((double) buttonText.size() / 3);
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
@@ -444,6 +603,21 @@ public class UtilCommandsHandler {
                 buttonIndex++;
             }
             keyboard.add(row);
+        }
+
+        if(totalPages > 1){
+            List<InlineKeyboardButton> navigationRow = new ArrayList<>();
+            InlineKeyboardButton prevButton = new InlineKeyboardButton();
+            prevButton.setText("◀\uFE0F");
+            prevButton.setCallbackData("PAGE_" + (page > totalPages -1 ? page +1 :0));
+            navigationRow.add(prevButton);
+
+            InlineKeyboardButton nextButton = new InlineKeyboardButton();
+            prevButton.setText("▶\uFE0F");
+            prevButton.setCallbackData("PAGE_" + (page < totalPages -1 ? page +1 :0));
+            navigationRow.add(nextButton);
+
+            keyboard.add(navigationRow);
         }
 
         keyboardMarkup.setKeyboard(keyboard);
